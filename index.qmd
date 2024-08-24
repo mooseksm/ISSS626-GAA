@@ -2,4 +2,4 @@
 title: "ISSS626-GIS"
 ---
 
-Welcome to Si Min's ISSS626 website!
+Welcome to Si Min's ISSS626 Geospatial Analytics and Applications website!
