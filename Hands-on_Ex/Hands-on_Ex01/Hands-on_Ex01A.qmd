@@ -1,6 +1,15 @@
 ---
 title: "Hands-on Exercise 1A"
 author: "Kock Si Min"
+date: August 25, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
 ---
 
 # Geospatial Data Science with R

@@ -1,6 +1,15 @@
 ---
-title: "Hands-on Exercise 1A"
+title: "Hands-on Exercise 1B"
 author: "Kock Si Min"
+date: August 25, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
 ---
 
 # Geospatial Data Science with R
@@ -150,7 +159,7 @@ The report reveals the data type of each field. For example `FMEL-UPD_D` field
 
 ### 1.5.3 Working with *head()*
 
-To reveal the complete information of a feature object, we use [head() ](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/head)of Base R:
+To reveal the complete information of a feature object, we use [head()](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/head)of Base R:
 
 ```{r}
 head(mpsz,n=5)
@@ -188,7 +197,7 @@ Map projection is an important property of a geospatial data. To perform geoproc
 
 The process of projecting a simple feature data frame from one coordinate system to another coordinate system is called **projection transformation.**
 
-### 1.7.1 Assigning [EPSG ](https://epsg.io/)code to a simple feature data frame
+### 1.7.1 Assigning [EPSG](https://epsg.io/)code to a simple feature data frame
 
 One common issue that can happen when importing geospatial data is either the coordinate system of the source data is missing or wrongly assigned during the importing process.
 
@@ -291,7 +300,7 @@ Note that a new column called `geometry` has been added into the data frame whi
 
 Besides providing functions to handle (i.e. importing, exporting, assigning projection, transforming projection) geospatial data, **sf** package also offers geoprocessing functions.
 
-Two commonly used geoprocessing functions are [buffering ](https://www.geographyrealm.com/buffers-in-gis/)and point in polygon count.
+Two commonly used geoprocessing functions are [buffering](https://www.geographyrealm.com/buffers-in-gis/)and point in polygon count.
 
 ### 1.9.1 Buffering
 
