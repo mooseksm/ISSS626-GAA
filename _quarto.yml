@@ -5,13 +5,28 @@ website:
   title: "ISSS626-GAA"
   navbar:
     left:
+      - text: Hands-on Exercises
+        menu: 
+          - text: Hands-on Exercise 1
+            href: Hands-on_Ex/Hands-on_Ex1/Hands-on_Ex1.html
+      - text: In-class Exercises
+        menu: 
+          - text: In-class Exercise 1
+            href: In-class_Ex/In-class_Ex1/In-class_Ex1.html
+      - text: Take-home Exercises
+        menu: 
+          - text: Take-Home Exercise 1
+            href: Take-home_Ex/Take-home_Ex1/Take-home_Ex1.html
+      - text: GAA Project
+        href: Proj/Proj.html
+    right:
       - href: index.qmd
         text: Home
       - about.qmd
 
 format:
   html:
-    theme: cosmo
+    theme: flatly
     css: styles.css
     toc: true
 

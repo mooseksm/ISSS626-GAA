@@ -3,3 +3,17 @@ title: "ISSS626-GAA"
 ---
 
 Welcome to Si Min's ISSS626 Geospatial Analytics and Applications website!
+
+Please find below the latest updates:
+
+---
+title: "Latest Updates"
+listing:
+  id: latest-updates
+  fields: [image, date, title, reading-time]
+  type: grid
+  sort:
+    - "file-modified desc"
+    - "title asc"
+  max-items: 3
+---
