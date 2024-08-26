@@ -197,7 +197,7 @@ Map projection is an important property of a geospatial data. To perform geoproc
 
 The process of projecting a simple feature data frame from one coordinate system to another coordinate system is called **projection transformation.**
 
-### 1.7.1 Assigning [EPSG](https://epsg.io/)code to a simple feature data frame
+### 1.7.1 Assigning [EPSG](https://epsg.io/) code to a simple feature data frame
 
 One common issue that can happen when importing geospatial data is either the coordinate system of the source data is missing or wrongly assigned during the importing process.
 

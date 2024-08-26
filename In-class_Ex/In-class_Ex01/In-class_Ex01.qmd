@@ -28,3 +28,144 @@ If false,
 
 -   message: avoid printing out warning messages (for added info, warning in markdown is the same as warning in message)
 :::
+
+In this in-class exercise, the following packages will be used:
+
+-   *tidyverse*
+
+-   *sf*
+
+-   *tmap*
+
+-   *ggstatsplot*
+
+## 1. Installing and Loading R packages
+
+```{r}
+pacman::p_load(tidyverse,sf,tmap,ggstatsplot)
+```
+
+-   pacman will first check whether packages are installed before loading
+
+-   pacman is just called once and not loaded into the environment as its not required for the long-term and to avoid taking up memory
+
+## 2. Working with Master Plan Planning Subzone Data
+
+### 2.1 Master Plan Planning 2014
+
+#### 2.1.1 Importing the data in shapefile format
+
+```{r}
+mpsz14_shp = st_read(dsn="data/geospatial",
+               layer="MP14_SUBZONE_WEB_PL")
+```
+
+-   *geometry* column store all coordinate pairs
+
+#### 2.1.2 Importing the data in kml format
+
+```{r}
+#| eval: false
+mpsz14_kml <- st_read("data/geospatial/MasterPlan2014SubzoneBoundaryWebKML.kml")
+```
+
+-   this kml file is corrupted
+
+-   in other cases, if cannot open kml file, can change extension to .kmz and see if it can be unzipped
+
+It is possible to generate a kml file from shp file as follows:
+
+```{r}
+#| output: false
+st_write(mpsz14_shp,
+         "data/geospatial/MP14_SUBZONE_WEB_PL.kml",
+         delete_dsn=TRUE)
+```
+
+```{r}
+mpsz14_kml <- st_read("data/geospatial/MP14_SUBZONE_WEB_PL.kml")
+```
+
+-   delete_dsn = TRUE is to overwrite previous file otherwise it will prompt an error that the dataset already exists
+
+### 2.2 Master Plan Planning 2019
+
+#### 2.2.1 Importing the data in shapefile format
+
+```{r}
+mpsz19_shp = st_read(dsn="data/geospatial",
+                   layer="MPSZ-2019")
+```
+
+-   note from printout above that the coordinate system is in WGS84 (geographic coordinate system for which units are in decimal degree)
+
+-   WGS84 is popular and used in our handphones but problem is such coordinate systems are not useful for distance and area measurements i.e. 1 degree at equator not equivalent to 1 degree at north pole aka distorted. As such, always use projected coordinated system.
+
+::: callout-important
+Important to know coordinate system to interpret coordinate points
+
+-   latitude, longitude straightforward as typically in degrees BUT
+
+-   if in x, y, could be in various units i.e. metres, km
+:::
+
+#### 2.2.2 Importing the data in kml format
+
+```{r}
+mpsz19_kml <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaKML.kml")
+```
+
+-   Comparing the 2 files, shp file is clearer than kml file hence naturally use the shp file. kml file will require splitting
+
+::: callout-tip
+Given the above, always download different versions of the same file and analyse which is the better data to use.
+:::
+
+#### 2.2.3 Transforming the coordinate system for mpsz19_shp from WGS84 to SVY21
+
+```{r}
+mpsz19_shp <- st_read(dsn="data/geospatial",
+                   layer="MPSZ-2019")%>%
+  st_transform(crs=3414)
+```
+
+```{r}
+st_crs(mpsz19_shp)
+```
+
+-   do not create intermediate data, just replace
+
+### 2.3 Importing population data
+
+```{r}
+popdata <- read_csv("data/aspatial/respopagesextod2023.csv")
+```
+
+#### 2.3.1 Split the data by planning subzone
+
+```{r}
+popdata2023 <- popdata %>%
+  group_by(PA,SZ,AG) %>%
+  summarise(`POP`=sum(`Pop`)) %>%
+  ungroup() %>%
+  pivot_wider(names_from = AG,
+              values_from = POP)
+
+colnames(popdata2023)
+```
+
+-   r vs python: r starts from 1 and not 0 like python
+
+-   note which rows the age groups fall in
+
+```{r}
+popdata2023 <- popdata2023 %>%
+  mutate(`YOUNG` = rowSums(.[3:6])
+         +rowSums(.[14])) %>%
+  mutate(`ECONOMY ACTIVE` = rowSums(.[7:13])+
+           rowSums(.[15])) %>%
+  mutate(`AGED`=rowSums(.[16:21])) %>%
+  mutate(`TOTAL`=rowSums(.[3:21])) %>%
+  mutate(`DEPENDENCY`=(`YOUNG`+`AGED`)/`ECONOMY ACTIVE`) %>%
+  select(`PA`,`SZ`,`YOUNG`,`ECONOMY ACTIVE`,`AGED`,`TOTAL`,`DEPENDENCY`)
+```
