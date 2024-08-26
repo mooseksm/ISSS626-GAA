@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "ISSS626-GAA",
     "section": "",
-    "text": "Welcome to Si Min’s ISSS626 Geospatial Analytics and Applications website!\nPlease find below the latest updates:\n\n\n\n\n\n\n\n\n\n\n\n\nHands-on Exercise 1A\n\n\n10 min\n\n\n\nAug 24, 2024\n\n\n\n\n\n\n\n\n\n\n\n\nHands-on Exercise 1B\n\n\n16 min\n\n\n\nAug 24, 2024\n\n\n\n\n\n\n\n\nNo matching items"
+    "text": "Welcome to Si Min’s ISSS626 Geospatial Analytics and Applications website!\nPlease find below the latest updates:\n\n\n\n\n\n\n\n\n\n\n\n\nIn-class Exercise 1: Geospatial\n\n\n1 min\n\n\n\nAug 26, 2024\n\n\n\n\n\n\n\n\n\n\n\n\nHands-on Exercise 1B\n\n\n16 min\n\n\n\nAug 24, 2024\n\n\n\n\n\n\n\n\n\n\n\n\nHands-on Exercise 1A\n\n\n10 min\n\n\n\nAug 24, 2024\n\n\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "about.html",
@@ -264,5 +264,12 @@
     "title": "Hands-on Exercise 1B",
     "section": "",
     "text": "tmap: Thematic Maps in R\ntmap\ntmap: get started!\ntmap: changes in version 2.0\ntmap: creating thematic maps in a flexible way (useR!2015)\nExploring and presenting maps with tmap (useR!2017)\n\n\n\n\n\nsf: Simple Features for R\nSimple Features for R: StandardizedSupport for Spatial Vector Data\nReading, Writing and Converting Simple Features\n\n\n\n\n\ndplyr\nTidy data\ntidyr: Easily Tidy Data with ‘spread()’ and ‘gather()’ Functions"
+  },
+  {
+    "objectID": "In-class_Ex/In-class_Ex01/data/geospatial/MPSZ-2019.html",
+    "href": "In-class_Ex/In-class_Ex01/data/geospatial/MPSZ-2019.html",
+    "title": "ISSS626-GAA",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
   }
 ]

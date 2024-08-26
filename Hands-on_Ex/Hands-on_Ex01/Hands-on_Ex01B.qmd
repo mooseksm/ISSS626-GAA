@@ -18,16 +18,16 @@ execute:
 
 Thematic mapping involves the use of map symbols to visualise selected properties of geographic features that are not naturally visible i.e. population, temperate, crime rate and property prices.
 
-Geovisualisation works by providing a geographical ideation to render a place, phenomenon or process visible. In this exercise, functional and truthful chloropleth maps will be plot using the [tmap ](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)package.
+Geovisualisation works by providing a geographical ideation to render a place, phenomenon or process visible. In this exercise, functional and truthful chloropleth maps will be plot using the [tmap](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)package.
 
 ## 1.2 Getting Started
 
-In this hands-on exercise, the key R package is the [tmap ](https://cran.r-project.org/web/packages/tmap/)package and the following packages:
+In this hands-on exercise, the key R package is the [tmap](https://cran.r-project.org/web/packages/tmap/)package and the following packages:
 
 1.  [**readr**](https://readr.tidyverse.org/)[ ](#0)to import delimited text file
-2.  [**tidyr** ](https://tidyr.tidyverse.org/)for tidying data
-3.  [**dplyr** ](https://dplyr.tidyverse.org/)for wrangling data
-4.  [**sf** ](https://cran.r-project.org/web/packages/sf/index.html)to handle geospatial data
+2.  [**tidyr**](https://tidyr.tidyverse.org/)for tidying data
+3.  [**dplyr**](https://dplyr.tidyverse.org/)for wrangling data
+4.  [**sf**](https://cran.r-project.org/web/packages/sf/index.html)to handle geospatial data
 
 The first 3 packages above are part of the tidyverse package.
 
@@ -143,7 +143,7 @@ Two approaches are used to prepare the thematic map using *tmap*:
 
 -   Plotting a thematic map quickly using *qtm()*
 
--    Plotting a highly customisable thematic map using tmap elements
+-   Plotting a highly customisable thematic map using tmap elements
 
 ### 1.4.1 Plotting a choropleth map quickly using *qtm()*
 

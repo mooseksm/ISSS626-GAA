@@ -1,0 +1,15 @@
+---
+title: "In-class Exercise 1: Geospatial"
+author: "Kock Si Min"
+date: August 26, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# 
