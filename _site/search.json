@@ -271,5 +271,12 @@
     "title": "ISSS626-GAA",
     "section": "",
     "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n        0 0     false"
+  },
+  {
+    "objectID": "In-class_Ex/In-class_Ex01/In-class_Ex01.html",
+    "href": "In-class_Ex/In-class_Ex01/In-class_Ex01.html",
+    "title": "In-class Exercise 1: Geospatial",
+    "section": "",
+    "text": "In-class Exercise 1\n\n\n\n\n\n\nTip\n\n\n\nIf true,\neval: R will run code\necho: R will display code chunk\nfreeze: whatever document that has already been committed and pushed to github (and if there’s no changes), will no longer be rendereds\nIf false,\nmessage: avoid printing out warning messages"
   }
 ]
