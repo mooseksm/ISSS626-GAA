@@ -1,0 +1,602 @@
+---
+title: "Hands-on Exercise 2B"
+author: "Kock Si Min"
+date: August 31, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# 2nd Order Spatial Point Pattern Analysis Methods
+
+## 1.1 Learning Outcomes
+
+Spatial Point Pattern Analysis is the evaluation of the pattern or distribution of a set of points on a surface. The point can be a location of:
+
+-   events such as crime, traffic incident and disease onset or
+
+-   business services (coffee and fast food outlets) or facilities such as childcare and eldercare
+
+In this hands-on exercise, we will use appropriate functions of [spatstat](https://cran.r-project.org/web/packages/spatstat/) to discover the spatial point processes of childcare centres in Singapore.
+
+The specific questions to be addressed are as follows:
+
+-   are the childcare centres in Singapore randomly distributed throughout the country?
+
+-   if the answer is not, then the next question is where are the locations with higher concentrations of childcare centres?
+
+## 1.2 Data Acquisition
+
+Three datasets are used in this exercise:
+
+-   `CHILDCARE`, a point feature data providing both location and attribute information of childcare centres. It was downloaded from [data.gov.sg](https://data.gov.sg/) and is in geojson format.
+
+-   `MP14_SUBZONE_WEB_PL`, a polygon feature data providing information of URA 2014 Master Plan Planning Subzone boundary data. It is in ESRI shapefile format. This data set was also downloaded from [data.gov.sg](https://data.gov.sg/).
+
+-   `CostalOutline`, a polygon feature data showing the national boundary of Singapore. It is provided by SLA and is in ESRI shapefile format.
+
+## 1.3 Installing and Launching R packages
+
+-   [**sf**](https://r-spatial.github.io/sf/) for importing, managing, and processing vector-based geospatial data, and
+
+-   [**spatstat**](https://spatstat.org/), which has a wide range of useful functions for point pattern analysis. In this hands-on exercise, it will be used to perform 1st- and 2nd-order spatial point patterns analysis and derive kernel density estimation (KDE) layer
+
+-   [**raster**](https://cran.r-project.org/web/packages/raster/) which reads, writes, manipulates, analyses and model of gridded spatial data (i.e. raster). In this hands-on exercise, it will be used to convert image output generate by spatstat into raster format.
+
+-   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html) which provides functions for plotting cartographic quality static point patterns maps or interactive maps by using [leaflet](https://leafletjs.com/) API.
+
+-   [**tidyverse**](https://www.tidyverse.org/) for performing data science tasks such as importing, wrangling and visualising data.
+
+The packages are loaded with the following code chunk:
+
+```{r}
+pacman::p_load(sf,spatstat,raster,tmap,tidyverse)
+```
+
+## 1.4 Spatial Data Wrangling
+
+### 1.4.1 Importing the spatial data
+
+We will import the geospatial data using [*st_read()*](https://r-spatial.github.io/sf/reference/st_read.html) of **sf** package:
+
+```{r}
+childcare_sf <- st_read("data/geospatial/child-care-services-geojson.geojson") %>%
+  st_transform(crs = 3414)
+```
+
+Checking whether the EPSG code has been corrected:
+
+```{r}
+st_crs(childcare_sf)
+```
+
+When the input geospatial data is in shapefile format, two arguments are used:
+
+-   `dsn` to define the data path
+
+-   `layer` to provide the shapefile name
+
+```{r}
+sg_sf <- st_read(dsn = "data/geospatial",
+                 layer = "CostalOutline")
+```
+
+```{r}
+mpsz_sf <- st_read(dsn = "data/geospatial",
+                   layer = "MP14_SUBZONE_WEB_PL")
+```
+
+Before using these data for analysis, it is important to ensure that they are projected in the same projection system.
+
+```{r}
+st_crs(sg_sf)
+```
+
+```{r}
+st_crs(mpsz_sf)
+```
+
+While the *sg_sf* and *mpsz_sf* data frames are projected in svy21, the end of the printout above states that the EPSG is 9001 - this is a wrong EPSG code as the correct EPSG code for svy21 should be [3414](https://epsg.io/3414).
+
+To correctly assign the right EPSG code to both data frame, *st_set_crs()* of sf package is used:
+
+```{r}
+sg_sf3414 <- st_set_crs(sg_sf,3414)
+mpsz_sf3414 <- st_set_crs(mpsz_sf,3414)
+```
+
+Checking whether the EPSG code has been corrected:
+
+```{r}
+st_crs(sg_sf3414)
+```
+
+```{r}
+st_crs(mpsz_sf3414)
+```
+
+### 1.4.2 Mapping the geospatial datasets
+
+After checking the referencing system of each geospatial dataframe, it is also useful to plot a map to show their spatial patterns. A pin map can be prepared using the code below:
+
+```{r}
+tmap_mode('view')
+tm_shape(childcare_sf)+
+  tm_dots()
+```
+
+All the geospatial layers are within the same map extend which indicates that their referencing system and coordinate values are referred to similar spatial context. This is very important in any geospatial analysis.
+
+```{r}
+tmap_mode('plot')
+```
+
+At interactive mode, **tmap** is using [**leaflet for R**](https://rstudio.github.io/leaflet/)API. The advantage of an interactive pin map is it allows one to navigate and zoom around the map freely as well as query the information of each simple feature (i.e. the point) by clicking on the. The background of the internet map layer can also be changed. At present, three internet map layers are provided: ESRI.WorldGrayCanvas, OpenStreetMap, and ESRI.WorldTopoMap. The default is ESRI.WorldGrayCanvas.
+
+::: callout-tip
+It is always important to switch back to plot mode after the interactive map as each interactive mode will consume a connection.
+
+It is important to avoid displaying excessive number of interactive maps i.e. not more than 10, in one RMarkdown document when publishing on Netlify.
+:::
+
+## 1.5 Geospatial Data Wrangling
+
+While simple feature data frame is gaining popularity against Spatial\* classes, many geospatial analysis packages require the input geospatial data in to be in Spatial\* classes. In this section, simple feature data frame will be converted to Spatial\* class.
+
+### 1.5.1 **Converting from sf format into spatstat’s ppp format**
+
+The code chunk below *as.ppp()* function of **spatstat** to convert the spatial data into **spatstat**’s ***ppp*** object format.
+
+```{r}
+childcare_ppp <- as.ppp(childcare_sf)
+childcare_ppp
+```
+
+Plotting childcare_ppp:
+
+```{r}
+plot(childcare_ppp)
+```
+
+Taking a look at the summary statistics of the ppp object:
+
+```{r}
+summary(childcare_ppp)
+```
+
+::: callout-note
+In spatial point patterns analysis, a significant issue is the presence of duplicates. The statistical methodology used for spatial point patterns processes is based largely on the assumption that process is *simple*, that is, that the points cannot be coincidental.
+:::
+
+### 1.5.2 Handling duplicate points
+
+We can check the duplication in a ppp object using the code chunk below:
+
+```{r}
+any(duplicated(childcare_ppp))
+```
+
+To count the number of coincidence points, the *multiplicity()* function is used, as shown in the code chunk below.
+
+```{r}
+multiplicity(childcare_ppp)
+```
+
+To know how many locations have more than one point event, the code chunk below is used:
+
+```{r}
+sum(multiplicity(childcare_ppp) > 1)
+```
+
+```{r}
+tmap_mode('view')
+tm_shape(childcare_sf) +
+  tm_dots(alpha=0.4, 
+          size=0.05)
+```
+
+```{r}
+tmap_mode('plot')
+```
+
+In the event of duplicate points, there are 3 ways to overcome the issue:
+
+1.  Delete the duplicates - easiest way but it will also meant that some useful point events will be lost
+2.  Jittering - this method will add a small perturbation to the duplicate points so that they do not occupy the exact same space
+3.  Make each point "unique" and attach the duplicates of the points to the patterns as **marks**, as attributes of the points. Analytical techniques that take into account these marks would be required.
+
+The code chunk below implements the jittering approach:
+
+```{r}
+childcare_ppp_jit <- rjitter(childcare_ppp, 
+                             retry=TRUE, 
+                             nsim=1, 
+                             drop=TRUE)
+```
+
+Check for duplicated points:
+
+```{r}
+any(duplicated(childcare_ppp_jit))
+```
+
+### 1.5.3 Creating *owin* object
+
+When analysing spatial point patterns, it is a good practice to confine the analysis within a geographical area like Singapore's boundary. In **spatstat**, an object called ***owin*** is specially designed to represent this polygonal region.
+
+The code chunk below is used to covert *sg* SpatialPolygon object into owin object of **spatstat**.
+
+```{r}
+sg_owin <- as.owin(sg_sf)
+```
+
+The ouput object can be displayed by using *plot()* function:
+
+```{r}
+plot(sg_owin)
+```
+
+```{r}
+summary(sg_owin)
+```
+
+### 1.5.4 **Combining point events object and owin object**
+
+In this last step of geospatial data wrangling, we will extract childcare events that are located within Singapore by using the code chunk below:
+
+```{r}
+childcareSG_ppp = childcare_ppp[sg_owin]
+```
+
+The output object combined both the point and polygon feature in one ppp object class as shown below:
+
+```{r}
+summary(childcareSG_ppp)
+```
+
+Plotting the newly derived *childcareSG_ppp*:
+
+```{r}
+plot(childcareSG_ppp)
+```
+
+### 1.5.4.1 Extracting study area
+
+The code chunk below will be used to extract the target planning areas.
+
+```{r}
+pg <- mpsz_sf %>%
+  filter(PLN_AREA_N == "PUNGGOL")
+tm <- mpsz_sf %>%
+  filter(PLN_AREA_N == "TAMPINES")
+ck <- mpsz_sf %>%
+  filter(PLN_AREA_N == "CHOA CHU KANG")
+jw <- mpsz_sf %>%
+  filter(PLN_AREA_N == "JURONG WEST")
+```
+
+Plotting target planning areas:
+
+```{r}
+par(mfrow=c(2,2))
+plot(pg, main = "Punggol")
+```
+
+```{r}
+plot(tm, main = "Tampines")
+```
+
+```{r}
+plot(ck, main = "Choa Chu Kang")
+```
+
+```{r}
+plot(jw, main = "Jurong West")
+```
+
+#### 1.5.4.2 Converting sf objects into ***owin*** objects
+
+Now, we will convert these sf objects into owin objects that is required by **spatstat**:
+
+```{r}
+pg_owin = as.owin(pg)
+tm_owin = as.owin(tm)
+ck_owin = as.owin(ck)
+jw_owin = as.owin(jw)
+```
+
+#### 1.5.4.3 Combining childcare points and the study area
+
+By using the code chunk below, we are able to extract childcare that is within the specific region to do our analysis later on.
+
+```{r}
+childcare_pg_ppp = childcare_ppp_jit[pg_owin]
+childcare_tm_ppp = childcare_ppp_jit[tm_owin]
+childcare_ck_ppp = childcare_ppp_jit[ck_owin]
+childcare_jw_ppp = childcare_ppp_jit[jw_owin]
+```
+
+Next, *rescale.ppp()* function is used to transform the unit of measurement from metre to kilometre:
+
+```{r}
+childcare_pg_ppp.km = rescale.ppp(childcare_pg_ppp, 1000, "km")
+childcare_tm_ppp.km = rescale.ppp(childcare_tm_ppp, 1000, "km")
+childcare_ck_ppp.km = rescale.ppp(childcare_ck_ppp, 1000, "km")
+childcare_jw_ppp.km = rescale.ppp(childcare_jw_ppp, 1000, "km")
+```
+
+The code chunk below is used to plot these four study areas and the locations of the childcare centres:
+
+```{r}
+par(mfrow=c(2,2))
+plot(childcare_pg_ppp.km, main="Punggol")
+plot(childcare_tm_ppp.km, main="Tampines")
+plot(childcare_ck_ppp.km, main="Choa Chu Kang")
+plot(childcare_jw_ppp.km, main="Jurong West")
+```
+
+## 1.6 **Analysing Spatial Point Process Using G-Function**
+
+The G function measures the distribution of the distances from an arbitrary event to its nearest event. In this section, we will compute G-function estimation using [*Gest()*](https://rdrr.io/cran/spatstat/man/Gest.html) of **spatstat** package. A monte carlo simulation test will also be performed using [*envelope()*](https://rdrr.io/cran/spatstat/man/envelope.html) of **spatstat** package.
+
+### 1.7.1 **Choa Chu Kang planning area**
+
+#### 1.7.1.1 Computing G-function estimation
+
+The code chunk below is used to compute G-function using *Gest()* of **spatat** package.
+
+```{r}
+G_CK = Gest(childcare_ck_ppp, correction = "border")
+plot(G_CK, xlim=c(0,500))
+```
+
+#### 1.7.1.2 Performing Complete Spatial Randomness Test
+
+To confirm the observed spatial patterns above, a hypothesis test will be conducted. The hypothesis and test are as follows:
+
+H0 = The distribution of childcare services at Choa Chu Kang are randomly distributed.
+
+H1= The distribution of childcare services at Choa Chu Kang are not randomly distributed.
+
+The null hypothesis will be rejected if p-value is smaller than alpha value of 0.001.
+
+Monte Carlo test with G-function:
+
+```{r}
+G_CK.csr <- envelope(childcare_ck_ppp, Gest, nsim = 999)
+```
+
+```{r}
+plot(G_CK.csr)
+```
+
+### 1.7.2 **Tampines planning area**
+
+#### 1.7.2.1 Computing G-function estimation
+
+```{r}
+G_tm = Gest(childcare_tm_ppp, correction = "best")
+plot(G_tm)
+```
+
+#### 1.7.2.2 Performing Complete Spatial Randomness Test
+
+To confirm the observed spatial patterns above, a hypothesis test will be conducted. The hypothesis and test are as follows:
+
+H0 = The distribution of childcare services at Tampines are randomly distributed.
+
+H1= The distribution of childcare services at Tampines are not randomly distributed.
+
+The null hypothesis will be rejected is p-value is smaller than alpha value of 0.001.
+
+The code chunk below is used to perform the hypothesis testing:
+
+```{r}
+G_tm.csr <- envelope(childcare_tm_ppp, Gest, correction = "all", nsim = 999)
+```
+
+```{r}
+plot(G_tm.csr)
+```
+
+## 1.8 **Analysing Spatial Point Process Using F-Function**
+
+The F function estimates the empty space function F(r) or its hazard rate h(r) from a point pattern in a window of arbitrary shape. In this section, we will compute the F-function estimation by using [*Fest()*](https://rdrr.io/cran/spatstat/man/Fest.html) of **spatstat** package. A monte carlo simulation test will also be performed using [*envelope()*](https://rdrr.io/cran/spatstat/man/envelope.html) of **spatstat** package.
+
+### 1.8.1 **Choa Chu Kang planning area**
+
+#### 1.8.1.1 Computing F-function estimation
+
+The code chunk below is used to compute F-function using *Fest()* of **spatat** package.
+
+```{r}
+F_CK = Fest(childcare_ck_ppp)
+plot(F_CK)
+```
+
+### 1.8.2 **Performing Complete Spatial Randomness Test**
+
+To confirm the observed spatial patterns above, a hypothesis test will be conducted. The hypothesis and test are as follows:
+
+H0 = The distribution of childcare services at Choa Chu Kang are randomly distributed.
+
+H1= The distribution of childcare services at Choa Chu Kang are not randomly distributed.
+
+The null hypothesis will be rejected if p-value is smaller than alpha value of 0.001.
+
+Monte Carlo test with F-function:
+
+```{r}
+F_CK.csr <- envelope(childcare_ck_ppp, Fest, nsim = 999)
+```
+
+```{r}
+plot(F_CK.csr)
+```
+
+### 1.8.3 **Tampines planning area**
+
+#### 1.8.3.1 Computing F-function estimation
+
+Monte Carlo test with F-function:
+
+```{r}
+F_tm = Fest(childcare_tm_ppp, correction = "best")
+plot(F_tm)
+```
+
+#### 1.8.3.2 Performing Complete Spatial Randomness Test
+
+To confirm the observed spatial patterns above, a hypothesis test will be conducted. The hypothesis and test are as follows:
+
+H0 = The distribution of childcare services at Tampines are randomly distributed.
+
+H1= The distribution of childcare services at Tampines are not randomly distributed.
+
+The null hypothesis will be rejected is p-value is smaller than alpha value of 0.001.
+
+The code chunk below is used to perform the hypothesis testing:
+
+```{r}
+F_tm.csr <- envelope(childcare_tm_ppp, Fest, correction = "all", nsim = 999)
+```
+
+```{r}
+plot(F_tm.csr)
+```
+
+## 1.9 **Analysing Spatial Point Process Using K-Function**
+
+K-function measures the number of events found up to a given distance of any particular event. In this section, we will compute K-function estimates by using [*Kest()*](https://rdrr.io/cran/spatstat/man/Kest.html) of **spatstat** package. We will also perform monte carlo simulation test using *envelope()* of spatstat package.
+
+### 1.9.1 **Choa Chu Kang planning area**
+
+#### 1.9.1.1 Computing K-function estimate
+
+```{r}
+K_ck = Kest(childcare_ck_ppp, correction = "Ripley")
+plot(K_ck, . -r ~ r, ylab= "K(d)-r", xlab = "d(m)")
+```
+
+#### 1.9.1.2 Performing Complete Spatial Randomness Test
+
+To confirm the observed spatial patterns above, a hypothesis test will be conducted. The hypothesis and test are as follows:
+
+H0 = The distribution of childcare services at Choa Chu Kang are randomly distributed.
+
+H1= The distribution of childcare services at Choa Chu Kang are not randomly distributed.
+
+The null hypothesis will be rejected if p-value is smaller than alpha value of 0.001.
+
+The code chunk below is used to perform the hypothesis testing:
+
+```{r}
+K_ck.csr <- envelope(childcare_ck_ppp, Kest, nsim = 99, rank = 1, glocal=TRUE)
+```
+
+```{r}
+plot(K_ck.csr, . - r ~ r, xlab="d", ylab="K(d)-r")
+```
+
+### 1.9.2 **Tampines planning area**
+
+#### 1.9.2.1 Computing K-function estimation
+
+```{r}
+K_tm = Kest(childcare_tm_ppp, correction = "Ripley")
+plot(K_tm, . -r ~ r, 
+     ylab= "K(d)-r", xlab = "d(m)", 
+     xlim=c(0,1000))
+```
+
+#### 1.9.2.2 Performing Complete Spatial Randomness Test
+
+To confirm the observed spatial patterns above, a hypothesis test will be conducted. The hypothesis and test are as follows:
+
+H0 = The distribution of childcare services at Tampines are randomly distributed.
+
+H1= The distribution of childcare services at Tampines are not randomly distributed.
+
+The null hypothesis will be rejected if p-value is smaller than alpha value of 0.001.
+
+The code chunk below is used to perform the hypothesis testing:
+
+```{r}
+K_tm.csr <- envelope(childcare_tm_ppp, Kest, nsim = 99, rank = 1, glocal=TRUE)
+```
+
+```{r}
+plot(K_tm.csr, . - r ~ r, 
+     xlab="d", ylab="K(d)-r", xlim=c(0,500))
+```
+
+## 1.10 **Analysing Spatial Point Process Using L-Function**
+
+In this section, we will compute L-function estimation by using [*Lest()*](https://rdrr.io/cran/spatstat/man/Lest.html) of **spatstat** package. We will also perform monte carlo simulation test using *envelope()* of spatstat package.
+
+### 1.10.1 **Choa Chu Kang planning area**
+
+#### 1.10.1.1 Computing L Function estimation
+
+```{r}
+L_ck = Lest(childcare_ck_ppp, correction = "Ripley")
+plot(L_ck, . -r ~ r, 
+     ylab= "L(d)-r", xlab = "d(m)")
+```
+
+#### 1.10.1.2 Performing Complete Spatial Randomness Test
+
+To confirm the observed spatial patterns above, a hypothesis test will be conducted. The hypothesis and test are as follows:
+
+H0 = The distribution of childcare services at Choa Chu Kang are randomly distributed.
+
+H1= The distribution of childcare services at Choa Chu Kang are not randomly distributed.
+
+The null hypothesis will be rejected if p-value if smaller than alpha value of 0.001.
+
+The code chunk below is used to perform the hypothesis testing.
+
+```{r}
+L_ck.csr <- envelope(childcare_ck_ppp, Lest, nsim = 99, rank = 1, glocal=TRUE)
+```
+
+```{r}
+plot(L_ck.csr, . - r ~ r, xlab="d", ylab="L(d)-r")
+```
+
+### 1.10.2 **Tampines planning area**
+
+#### 1.10.2.1 Computing L-function estimate
+
+```{r}
+L_tm = Lest(childcare_tm_ppp, correction = "Ripley")
+plot(L_tm, . -r ~ r, 
+     ylab= "L(d)-r", xlab = "d(m)", 
+     xlim=c(0,1000))
+```
+
+#### 1.10.2.2 Performing Complete Spatial Randomness Test
+
+To confirm the observed spatial patterns above, a hypothesis test will be conducted. The hypothesis and test are as follows:
+
+H0 = The distribution of childcare services at Tampines are randomly distributed.
+
+H1= The distribution of childcare services at Tampines are not randomly distributed.
+
+The null hypothesis will be rejected if p-value is smaller than alpha value of 0.001.
+
+The code chunk below will be used to perform the hypothesis testing.
+
+```{r}
+L_tm.csr <- envelope(childcare_tm_ppp, Lest, nsim = 99, rank = 1, glocal=TRUE)
+```
+
+```{r}
+plot(L_tm.csr, . - r ~ r, 
+     xlab="d", ylab="L(d)-r", xlim=c(0,500))
+```

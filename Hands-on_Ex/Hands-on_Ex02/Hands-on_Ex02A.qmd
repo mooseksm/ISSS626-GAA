@@ -42,7 +42,7 @@ Three datasets are used in this exercise:
 
 ## 1.3 Installing and Launching R packages
 
--   [**sf**](https://r-spatial.github.io/sf/)for importing, managing, and processing vector-based geospatial data, and
+-   [**sf**](https://r-spatial.github.io/sf/) for importing, managing, and processing vector-based geospatial data, and
 
 -   [**spatstat**](https://spatstat.org/), which has a wide range of useful functions for point pattern analysis. In this hands-on exercise, it will be used to perform 1st- and 2nd-order spatial point patterns analysis and derive kernel density estimation (KDE) layer
 
