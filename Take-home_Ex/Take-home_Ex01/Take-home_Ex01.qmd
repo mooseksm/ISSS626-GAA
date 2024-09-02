@@ -1,7 +1,7 @@
 ---
 title: "Take-home Exercise 1"
 author: "Kock Si Min"
-date: Sep 2, 2024
+date: September 2, 2024
 date-modified: "last-modified"
 toc: true
 execute:
@@ -50,12 +50,14 @@ rdacc_sf <- read_csv("data/thai_road_accident_2019_2022.csv") %>%
 
 -   when file is read in sf, can easily convert to ppp
 
--   dissecting the code - it comes in 3 chunks:
+-   dissecting the code - it comes in 4 chunks:
 
     -   the first to load the file
 
     -   the second to filter missing values
 
     -   the third is to get the coordinates and transform the crs
+
+    -   transform it
 
 -   without the filter function in between, running the code will give you error, this is because there are missing values for longitude and latitude
