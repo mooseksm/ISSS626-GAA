@@ -1,0 +1,61 @@
+---
+title: "Take-home Exercise 1"
+author: "Kock Si Min"
+date: Sep 2, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+## 1.2 Data Acquisition
+
+## 1.3 Installing and Launching R packages
+
+-   [**sf**](https://r-spatial.github.io/sf/) for importing, managing, and processing vector-based geospatial data, and
+
+-   [**spatstat**](https://spatstat.org/), which has a wide range of useful functions for point pattern analysis. In this hands-on exercise, it will be used to perform 1st- and 2nd-order spatial point patterns analysis and derive kernel density estimation (KDE) layer
+
+-   [**raster**](https://cran.r-project.org/web/packages/raster/) which reads, writes, manipulates, analyses and model of gridded spatial data (i.e. raster). In this hands-on exercise, it will be used to convert image output generate by spatstat into raster format.
+
+-   [**maptools**](https://cran.r-project.org/web/packages/maptools/index.html) which provides a set of tools for manipulating geographic data. In this hands-on exercise, we mainly use it to convert *Spatial* objects into *ppp* format of **spatstat**.
+
+-   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html) which provides functions for plotting cartographic quality static point patterns maps or interactive maps by using [leaflet](https://leafletjs.com/) API.
+
+-   [**tidyverse**](https://www.tidyverse.org/) for performing data science tasks such as importing, wrangling and visualising data.
+
+The packages are loaded with the following code chunk:
+
+```{r}
+pacman::p_load(sf,spatstat,raster,tmap,tidyverse)
+```
+
+## Importing Data
+
+```{r}
+rdacc_sf <- read_csv("data/thai_road_accident_2019_2022.csv") %>%
+  filter(!is.na(longitude) & longitude != "",
+         !is.na(latitude) & latitude != "") %>%
+  st_as_sf(coords = c(
+    "longitude", "latitude"),
+    crs=4326) %>%
+  st_transform(crs = 32647)
+```
+
+-   Note that **incident_datetime** and **report_datetime** are kept in **datetime field**, so that easier for manipulation later on i.e. extracting day of week, time of day. Can be useful in determining the occurrence of incidents at a particular timing i.e. peak hour.
+
+-   when file is read in sf, can easily convert to ppp
+
+-   dissecting the code - it comes in 3 chunks:
+
+    -   the first to load the file
+
+    -   the second to filter missing values
+
+    -   the third is to get the coordinates and transform the crs
+
+-   without the filter function in between, running the code will give you error, this is because there are missing values for longitude and latitude
