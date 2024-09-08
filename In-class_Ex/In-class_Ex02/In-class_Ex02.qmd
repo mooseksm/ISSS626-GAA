@@ -37,6 +37,66 @@ The packages are loaded with the following code chunk:
 pacman::p_load(sf,spatstat,raster,tmap,tidyverse)
 ```
 
+## Importing Data
+
+We will import the geospatial data using [*st_read()*](https://r-spatial.github.io/sf/reference/st_read.html) of **sf** package:
+
+```{r}
+childcare_sf <- st_read("data/geospatial/child-care-services-geojson.geojson") %>%
+  st_transform(crs = 3414)
+```
+
+Checking whether the EPSG code has been corrected:
+
+```{r}
+st_crs(childcare_sf)
+```
+
+When the input geospatial data is in shapefile format, two arguments are used:
+
+-   `dsn` to define the data path
+
+-   `layer` to provide the shapefile name
+
+```{r}
+sg_sf <- st_read(dsn = "data/geospatial",
+                 layer = "CostalOutline")
+```
+
+```{r}
+mpsz_sf <- st_read(dsn = "data/geospatial",
+                   layer = "MP14_SUBZONE_WEB_PL")
+```
+
+Before using these data for analysis, it is important to ensure that they are projected in the same projection system.
+
+```{r}
+st_crs(sg_sf)
+```
+
+```{r}
+st_crs(mpsz_sf)
+```
+
+While the *sg_sf* and *mpsz_sf* data frames are projected in svy21, the end of the printout above states that the EPSG is 9001 - this is a wrong EPSG code as the correct EPSG code for svy21 should be [3414](https://epsg.io/3414).
+
+To correctly assign the right EPSG code to both data frame, *st_set_crs()* of sf package is used:
+
+```{r}
+sg_sf3414 <- st_set_crs(sg_sf,3414)
+mpsz_sf3414 <- st_set_crs(mpsz_sf,3414)
+```
+
+Checking whether the EPSG code has been corrected:
+
+```{r}
+st_crs(sg_sf3414)
+```
+
+```{r}
+st_crs(mpsz_sf3414)
+```
+
 ### Issue 1: Defunct maptools package
 
 ::: callout-tip
@@ -62,7 +122,6 @@ utilise #\| eval: false after installing the packages to avoid the code from re-
 -   The code chunk below *st_union()* is used to derive the coastal outline of sf tibble data.frame
 
 ```{r}
-#| eval: false
 sg_sf <- mpsz_sf %>%
   st_union()
 ```

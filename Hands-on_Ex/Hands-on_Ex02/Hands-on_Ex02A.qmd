@@ -48,6 +48,8 @@ Three datasets are used in this exercise:
 
 -   [**raster**](https://cran.r-project.org/web/packages/raster/) which reads, writes, manipulates, analyses and model of gridded spatial data (i.e. raster). In this hands-on exercise, it will be used to convert image output generate by spatstat into raster format.
 
+-   [**maptools**](https://cran.r-project.org/web/packages/maptools/index.html) which provides a set of tools for manipulating geographic data. In this hands-on exercise, we mainly use it to convert *Spatial* objects into *ppp* format of **spatstat**.
+
 -   [**tmap**](https://cran.r-project.org/web/packages/tmap/index.html) which provides functions for plotting cartographic quality static point patterns maps or interactive maps by using [leaflet](https://leafletjs.com/) API.
 
 -   [**tidyverse**](https://www.tidyverse.org/) for performing data science tasks such as importing, wrangling and visualising data.
@@ -57,6 +59,15 @@ The packages are loaded with the following code chunk:
 ```{r}
 pacman::p_load(sf,spatstat,raster,tmap,tidyverse)
 ```
+
+::: callout-tip
+**maptools** is [retired](https://cran.r-project.org/src/contrib/Archive/maptools/) and binary is removed from CRAN, however it can be downloaded from [Posit Public Package Manager](https://posit.co/products/cloud/public-package-manager/) (this site is useful for Shiny) snapshots by using the code chunk below. Alternatively, can utilise the CRAN retired website and key in the latest version.
+
+```{r}
+install.packages("maptools",
+                 repos = "https://packagemanager.posit.co/cran/2023-10-13")
+```
+:::
 
 ## 1.4 Spatial Data Wrangling
 
@@ -258,9 +269,13 @@ The code chunk below implements the jittering approach:
 ```{r}
 childcare_ppp_jit <- rjitter(childcare_ppp, 
                              retry=TRUE, 
-                             nsim=1, 
+                             nsim=49, 
                              drop=TRUE)
 ```
+
+::: callout-important
+Note that Prof's original code only indicated nsim = 1 which means there's only 2 simulations. To increase the value i.e. nsim = 49 to bring the simulations up to 50.
+:::
 
 Check for duplicated points:
 

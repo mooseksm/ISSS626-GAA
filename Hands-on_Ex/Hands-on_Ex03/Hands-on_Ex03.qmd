@@ -1,0 +1,19 @@
+---
+title: "Hands-on Exercise 3"
+author: "Kock Si Min"
+date: September 7, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# Network Constrained Spatial Point Patterns Analysis
+
+## 3.1 Overview
+
+**Network constrained Spatial Point Patterns Analysis (NetSPAA)** is a collection of spatial point patterns analysis methods specially developed for analysing spatial point events that occur on or alongside a network. The spatial point event can be locations of traffic accidents or childcare centres for example. The network, on the other hand, can be a road network or a river network.
