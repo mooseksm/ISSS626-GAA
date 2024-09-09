@@ -128,7 +128,7 @@ Before computing NKDE, the Spatial Lines object needs to be cut into lixels with
 ```{r}
 lixels <- lixelize_lines(network,
                          700,
-                         mindist = 375)
+                         mindist = 350)
 ```
 
 In the code above,
@@ -259,7 +259,7 @@ kfun_childcare <- kfunctions(network,
                              end = 1000,
                              step = 50,
                              width = 50,
-                             nsim = 50,
+                             nsim = 49,
                              resolution = 50,
                              verbose = FALSE,
                              conf_int = 0.05)
