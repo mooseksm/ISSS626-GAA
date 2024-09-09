@@ -48,7 +48,7 @@ rdacc_sf <- read_csv("data/rawdata/thai_road_accident_2019_2022.csv") %>%
   st_transform(crs = 32647)
 ```
 
--   Note that **incident_datetime** and **report_datetime** are kept in **datetime field**, so that easier for manipulation later on i.e. extracting day of week, time of day. Can be useful in determining the occurrence of incidents at a particular timing i.e. peak hour.
+-   Note that **incident_datetime** and **report_datetime** are kept in **datetime field**, so that easier for manipulation later on i.e. extracting day of week, time of day using [lubridate](https://lubridate.tidyverse.org/reference/index.html). Can be useful in determining the occurrence of incidents at a particular timing i.e. peak hour.
 
 -   when file is read in sf, can easily convert to ppp
 
@@ -63,3 +63,36 @@ rdacc_sf <- read_csv("data/rawdata/thai_road_accident_2019_2022.csv") %>%
     -   transform it
 
 -   without the filter function in between, running the code will give you error, this is because there are missing values for longitude and latitude
+
+## In-class notes from Prof Kam:
+
+-   An example is shown below to extract month and day of the *incident_datetime*:
+
+```{r}
+#| eval: false
+rdacc_sf <- read_csv("data/rawdata/thai_road_accident_2019_2022.csv") %>%
+  filter(!is.na(longitude) & longitude != "",
+         !is.na(latitude) & latitude != "") %>%
+  st_as_sf(coords = c("longitude", "latitude"),
+                       crs=4326) %>%
+  st_transform(crs = 32467) %>%
+  mutate(Month_num = month(incident_datetime)) %>%
+  mutate(Month_fac = month(incident_datetime,
+                       label = TRUE,
+                       abbr = TRUE)) %>%
+  mutate(dayofweek = day(incident_datetime))
+```
+
+-   The 2nd [month](https://lubridate.tidyverse.org/reference/month.html) line is more specific and has order since its a factor.
+-   WGS 84 got [32467](https://epsg.io/32647) and [324648](https://epsg.io/32648) - take a good look at it before deciding which is the right one (above is just an example)
+-   note that there's hidden problem inside the data i.e. missing values (can mutate and omit missing values in the code above)
+
+```{r}
+write_rds(rdacc_sf,"data/rds/rdacc_sf.rds")
+```
+
+-   write_rds will take care of all the objects within the dataset; once you got this file "#\| eval: false" to avoid running the data wrangling code
+
+```{r}
+acc <- read_rds("data/rds/rdacc_sf.rds")
+```
