@@ -28,16 +28,18 @@ execute:
 
 -   [**tidyverse**](https://www.tidyverse.org/) for performing data science tasks such as importing, wrangling and visualising data.
 
+-   [**spNetwork**](https://cran.r-project.org/web/packages/spNetwork/index.html) which provides functions to perform Spatial Point Patterns Analysis such as kernel density estimation (KDE) and K-function on network. It can also be used to build spatial matrices (\`listw' objects like in 'spdep' package) to conduct any kind of traditional spatial analysis with spatial weights based on reticular distances.
+
 The packages are loaded with the following code chunk:
 
 ```{r}
-pacman::p_load(sf,spatstat,raster,tmap,tidyverse)
+pacman::p_load(sf,spatstat,raster,tmap,tidyverse,spNetwork)
 ```
 
 ## Importing Data
 
 ```{r}
-rdacc_sf <- read_csv("data/thai_road_accident_2019_2022.csv") %>%
+rdacc_sf <- read_csv("data/rawdata/thai_road_accident_2019_2022.csv") %>%
   filter(!is.na(longitude) & longitude != "",
          !is.na(latitude) & latitude != "") %>%
   st_as_sf(coords = c(
