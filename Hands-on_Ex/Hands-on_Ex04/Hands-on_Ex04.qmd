@@ -599,6 +599,6 @@ w_sum_gdppc <- qtm(hunan, "w_sum GDPPC")
 tmap_arrange(lag_sum_gdppc, w_sum_gdppc, asp=1, ncol=2)
 ```
 
-## **8.11 References**
+## 4.11 References
 
 -   [Creating Neighbours using sf objects](https://cran.r-project.org/web/packages/spdep/vignettes/nb_sf.html)
