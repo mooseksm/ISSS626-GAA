@@ -1,0 +1,328 @@
+---
+title: "In-class Exercise 4"
+author: "Kock Si Min"
+date: September 16, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# In-class Exercise 4: Spatial Weights and Applications
+
+## 4.1 Study Area and Data
+
+Two data sets will be used in this hands-on exercise:
+
+-   Hunan county boundary layer. This is a geospatial data set in ESRI shapefile format.
+
+-   Hunan_2012.csv: This csv file contains selected Hunan’s local development indicators in 2012.
+
+## 4.2 Installing and loading R packages
+
+To carry out the analysis, we install and load the following R packages:
+
+```{r}
+pacman::p_load(sf, ggstatsplot, spdep, tmap, tidyverse, knitr,GWmodel)
+```
+
+## 4.3 Preparing the data
+
+The geospatial data is in ESRI shapefile format and the attribute table is in csv fomat.
+
+::: panel-tabset
+## Import Hunan shapefile
+
+The code chunk below uses [*st_read()*](https://r-spatial.github.io/sf/reference/st_read.html) of **sf** package to import Hunan shapefile into R. The imported shapefile will be a **simple features object of sf.**
+
+```{r}
+hunan_sf <- st_read(dsn = "data/geospatial",
+                 layer = "Hunan")
+```
+
+-   note that above data has not been transformed - this is intentional for this use case so that know that there are packages that have provision for projection
+
+-   note that geometry type is single polygon - always note that administrative boundaries can be captured as polygon or multipolygon
+
+## Import Hunan 2012
+
+Next, we will import *Hunan_2012.csv* into R using *read_csv()* of **readr** package. The output is R dataframe class.
+
+```{r}
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+-   do not use read.csv (Base R)
+
+## Joining Hunan and Hunan 2012
+
+The code chunk below is used to update the attribute table of *hunan*’s SpatialPolygonsDataFrame with the attribute fields of *hunan2012* data frame. This is performed using *left_join()* of **dplyr** package.
+
+```{r}
+hunan_sf <- left_join(hunan_sf,hunan2012) %>%
+  select(1:3,7,15,16,31,32)
+```
+
+-   combining spatial data with aspatial data - use dplyr left_join() function but in reality, not so straightforward as need common identifier between the datasets i.e. value in a particular variable must be the same - **need to carefully check through the names and actual values in the datasets to make sure they are the same else might not be able to join** (recall hands-on ex01 where administrative boundary of singapore is in uppercase while that in singstat data is a mix of upper and lowercase)
+
+-   both datasets have "County" column hence while code chunk did not define the join field, the code automatically uses the "County" column to join. if *hunan_sf* did not have "County" column, would have mention the join argument by as "NAME_3" in *hunan_sf* and "County" in *hunan2012.*
+
+-   **if there's a lot of names in the field, can do a unique match to compare**
+
+-   Select chooses these columns: "NAME_2", "ID_3", "NAME_3", "County","GDPPC", "GIO","Agri","Service", "geometry"
+:::
+
+## 4.4 Converting to SpatialPolygonDataFrame
+
+```{r}
+hunan_sp <- hunan_sf %>%
+  as_Spatial()
+```
+
+![](images/clipboard-1360567303.png)
+
+-   sp separates the components of data under sf:
+
+    -   data contains all data except geometry data
+
+    -   under polygons, geometry data
+
+Typing the below into console, we note the data object type:
+
+![](images/clipboard-1561598466.png){width="315"}
+
+## 4.5 Geographically Weighted Summary Statistics with adaptive bandwidth
+
+### 4.5.1 Determine adaptive bandwidth
+
+-   both CV and AIC methods produce the same results - that the optimum number of neighbours is 22 but note that this is not always the case i.e. can produce different results
+
+::: panel-tabset
+## Cross-validation
+
+```{r}
+bw_CV <- bw.gwr(GDPPC ~ 1,
+                data = hunan_sp,
+                approach = "CV",
+                adaptive = TRUE,
+                kernel = "bisquare",
+                longlat = T)
+```
+
+-   first line is dependent variable \~ independent variable (put an arbitrary number 1 if don't have independent variable), else without formula, won't work and give error message –\> this is a global model
+
+-   second line is hunan_sp data
+
+-   approach either CV or AIC (see next tab)
+
+-   adaptive = FALSE means calculating fixed bandwith, TRUE means adaptive bandwidth –\> in this case, indicate the number of neighbours (note that it starts with 62 then slowly bury the number of neighbours)
+
+-   kernel is the same as spatial point pattern analysis, can change to other methods, not likely to affect much
+
+-   longlat = T, indicate that its in decimal degree - great circle distances will be calculated
+
+-   note that the results are in km
+
+-   based on GDPPC, optimum number of neighbours is 22
+
+```{r}
+bw_CV
+```
+
+## AIC
+
+-   smaller AIC value, the better. at some point, AIC points will converge and no longer change/change rate very small - that would be optimal value
+
+```{r}
+bw_AIC <- bw.gwr(GDPPC ~ 1,
+                data = hunan_sp,
+                approach = "AIC",
+                adaptive = TRUE,
+                kernel = "bisquare",
+                longlat = T)
+```
+
+-   note that the change in AIC becomes very small and eventually stops
+
+-   based on GDPPC, optimum number of neighbours is 22
+
+```{r}
+bw_AIC
+```
+:::
+
+### 4.5.2 Computing geographically weighted summary statistics
+
+```{r}
+gwstat <- gwss(data = hunan_sp,
+               vars = "GDPPC",
+               bw = bw_AIC,
+               kernel = "bisquare",
+               adaptive = TRUE,
+               longlat = T)
+```
+
+-   need to make sure that the bottom 3 fields are the same as the above in [4.5.1 Determine adaptive bandwidth]
+
+-   ![](images/clipboard-2183633018.png){width="152"} is a gwss object (specially customised object - list that contains many things)
+
+    -   mostly are metadata
+
+    -   what is of interest is SDF - spatialdataframe - contains all spatial information + data information
+
+        ![](images/clipboard-636078429.png)
+
+        can click on logo:
+
+    ![](images/clipboard-2063992322.png)
+
+    -   GDPPC_LM: local mean (have 88 local means that is based on average of 22 neighbours)
+
+    -   GDPPC_LSD: local standard deviation
+
+    -   GDPPC_LSKe: local standard estimations
+
+    -   GDPPC_LCV: local co-variance
+
+    All are taking the average of 22 neighbours
+
+### 4.5.3 Preparing the output data
+
+Code chunk below is used to extract SDF data table from gwss object output from gwss(). It will be converted into data.frame by using as.data.frame():
+
+```{r}
+gwstat_df <- as.data.frame(gwstat$SDF)
+```
+
+Next, cbind() is used to append the newly derived data.frame onto hunan_sf sf data frame:
+
+```{r}
+hunan_gstat <- cbind(hunan_sf,gwstat_df)
+```
+
+-   note that only able to use cbind() with the understanding that there's no change in sequence of data in both dataframes
+
+### 4.5.4 Visualising geographically weighted summary statistics
+
+::: panel-tabset
+## Geographically Weighted Mean
+
+```{r}
+#| echo: false
+tm_shape(hunan_gstat)+
+  tm_fill("GDPPC_LM",
+          n = 5,
+          style = "quantile") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Distribution of geographically weighted mean",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.text.size = 0.6,
+            legend.height = 1.20,
+            legend.width = 1.20,
+            frame = TRUE)
+```
+
+-   help to generalise the pattern
+
+-   tm_fill n=5 sets the number of gradient
+
+-   tm_borders draw the border around polygon, =1 is full black, closer to 0 - greater transparency
+
+-   tm_layout add in other details
+
+## The code
+
+```{r}
+#| eval: false
+tm_shape(hunan_gstat)+
+  tm_fill("GDPPC_LM",
+          n = 5,
+          style = "quantile") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "Distribution of geographically weighted mean",
+            main.title.position = "center",
+            main.title.size = 1.0,
+            legend.text.size = 0.6,
+            legend.height = 1.20,
+            legend.width = 1.20,
+            frame = TRUE)+
+  tm_text("County", size = 0.5)
+```
+:::
+
+### 4.5.5 Relationship between GDPPC and Gross Industry Output
+
+::: panel-tabset
+## Conventional statistical solution
+
+```{r}
+#| echo: false
+
+```
+
+## The code
+
+```{r}
+#| eval: false
+
+```
+:::
+
+## 4.6 Geographically Weighted Summary Statistics with fixed bandwidth
+
+### 4.6.1 Determine fixed bandwidth
+
+-   note that results for CV and AIC are not the same - AIC optimum is 160.5517, almost twice of CV optimum of 76.29126 (longer bandwidth have smoother output, shorter bandwidth have more details)
+
+::: panel-tabset
+## Cross-validation
+
+```{r}
+bw_CV <- bw.gwr(GDPPC ~ 1,
+                data = hunan_sp,
+                approach = "CV",
+                adaptive = FALSE,
+                kernel = "bisquare",
+                longlat = T)
+```
+
+```{r}
+bw_CV
+```
+
+## AIC
+
+```{r}
+bw_AIC <- bw.gwr(GDPPC ~ 1,
+                data = hunan_sp,
+                approach = "AIC",
+                adaptive = FALSE,
+                kernel = "bisquare",
+                longlat = T)
+```
+
+```{r}
+bw_AIC
+```
+:::
+
+### Visualising local correlation
+
+-   need to note how many neighbours you are using to define the correlation
+
+-   Corr: parametric vs Spearman: non-parametric - indicate how well each correlate with neighbour
+
+== end ==
+
+::: callout-tip
+## In-class notes from Prof Kam:
+
+-   clean environment, save data image when closing session can help to prevent upload of temporary files
+
+-   [GWmodel](https://cran.r-project.org/web/packages/GWmodel/GWmodel.pdf) package: bw.gwr recommend optimum number of neighbours
+:::
