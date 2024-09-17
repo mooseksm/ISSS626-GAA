@@ -587,7 +587,7 @@ The code chunk above performs three tasks:
 
 ### 5.7.2 Mapping Gi values with fixed distance weights
 
-The code chunk below shows the functions used to map the Gi values derived using fixed distance weight matrix.
+The code chunk below shows the functions used to map Gi values derived using fixed distance weight matrix.
 
 ```{r}
 gdppc <- qtm(hunan, "GDPPC")
