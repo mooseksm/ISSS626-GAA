@@ -12,9 +12,43 @@ execute:
   message: false
 ---
 
-## 1.2 Data Acquisition
+# Take-Home Exercise 1: **Geospatial Analytics for Public Good**
 
-## 1.3 Installing and Launching R packages
+## 1. Background
+
+According to the World Health Organisation (WHO), road traffic accidents cause the death of approximately 1.19 million people each year and leave between 20 to 50 million people with non-fatal injuries. Vulnerable road users, such as pedestrians, cyclists and motorcyclists, make up more than half of all road traffic deaths.
+
+Road traffic injuries are the leading cause of death for children and young adults aged 5 to 29, however two-thirds of road traffic fatalities occur among people of working ages, from 18 to 59 years. Further, nine in 10 fatalities on the roads occur in low- and middle-income countries, even though these countries make up only around 60% of the world’s vehicles.
+
+Besides human suffering, road traffic injuries also result in a heavy economic burden on victims and their families, through treatment costs for the injured and loss of productivity of those killed or disabled. More broadly, road traffic injuries have a serious impact on national economies, costing countries 3% of their annual gross domestic product.
+
+According to the WHO, Thailand’s roads are the deadliest in Southeast Asia and among the worst in the world - about 20,000 people die in road accidents each year, or about 56 deaths a day.
+
+Between 2014 and 2021, Thailand experienced a notable increase in accident frequencies. Specifically, 19% of all accidents in Thailand occurred on the national highways, which make up the primary public thoroughfares connecting various regions, provinces, districts, and significant locations within a comprehensive network. Within the broader context of accidents across the country, there existed a considerable 66% likelihood of encountering accident-prone zones, often termed as ‘black spots’ which are distributed as follows: 66% on straight road segments, 13% at curves, 6% at median points of cross-shaped intersections, 5% at T-shaped intersections and Y-shaped intersections, 3% at cross-shaped intersections, 2% on bridges, and 2% on steep slopes.
+
+## 2. Objectives
+
+By and large, road traffic accidents can be attributed by two major factors, namely behavioural and environmental factors.
+
+-   Behavioural factors in driving are considered to be major causes of traffic accidents either in direct or indirect manner (Lewin, 1982). These factors can be further grouped into driver behavior (driver/driving style) and driver performance (driver/driving skills) (Elander, West, & French, 1993).
+
+-   Environmental factors, on the other hand, includes but not limited to weather conditions such as poor visibility during heavy rain or fogs as well as road conditions such as sharp bends, slippery slopes, and [blind spots](https://en.wikipedia.org/wiki/Vehicle_blind_spot).
+
+Previous studies have demonstrated the significant potential of Spatial Point Patterns Analysis (SPPA) in exploring and identifying factors influencing road traffic accidents. However, these studies often focus solely on either behavioral or environmental factors, with limited consideration of temporal factors such as season, day of the week, or time of day.
+
+In view of this, in this hands-on exercise, we will determine factors that affect road traffic accidents in the [Bangkok Metropolitan Region (BMR)](https://en.wikipedia.org/wiki/Bangkok_Metropolitan_Region) by employing both spatial and spatio-temporal point patterns analysis methods.
+
+The specific objectives are as follows:
+
+-   To visualize the spatio-temporal dynamics of road traffic accidents in BMR using appropriate statistical graphics and geovisualization methods.
+
+-   To conduct detailed spatial analysis of road traffic accidents using appropriate Network Spatial Point Patterns Analysis methods.
+
+-   To conduct detailed spatio-temporal analysis of road traffic accidents using appropriate Temporal Network Spatial Point Patterns Analysis methods.
+
+## 3. Installing and Launching R packages
+
+Key packages that are installed are:
 
 -   [**sf**](https://r-spatial.github.io/sf/) for importing, managing, and processing vector-based geospatial data, and
 
@@ -33,66 +67,629 @@ execute:
 The packages are loaded with the following code chunk:
 
 ```{r}
-pacman::p_load(sf,spatstat,raster,tmap,tidyverse,spNetwork)
+pacman::p_load(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT)
 ```
 
-## Importing Data
+## 4. Data
+
+For the purpose of this exercise, three basic data sets are used:
+
+-   [Thailand Road Accident \[2019-2022\]](https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022) on Kaggle - comprised records of road accidents in Thailand from \~2019 to 2022, based on information provided by the Office of the Permanent Secretary, Ministry of Transport.
+
+-   [Thailand - Subnational Administrative Boundaries](https://data.humdata.org/dataset/cod-ab-tha?) on HDX
+
+-   [Thailand Roads (OpenStreetMap Export)](https://data.humdata.org/dataset/hotosm_tha_roads) on HDX
+
+## 5. Importing, Cleaning and Wrangling Data
+
+### 5.1 Thailand Road Accident Data
+
+The data is imported using the code below:
 
 ```{r}
-rdacc_sf <- read_csv("data/rawdata/thai_road_accident_2019_2022.csv") %>%
-  filter(!is.na(longitude) & longitude != "",
-         !is.na(latitude) & latitude != "") %>%
-  st_as_sf(coords = c(
-    "longitude", "latitude"),
-    crs=4326) %>%
-  st_transform(crs = 32647)
+roadacc <- read_csv("data/rawdata/thai_road_accident_2019_2022.csv")
 ```
 
--   Note that **incident_datetime** and **report_datetime** are kept in **datetime field**, so that easier for manipulation later on i.e. extracting day of week, time of day using [lubridate](https://lubridate.tidyverse.org/reference/index.html). Can be useful in determining the occurrence of incidents at a particular timing i.e. peak hour.
+Taking a glimpse at the data to determine the fields in the data:
 
--   when file is read in sf, can easily convert to ppp
+```{r}
+glimpse(roadacc)
+```
 
--   dissecting the code - it comes in 4 chunks:
+There are 81735 rows and 18 variables. Further details about the important variables that would be needed for analysis can be found in the dropdown box below:
 
-    -   the first to load the file
+::: {.callout-caution collapse="true"}
+## More information about variables for analysis
 
-    -   the second to filter missing values
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| Field                       | Description                                                                   | Purpose of data i.e. what it might indicate                                                                                                      |
++=============================+===============================================================================+==================================================================================================================================================+
+| incident_datetime           | The date and time of the accident occurrence                                  | whether accidents tend to occur at specific:                                                                                                     |
+|                             |                                                                               |                                                                                                                                                  |
+|                             |                                                                               | -   months                                                                                                                                       |
+|                             |                                                                               |                                                                                                                                                  |
+|                             |                                                                               | -   day of week                                                                                                                                  |
+|                             |                                                                               |                                                                                                                                                  |
+|                             |                                                                               | -   time of the day                                                                                                                              |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| report_datetime             | The date and time when the accident was reported                              | efficacy at which accident was reported could indicate:                                                                                          |
+|                             |                                                                               |                                                                                                                                                  |
+|                             |                                                                               | -   how busy the road segment is                                                                                                                 |
+|                             |                                                                               |                                                                                                                                                  |
+|                             |                                                                               | -   how tightly the road is being monitored/ whether there is a lapse in the management of the road                                              |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| province_en                 | The name of the province in Thailand, written in English                      | supports the filtering of data to just BMR                                                                                                       |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| agency                      | The government agency responsible for the road and traffic management         | pinpoints the responsible government agency, could indicate whether there is a need for government agency to take corrective actions             |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| route                       | The route or road segment where the accident occurred                         | while the data can be used to determine frequency of incident at different locations, it is not useful for our case as it's in the Thai language |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| vehicle_type                | The type of vehicle involved in the accident                                  | can determine frequency of vehicle types involved in accidents                                                                                   |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| presumed_cause              | The presumed cause or reason for the accident                                 | can determine distribution of cause for accidents                                                                                                |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| accident_type               | The type or nature of the accident                                            | can determine distribution of nature of accidents                                                                                                |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| number_of_vehicles_involved | The number of vehicles involved in the accident                               | can determine the scale of accidents at different locations i.e. how severe/deadly                                                               |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| number_of_fatalities        | The number of fatalities resulting from the accident                          | can determine the scale of accidents at different locations i.e. how severe/deadly                                                               |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| number_of_injuries          | The number of injuries resulting from the accident                            | can determine the scale of accidents at different locations i.e. how severe/deadly                                                               |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| weather_condition           | The weather condition at the time of the accident                             | can determine how much weather conditions can affect the occurrence of accidents                                                                 |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| latitude                    | The latitude coordinate of the accident location                              | used for mapping and for analysis with other datasets                                                                                            |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| longitude                   | The longitude coordinate of the accident location                             | used for mapping and for analysis with other datasets                                                                                            |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| road_description            | The description of the road type or configuration where the accident occurred | can determine how road types can affect the occurrence of accidents                                                                              |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+| slope_description           | The description of the slope condition at the accident location               | can determine how presence of slopes can affect the occurrence of accidents                                                                      |
++-----------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------+
+:::
 
-    -   the third is to get the coordinates and transform the crs
+### 5.1.1 Removing unwanted variables "province_th" and "route"
 
-    -   transform it
+We will first drop "province_th" as it indicates the provinces in the Thai language.
 
--   without the filter function in between, running the code will give you error, this is because there are missing values for longitude and latitude
+```{r}
+roadacc <- roadacc[, !names(roadacc) %in% c("province_th","route")]
+```
 
+### 5.1.2 Filtering province data to area of interest - Bangkok Metropolitan Region (BMR)
+
+We then determine the unique provinces within the dataset and scan through the province names (i.e. in case there are any entries that refer to the same province but are spelt differently/have spelling mistakes) before filtering the data to just include provinces that are within the BMR:
+
+```{r}
+unique_provinces <- roadacc %>% 
+  distinct(province_en) %>%
+  arrange(province_en)
+
+DT::datatable(unique_provinces,class = "compact")
+```
+
+Our region of interest comprises Bangkok and five adjacent provinces of Nakhon Pathom, Nonthaburi, Pathum Thani, Samut Prakan and Samut Sakhon.
+
+```{r}
+roadacc <- roadacc %>% 
+  filter(province_en %in% c("Bangkok", "Nakhon Pathom", "Nonthaburi", "Pathum Thani","Samut Prakan","Samut Sakhon"))
+```
+
+This leaves the data with 13336 rows.
+
+### 5.1.3 Removing missing data
+
+We further clean the data by removing rows with missing data:
+
+```{r}
+roadacc <- roadacc %>%
+  drop_na()
+
+roadacc
+```
+
+### 5.1.4 Checking for duplicate accident codes
+
+We also check if there are duplicate entries in the dataset:
+
+```{r}
+roadacc$acc_code[duplicated(roadacc$acc_code) == TRUE]
+```
+
+Generating summary statistics of *roadacc*:
+
+```{r}
+summary(roadacc)
+```
+
+::: callout-note
 ## In-class notes from Prof Kam:
 
--   An example is shown below to extract month and day of the *incident_datetime*:
+During class, Prof Kam had advised to study the data carefully and shared that it was important to filter out data with incomplete coordinates (missing either longitude or latitude or both) and shared that one way to do it was via the code below:
 
 ```{r}
 #| eval: false
-rdacc_sf <- read_csv("data/rawdata/thai_road_accident_2019_2022.csv") %>%
+roadacc <- roadacc %>%
   filter(!is.na(longitude) & longitude != "",
-         !is.na(latitude) & latitude != "") %>%
-  st_as_sf(coords = c("longitude", "latitude"),
-                       crs=4326) %>%
-  st_transform(crs = 32467) %>%
+         !is.na(latitude) & latitude != "")
+```
+
+As with the drop_na() code above, this way will also leave just 12986 rows of data as the missing data were found in either the longitude or latitude variables.
+:::
+
+### 5.1.5 Creating a simple feature data frame
+
+We convert *roadacc* data frame into a simple feature data frame and also transform the data from geographic coordinate system ([EPSG: 4326](https://epsg.io/4326) WGS84 Geographic Coordinate System) to projected coordinate system:
+
+```{r}
+roadacc <- st_as_sf(roadacc, 
+                    coords = c("longitude", "latitude"),
+                    crs=4326) %>%
+  st_transform(crs = 32647)
+```
+
+Based on the summary statistics of *roadacc* above, it is noted that the minimum longitude is 99.85° and maximum longitude is 100.94°. While there are 2 possible projected coordinate systems for Thailand, EPSG [32647](https://epsg.io/32647) and [32648](https://epsg.io/32648), the appropriate projected coordinate system to transform the data to would be EPSG [32647](https://epsg.io/32647) as the minimum and maximum longitude of *roadacc* falls within EPSG 32467's area of use (between 96°E and 102°E). A comparison of the area of use for both projected coordinate systems is shown below:
+
+|                 | EPSG [32647](https://epsg.io/32647)                                                                                                                                                                    | EPSG [32648](https://epsg.io/32648)                                                                                                                                                                                  |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Area of use** | Between 96°E and 102°E, northern hemisphere between equator and 84°N, onshore and offshore. China. Indonesia. Laos. Malaysia - West Malaysia. Mongolia. Myanmar (Burma). Russian Federation. Thailand. | Between 102°E and 108°E, northern hemisphere between equator and 84°N, onshore and offshore. Cambodia. China. Indonesia. Laos. Malaysia - West Malaysia. Mongolia. Russian Federation. Singapore. Thailand. Vietnam. |
+
+### 5.1.6 Creating new variables representing month, day of week, time of day as well as gap between incident and reporting time
+
+The *incident_datetime* and *report_datetime* variables are in **datetime field**, we hence utilise these variables and the [lubridate()](https://lubridate.tidyverse.org/) function to generate new variables that represent:
+
+-   [month:]{.underline} "inc_month"
+
+-   [day of week:]{.underline} "inc_dayofweek"
+
+-   [time of day:]{.underline} "inc_time"
+
+```{r}
+roadacc <- roadacc %>%
+  mutate(inc_month = month(incident_datetime,
+                       label = TRUE,
+                       abbr = TRUE)) %>%
+  mutate(inc_dayofweek = wday(incident_datetime,
+                              week_start = getOption("lubridate.week.start", 1),
+                              label = TRUE,
+                              abbr = TRUE)) %>%
+  mutate(inc_time = hour(incident_datetime))
+```
+
+::: callout-note
+## In-class notes from Prof Kam:
+
+Note that we can generate month in numbers or in factor format via:
+
+```{r}
+#| eval: false
+roadacc <- roadacc %>%
   mutate(Month_num = month(incident_datetime)) %>%
   mutate(Month_fac = month(incident_datetime,
                        label = TRUE,
-                       abbr = TRUE)) %>%
-  mutate(dayofweek = day(incident_datetime))
+                       abbr = TRUE))
 ```
+:::
 
--   The 2nd [month](https://lubridate.tidyverse.org/reference/month.html) line is more specific and has order since its a factor.
--   WGS 84 got [32467](https://epsg.io/32647) and [324648](https://epsg.io/32648) - take a good look at it before deciding which is the right one (above is just an example)
--   note that there's hidden problem inside the data i.e. missing values (can mutate and omit missing values in the code above)
+We also determine the gap between the incident time and reporting time and create a new variable "timegap" in hours unit:
 
 ```{r}
-write_rds(rdacc_sf,"data/rds/rdacc_sf.rds")
+roadacc$timegap <- time_length(roadacc$report_datetime - roadacc$incident_datetime, "hours")
 ```
 
--   write_rds will take care of all the objects within the dataset; once you got this file "#\| eval: false" to avoid running the data wrangling code
+Logically, the date and time when the accident was reported should be after the date and time of the accident occurrence. Looking at the summary statistics below, there are data entries that could have been erroneously recorded resulting in a negative time gap between report time and incident time (i.e. report time was earlier than incident time). As such, the data was further filtered to remove erroneous data to avoid affecting the analysis:
 
 ```{r}
-acc <- read_rds("data/rds/rdacc_sf.rds")
+summary(roadacc$timegap)
 ```
+
+```{r}
+roadacc <- roadacc %>%
+  filter(timegap >= 0)
+```
+
+This leaves us with 12985 rows.
+
+### 5.1.7 Saving as new rds file
+
+We then save this cleaned data as a rds file:
+
+```{r}
+#| eval: false
+write_rds(roadacc,"data/rds/roadacc.rds")
+```
+
+```{r}
+roadacc <- read_rds("data/rds/roadacc.rds")
+```
+
+::: callout-note
+## In-class notes from Prof Kam:
+
+-   It is good practice to save cleaned file as a new rds file via write_rds() to avoid re-running the data cleaning and wrangling codes. write_rds() will take care of all the objects within the dataset. Once the file is saved, we can add "#\| eval: false" to the data cleaning and wrangling codes to avoid re-running them.
+:::
+
+### 5.2 Thailand - Subnational Administrative Boundaries on HDX
+
+The data has different files providing details of the administrative boundaries of Thailand at different administrative levels:
+
+-   Level 0 (country)
+
+-   Level 1 (province)
+
+-   Level 2 (district)
+
+-   Level 3 (sub-district, tambon)
+
+As our area of interest is at Level 1 (province level), we will utilise "*tha_admbnda_adm1_rtsd_20220121"* that reflects details at province levels and import the data using the code chunk below:
+
+```{r}
+provincedata = st_read(dsn = "data/rawdata", 
+                  layer = "tha_admbnda_adm1_rtsd_20220121")
+```
+
+We note from the above that it is a multipolygon feature data frame. We note that there are 77 features and 16 fields, and the data is in WGS84 geographic coordinate system.
+
+We then take a glimpse of the data:
+
+```{r}
+glimpse(provincedata)
+```
+
+### 5.2.1 Retaining relevant variables at the province level
+
+We note from a glimpse of the data above that there are only a few pertinent fields that we require for our analysis, specifically:
+
+-   ADM1_EN: province name in english
+
+-   Shape_Leng
+
+-   Shape_Area
+
+-   geometry
+
+We hence filter the data to only comprise these fields to make the data frame more manageable:
+
+```{r}
+provincedata <- provincedata %>%
+  select("ADM1_EN", "Shape_Leng","Shape_Area","geometry")
+```
+
+### 5.2.2 Filtering province data to area of interest - Bangkok Metropolitan Region (BMR)
+
+We also filter to keep only data that are relevant to our area of interest which is BMR:
+
+```{r}
+provincedata <- provincedata %>% 
+  filter(ADM1_EN %in% c("Bangkok", "Nakhon Pathom", "Nonthaburi", "Pathum Thani","Samut Prakan","Samut Sakhon"))
+```
+
+This leaves 6 rows of data and 4 variables.
+
+### 5.2.3 Assigning the correct EPSG code for the projected coordinate system
+
+From the code chunk below, it is noted that the EPSG code for the *selectedboundaries* data frame is [EPSG: 4326](https://epsg.io/4326):
+
+```{r}
+st_crs(provincedata)
+```
+
+We will need to reproject *provincedata* from EPSG code to [EPSG: 32647](https://epsg.io/32647) which is the projected coordinate system to use for BMR, our area of interest:
+
+```{r}
+provincedata32647 <- st_transform(provincedata, 
+                              crs = 32647)
+```
+
+We check if the EPSG code has been correctly assigned:
+
+```{r}
+st_crs(provincedata32647)
+```
+
+```{r}
+tmap_mode('view')
+tm_shape(provincedata32647)+
+  tm_polygons()
+tmap_mode('plot')
+```
+
+### 5.2.4 Saving as a new rds file
+
+We save this cleaned data as a rds file:
+
+```{r}
+#| eval: false
+write_rds(provincedata32647,"data/rds/provincedata32647.rds")
+```
+
+```{r}
+provincedata32647 <- read_rds("data/rds/provincedata32647.rds")
+```
+
+### 5.3 Thailand Roads (OpenStreetMap Export) on HDX
+
+We import the data as follows:
+
+```{r}
+#| eval: false
+roadlines = st_read(dsn = "data/rawdata",
+                    layer = "hotosm_tha_roads_lines_shp")
+```
+
+We then glimpse at the data:
+
+```{r}
+#| eval: false
+glimpse(roadlines)
+```
+
+```{r}
+#| eval: false
+st_geometry(roadlines)
+```
+
+The dataset is very large, with 2792590 rows and 15 variables but we only need to extract relevant information that lie within the BMR for analysis.
+
+### 5.3.1 Assigning a EPSG code and reprojecting the data
+
+Based on the code chunk below, it is noted that the coordinate system of the *roadlines* data is missing.
+
+```{r}
+#| eval: false
+st_crs(roadlines)
+```
+
+Based on the values of the geometry in *roadlines,* the coordinates seem to be in geographic (latitude/longitude) form, in degrees, typically in a CRS like EPSG:4326 (WGS 84) used for global geographic coordinates. We hence assign the missing EPSG code using the code chunk below:
+
+```{r}
+#| eval: false
+roadlines4326 <- st_set_crs(roadlines,4326)
+```
+
+We check the CRS using the code chunk below:
+
+```{r}
+#| eval: false
+st_crs(roadlines4326)
+```
+
+For analysis, we would eventually need to overlay the *roadlines4326* data with the *selectedboundaries32647* data to determine the roads that lie within BMR. In order to perform geoprocessing using two geospatial data, both geospatial data would need to be projected using similar coordinate systems - in this case, it its EPSG: 32647:
+
+```{r}
+#| eval: false
+roadlines32647 <- st_transform(roadlines4326, 
+                              crs = 32647)
+```
+
+We check the CRS code again:
+
+```{r}
+#| eval: false
+st_crs(roadlines32647)
+```
+
+### 5.3.2 Retaining relevant/useful variables
+
+Based on the columns in the data frame *roadlines32647,* the columns that seem relevant/useful to retain for analysis are "highway", "surface", "smoothness", "width", "lanes", "oneway", "bridge" and "geometry".
+
+However before going ahead to retain these variables, we determine the presence of missing data within *roadlines32647*:
+
+```{r}
+#| eval: false
+missing_counts <- sapply(roadlines32647, function(x) sum(is.na(x)))
+print(missing_counts)
+```
+
+Based on the result above, more than 60% of data is missing for the variable "source" and more than 80% of data is missing for the variables "name", "name_en", "surface", "smoothness", "width", "lanes", "oneway", "bridge", "layer", "source" and "name_th". Given the extent of missing data, we will omit these columns as they would not provide useful information for analysis and only retain the relevant/useful columns "highway" and "geometry" with no missing data:
+
+```{r}
+#| eval: false
+selectedroadlines <- roadlines32647 %>%
+  select("highway", "geometry")
+```
+
+### 5.3.3 Retaining selected classes of highway
+
+The code chunk below is used to determine the types of highways in the *selectedroadlines* data frame:
+
+```{r}
+#| eval: false
+unique_highway <- unique(selectedroadlines$highway)
+unique_highway <- sort(unique_highway)
+
+unique_highway
+```
+
+To determine which classes of highway to retain for analysis, the default access restrictions based on the interpretation of Thailand's Road Traffic Act, 1979 was referenced ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification)):
+
+![](images/clipboard-2988766549.png)
+
+A detailed explanation on the type of highways and whether they are included for analysis is indicated in the table below:
+
+| Types of highway | Details                                                                                                                                                                                                                                                                                                                                    | Included for analysis?                                                                                      |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| abandoned        | Unused/Abandoned roads that are only passable on foot/two-wheel vehicles                                                                                                                                                                                                                                                                   | No                                                                                                          |
+| barrier          | Roadside barriers used to protect traffic from roadside obstacles or hazards ([source](https://en.wikipedia.org/wiki/Traffic_barrier#:~:text=Roadside%20barriers%20are%20used%20to,with%20hazards%20within%20the%20median.))                                                                                                               | No                                                                                                          |
+| bridleway        | A bridle path, also bridleway, equestrian trail, horse riding path, ride, bridle road, or horse trail, is a trail or a thoroughfare that is used by people riding on horses. ([source](https://en.wikipedia.org/wiki/Bridle_path))                                                                                                         | No                                                                                                          |
+| busway           | A dedicated, separate way for the use of public transport buses ([source](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dbusway))                                                                                                                                                                                                       | Yes                                                                                                         |
+| construction     | No details provided, could be a highway under construction or a highway used for construction purposes.                                                                                                                                                                                                                                    | No (due to ambiguity of information)                                                                        |
+| corridor         | A land corridor is a type of highway or railway infrastructure that links two or more urban areas ([source](https://www.researchgate.net/publication/228891146_What_are_Corridors_and_What_are_the_Issues_Introduction_to_Special_Issue_The_Governance_of_Corridors))                                                                      | Yes                                                                                                         |
+| cycleway         | Based on table above, its designated for bicycles and travel by foot is allowed                                                                                                                                                                                                                                                            | No (as the path is designated mainly for cyclists and might not be so useful for the scope of the exercise) |
+| escape           | A road, usually ending in a pile of sand, provided on a hill for drivers to drive into if their brakes fail or on a bend if they lose control of the turn ([source](https://www.collinsdictionary.com/dictionary/english/escape-road#google_vignette))                                                                                     | Yes                                                                                                         |
+| footway          | Built pathways designed mainly or exclusively for pedestrian access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                            | No                                                                                                          |
+| living_street    | Little information provided on use but based on table above, motorcars, motorcycles and pedestrians all have access                                                                                                                                                                                                                        | Yes                                                                                                         |
+| motorway         | Expressway with full access control ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                                                            | Yes                                                                                                         |
+| motorway_link    | Link roads (slip roads/ramps) leading to and from a motorway ([source](https://wiki.openstreetmap.org/wiki/Tag:highway=motorway_link)) and based on above table, otorcars, motorcycles and pedestrians all have access                                                                                                                     | Yes                                                                                                         |
+| parth            | No relevant information found, assume is a spelling error and meant to be "path".                                                                                                                                                                                                                                                          | Yes (to rename to "path" for analysis)                                                                      |
+| path             | Multi-purpose paths intended for all non-motorized vehicles with the exception of motorcycles ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification)). Based on table above, motorcycles and pedestrians have access.                                                                                  | Yes                                                                                                         |
+| paved            | Generally indicates a road that been covered with flat blocks of stone or concrete, so that it is suitable for walking or driving on.                                                                                                                                                                                                      | Yes                                                                                                         |
+| pedestrian       | Based on table above, access only allowed for bicycles and travel by foot                                                                                                                                                                                                                                                                  | No                                                                                                          |
+| primary          | Top-level urban road across the city connecting trunk to trunk, or road of equal or greater importance than the primary intercity highway that runs through that city ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                          | Yes                                                                                                         |
+| primary_link     | Based on table above, motorcars, motorcycles and pedestrians all have access                                                                                                                                                                                                                                                               | Yes                                                                                                         |
+| proposed         | Proposed cycling routes ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                                                                        | No                                                                                                          |
+| raceway          | A course for racing ([source](https://dictionary.cambridge.org/dictionary/english/raceway))                                                                                                                                                                                                                                                | No                                                                                                          |
+| residential      | A road within a residential area that gives the public access to one or multiple residences. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                      | Yes                                                                                                         |
+| road             | Based on table above, motorcars, motorcycles and pedestrians all have access                                                                                                                                                                                                                                                               | Yes                                                                                                         |
+| secondary        | Main urban road connecting primary to primary or higher, or road of equal or greater importance than the secondary intercity highway that runs through that city. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification)) | Yes                                                                                                         |
+| secondary_link   | Based on table above, motorcars, motorcycles and pedestrians all have access                                                                                                                                                                                                                                                               | Yes                                                                                                         |
+| service          | A minor road that gives access to buildings/places outside a residential area such as an estate, religious site, attraction site, or a specific part of a large estate such as an industrial facility or university campus ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                     | Yes                                                                                                         |
+| steps            | Based on table above, designated for travel by foot                                                                                                                                                                                                                                                                                        | No                                                                                                          |
+| tertiary         | Roads that are more important than regular unclassified or residential roads, or roads that connect several unclassified or residential roads. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                    | Yes                                                                                                         |
+| tertiary_link    | Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                   | Yes                                                                                                         |
+| track            | A road whose only function is to provide access to the surrounding land (agricultural, forestry purposes). Most of the time unpaved ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                            | Yes                                                                                                         |
+| trunk            | Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                   | Yes                                                                                                         |
+| trunk_link       | Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                   | Yes                                                                                                         |
+| unclassified     | A significant thru-traffic road used to reach the next settlement or another road of equal or higher importance regardless of its physical conditions. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))            | Yes                                                                                                         |
+
+```{r}
+#| eval: false
+selectedroadlines <- selectedroadlines %>%
+  filter(highway %in% c("busway","corridor","escape","living_street","motorway","motorway_link", "parth", "path", "paved","primary","primary_link","residential","road","secondary","secondary_link","service","tertiary","tertiary_link","track","trunk","trunk_link","unclassified")) %>%
+  mutate(highway = recode(highway, "parth" = "path"))
+```
+
+### **5.3.4 Clipping the data to be within area of interest**
+
+We require only a subset of the *selectedroadlines* data to just roads within our area of interest, BMR and hence we utilise st_intersection() to find retain roads that are within the BMR boundaries given by *provincedata32647:*
+
+```{r}
+#| eval: false
+roadsbkk <- st_intersection(selectedroadlines,provincedata32647)
+```
+
+This reduced the data to 564485 rows of data which is much more manageable.
+
+### 5.3.5 Saving as new rds file
+
+We save this cleaned data as a rds file:
+
+```{r}
+#| eval: false
+write_rds(roadsbkk,"data/rds/roadsbkk.rds")
+```
+
+```{r}
+roadsbkk <- read_rds("data/rds/roadsbkk.rds")
+```
+
+### 5.4 Data Wrangling for Spatial Point Pattern Analysis
+
+### 5.4.1 Converting data to ppp format for Spatial Point Pattern Analysis
+
+To carry out spatial point pattern analysis, we need to convert the data from sf format to ppp format:
+
+```{r}
+roadacc_ppp <- as.ppp(roadacc)
+roadacc_ppp
+```
+
+```{r}
+plot(roadacc_ppp)
+```
+
+```{r}
+summary(roadacc_ppp)
+```
+
+### 5.4.2 Checking for duplicate points
+
+In spatial point patterns analysis, a significant issue is the presence of duplicates as the statistical methodology used for spatial point patterns processes is based largely on the assumption that process are simple i.e. that the points cannot be coincident. We check for duplication in a *ppp* object via the code chunk below:
+
+```{r}
+any(duplicated(roadacc_ppp))
+```
+
+The data does not have any duplicated points.
+
+### 5.4.3 **Creating an *owin* object**
+
+When analysing spatial point patterns, it is a good practice to confine the analysis within a geographical area like Singapore boundary. In **spatstat**, an object called *owin* is specially designed to represent this polygonal region. The code chunk below is used to covert *provincedata32647* SpatialPolygon object into owin object of **spatstat**:
+
+```{r}
+provinceowin <- as.owin(provincedata32647)
+```
+
+The ouput object can be displayed by using *plot()* function
+
+```{r}
+plot(provinceowin)
+```
+
+```{r}
+summary(provinceowin)
+```
+
+### 5.4.4 Combining **point events object and owin object**
+
+```{r}
+roadacc_owin_ppp = roadacc_ppp[provinceowin]
+```
+
+```{r}
+plot(roadacc_owin_ppp)
+```
+
+```{r}
+summary(roadacc_owin_ppp)
+```
+
+### 5.5 Kernel Density Estimation
+
+```{r}
+kde_roadacc_bw <- density(roadacc_owin_ppp,
+                              sigma=bw.diggle,
+                              edge=TRUE,
+                            kernel="gaussian") 
+```
+
+```{r}
+plot(kde_roadacc_bw)
+```
+
+```{r}
+roadacc_owin_ppp.km <- rescale.ppp(roadacc_owin_ppp, 1000, "km")
+
+```
+
+```{r}
+kde_roadacc.bw <- density(roadacc_owin_ppp.km, sigma=bw.diggle, edge=TRUE, kernel="gaussian")
+plot(kde_roadacc.bw)
+```
+
+## 6. Exploratory Data Analysis
+
+Factors to study:
+
+-   vehicle type
+
+-   presumed cause
+
+-   number of vehicles
+
+-   number of fatalities
+
+-   number of injuries
+
+-   weather conditions
+
+-   road_description
+
+-   slope_description
+
+-   month
+
+-   day of week
+
+-   time of day
+
+-   time gap between incident occurrence and reporting
+
+```{r}
+ggplot(roadacc, aes(x = province_en)) + 
+  geom_bar(fill = "skyblue") +
+  labs(title = "Distribution of Road Accidents across Provinces", x = "Province", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+-   when file is read in sf, can easily convert to ppp
