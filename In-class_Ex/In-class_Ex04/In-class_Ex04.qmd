@@ -224,7 +224,8 @@ tm_shape(hunan_gstat)+
             legend.text.size = 0.6,
             legend.height = 1.20,
             legend.width = 1.20,
-            frame = TRUE)
+            frame = TRUE)+
+  tm_text("County", size = 0.5)
 ```
 
 -   help to generalise the pattern
