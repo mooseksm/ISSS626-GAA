@@ -12,13 +12,16 @@ execute:
   message: false
 ---
 
+
 # Take-Home Exercise 1: **Geospatial Analytics for Public Good**
 
 ::: {.callout-note collapse="true" icon="false"}
+
 ```{r}
 # increased timeout to mitigate error issues during rendering
 options(timeout = 3000)
 ```
+
 :::
 
 ## 1. Background
@@ -73,9 +76,11 @@ Key packages that are installed are:
 
 The packages are loaded with the following code chunk:
 
+
 ```{r}
 pacman::p_load(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly)
 ```
+
 
 ## 4. Data
 
@@ -93,15 +98,19 @@ For the purpose of this exercise, three basic data sets are used:
 
 The data is imported using the code below:
 
+
 ```{r}
 roadacc <- read_csv("data/rawdata/thai_road_accident_2019_2022.csv")
 ```
 
+
 Taking a glimpse at the data to determine the fields in the data:
+
 
 ```{r}
 glimpse(roadacc)
 ```
+
 
 There are 81735 rows and 18 variables. Further details about the important variables that would be needed for analysis can be found in the dropdown box below:
 
@@ -159,13 +168,16 @@ There are 81735 rows and 18 variables. Further details about the important varia
 
 We will first drop "province_th" as it indicates the provinces in the Thai language.
 
+
 ```{r}
 roadacc <- roadacc[, !names(roadacc) %in% c("province_th","route")]
 ```
 
+
 ### 5.1.2 Filtering province data to area of interest - Bangkok Metropolitan Region (BMR)
 
 We then determine the unique provinces within the dataset and scan through the province names (i.e. in case there are any entries that refer to the same province but are spelt differently/have spelling mistakes) before filtering the data to just include provinces that are within the BMR:
+
 
 ```{r}
 unique_provinces <- roadacc %>% 
@@ -175,12 +187,15 @@ unique_provinces <- roadacc %>%
 DT::datatable(unique_provinces,class = "compact")
 ```
 
+
 Our region of interest comprises Bangkok and five adjacent provinces of Nakhon Pathom, Nonthaburi, Pathum Thani, Samut Prakan and Samut Sakhon.
+
 
 ```{r}
 roadacc <- roadacc %>% 
   filter(province_en %in% c("Bangkok", "Nakhon Pathom", "Nonthaburi", "Pathum Thani","Samut Prakan","Samut Sakhon"))
 ```
+
 
 This leaves the data with 13336 rows.
 
@@ -188,32 +203,39 @@ This leaves the data with 13336 rows.
 
 We further clean the data by removing rows with missing data:
 
+
 ```{r}
 roadacc <- roadacc %>%
   drop_na()
 ```
 
+
 ### 5.1.4 Checking for duplicate accident codes
 
 We also check if there are duplicate entries in the dataset:
+
 
 ```{r}
 roadacc$acc_code[duplicated(roadacc$acc_code) == TRUE]
 ```
 
+
 There are no duplicate entries.
 
 Generating summary statistics of *roadacc*:
+
 
 ```{r}
 #| eval: false
 summary(roadacc)
 ```
 
+
 ::: callout-note
 ## In-class notes from Prof Kam:
 
 During class, Prof Kam had advised to study the data carefully and shared that it was important to filter out data with incomplete coordinates (missing either longitude or latitude or both) and shared that one way to do it was via the code below:
+
 
 ```{r}
 #| eval: false
@@ -222,6 +244,7 @@ roadacc <- roadacc %>%
          !is.na(latitude) & latitude != "")
 ```
 
+
 As with the drop_na() code above, this way will also leave just 12986 rows of data as the missing data were found in either the longitude or latitude variables.
 :::
 
@@ -229,12 +252,14 @@ As with the drop_na() code above, this way will also leave just 12986 rows of da
 
 We convert *roadacc* data frame into a simple feature data frame and also transform the data from geographic coordinate system ([EPSG: 4326](https://epsg.io/4326) WGS84 Geographic Coordinate System) to projected coordinate system:
 
+
 ```{r}
 roadacc <- st_as_sf(roadacc, 
                     coords = c("longitude", "latitude"),
                     crs=4326) %>%
   st_transform(crs = 32647)
 ```
+
 
 Based on the summary statistics of *roadacc* above, it is noted that the minimum longitude is 99.85° and maximum longitude is 100.94°. While there are 2 possible projected coordinate systems for Thailand, EPSG [32647](https://epsg.io/32647) and [32648](https://epsg.io/32648), the appropriate projected coordinate system to transform the data to would be EPSG [32647](https://epsg.io/32647) as the minimum and maximum longitude of *roadacc* falls within EPSG 32467's area of use (between 96°E and 102°E). A comparison of the area of use for both projected coordinate systems is shown below:
 
@@ -254,6 +279,7 @@ The *incident_datetime* and *report_datetime* variables are in **datetime field*
 
 -   [time of day:]{.underline} "inc_time"
 
+
 ```{r}
 roadacc <- roadacc %>%
   mutate(inc_year = year(incident_datetime)) %>%
@@ -267,10 +293,12 @@ roadacc <- roadacc %>%
   mutate(inc_time = hour(incident_datetime))
 ```
 
+
 ::: callout-note
 ## In-class notes from Prof Kam:
 
 Note that we can generate month in numbers or in factor format via:
+
 
 ```{r}
 #| eval: false
@@ -280,15 +308,19 @@ roadacc <- roadacc %>%
                        label = TRUE,
                        abbr = TRUE))
 ```
+
 :::
 
 We also determine the gap between the incident time and reporting time and create a new variable "timegap" in hours unit:
+
 
 ```{r}
 roadacc$timegap <- time_length(roadacc$report_datetime - roadacc$incident_datetime, "hours")
 ```
 
+
 Logically, the date and time when the accident was reported should be after the date and time of the accident occurrence. Looking at the summary statistics below, there are data entries that could have been erroneously recorded resulting in a negative time gap between report time and incident time (i.e. report time was earlier than incident time). As such, the data was further filtered to remove erroneous data to avoid affecting the analysis:
+
 
 ```{r}
 summary(roadacc$timegap)
@@ -299,11 +331,13 @@ roadacc <- roadacc %>%
   filter(timegap >= 0)
 ```
 
+
 This leaves us with 12985 rows.
 
 ### 5.1.7 Saving as new rds file
 
 We then save this cleaned data as a rds file:
+
 
 ```{r}
 #| eval: false
@@ -313,6 +347,7 @@ write_rds(roadacc,"data/rds/roadacc.rds")
 ```{r}
 roadacc <- read_rds("data/rds/roadacc.rds")
 ```
+
 
 ::: callout-note
 ## In-class notes from Prof Kam:
@@ -334,20 +369,24 @@ The data has different files providing details of the administrative boundaries 
 
 As our area of interest is at Level 1 (province level), we will utilise "*tha_admbnda_adm1_rtsd_20220121"* that reflects details at province levels and import the data using the code chunk below:
 
+
 ```{r}
 #| eval: false
 provincedata = st_read(dsn = "data/rawdata", 
                   layer = "tha_admbnda_adm1_rtsd_20220121")
 ```
 
+
 We note from the above that it is a multipolygon feature data frame. We note that there are 77 features and 16 fields, and the data is in WGS84 geographic coordinate system.
 
 We then take a glimpse of the data:
+
 
 ```{r}
 #| eval: false
 glimpse(provincedata)
 ```
+
 
 ### 5.2.1 Retaining relevant variables at the province level
 
@@ -363,15 +402,18 @@ We note from a glimpse of the data above that there are only a few pertinent fie
 
 We hence filter the data to only comprise these fields to make the data frame more manageable:
 
+
 ```{r}
 #| eval: false
 provincedata <- provincedata %>%
   select("ADM1_EN", "Shape_Leng","Shape_Area","geometry")
 ```
 
+
 ### 5.2.2 Filtering province data to area of interest - Bangkok Metropolitan Region (BMR)
 
 We also filter to keep only data that are relevant to our area of interest which is BMR:
+
 
 ```{r}
 #| eval: false
@@ -379,18 +421,22 @@ provincedata <- provincedata %>%
   filter(ADM1_EN %in% c("Bangkok", "Nakhon Pathom", "Nonthaburi", "Pathum Thani","Samut Prakan","Samut Sakhon"))
 ```
 
+
 This leaves 6 rows of data and 4 variables.
 
 ### 5.2.3 Assigning the correct EPSG code for the projected coordinate system
 
 From the code chunk below, it is noted that the EPSG code for the *selectedboundaries* data frame is [EPSG: 4326](https://epsg.io/4326):
 
+
 ```{r}
 #| eval: false
 st_crs(provincedata)
 ```
 
+
 We will need to reproject *provincedata* from EPSG code to [EPSG: 32647](https://epsg.io/32647) which is the projected coordinate system to use for BMR, our area of interest:
+
 
 ```{r}
 #| eval: false
@@ -398,16 +444,20 @@ provincedata32647 <- st_transform(provincedata,
                               crs = 32647)
 ```
 
+
 We check if the EPSG code has been correctly assigned:
+
 
 ```{r}
 #| eval: false
 st_crs(provincedata32647)
 ```
 
+
 ### 5.2.4 Saving as a new rds file
 
 We save this cleaned data as a rds file:
+
 
 ```{r}
 #| eval: false
@@ -418,7 +468,9 @@ write_rds(provincedata32647,"data/rds/provincedata32647.rds")
 provincedata32647 <- read_rds("data/rds/provincedata32647.rds")
 ```
 
+
 We visualise our *provincedata32647:*
+
 
 ```{r}
 tmap_mode('view')
@@ -427,9 +479,11 @@ tm_shape(provincedata32647)+
 tmap_mode('plot')
 ```
 
+
 ### 5.3 Thailand Roads (OpenStreetMap Export) on HDX
 
 We import the data as follows:
+
 
 ```{r}
 #| eval: false
@@ -437,7 +491,9 @@ roadlines = st_read(dsn = "data/rawdata",
                     layer = "hotosm_tha_roads_lines_shp")
 ```
 
+
 We then glimpse at the data:
+
 
 ```{r}
 #| eval: false
@@ -449,32 +505,40 @@ glimpse(roadlines)
 st_geometry(roadlines)
 ```
 
+
 The dataset is very large, with 2792590 rows and 15 variables but we only need to extract relevant information that lie within the BMR for analysis.
 
 ### 5.3.1 Assigning a EPSG code and reprojecting the data
 
 Based on the code chunk below, it is noted that the coordinate system of the *roadlines* data is missing.
 
+
 ```{r}
 #| eval: false
 st_crs(roadlines)
 ```
 
+
 Based on the values of the geometry in *roadlines,* the coordinates seem to be in geographic (latitude/longitude) form, in degrees, typically in a CRS like EPSG:4326 (WGS 84) used for global geographic coordinates. We hence assign the missing EPSG code using the code chunk below:
+
 
 ```{r}
 #| eval: false
 roadlines4326 <- st_set_crs(roadlines,4326)
 ```
 
+
 We check the CRS using the code chunk below:
+
 
 ```{r}
 #| eval: false
 st_crs(roadlines4326)
 ```
 
+
 For analysis, we would eventually need to overlay the *roadlines4326* data with the *selectedboundaries32647* data to determine the roads that lie within BMR. In order to perform geoprocessing using two geospatial data, both geospatial data would need to be projected using similar coordinate systems - in this case, it its EPSG: 32647:
+
 
 ```{r}
 #| eval: false
@@ -482,12 +546,15 @@ roadlines32647 <- st_transform(roadlines4326,
                               crs = 32647)
 ```
 
+
 We check the CRS code again:
+
 
 ```{r}
 #| eval: false
 st_crs(roadlines32647)
 ```
+
 
 ### 5.3.2 Retaining relevant/useful variables
 
@@ -495,13 +562,16 @@ Based on the columns in the data frame *roadlines32647,* the columns that seem r
 
 However before going ahead to retain these variables, we determine the presence of missing data within *roadlines32647*:
 
+
 ```{r}
 #| eval: false
 missing_counts <- sapply(roadlines32647, function(x) sum(is.na(x)))
 print(missing_counts)
 ```
 
+
 Based on the result above, more than 60% of data is missing for the variable "source" and more than 80% of data is missing for the variables "name", "name_en", "surface", "smoothness", "width", "lanes", "oneway", "bridge", "layer", "source" and "name_th". Given the extent of missing data, we will omit these columns as they would not provide useful information for analysis and only retain the relevant/useful columns "highway" and "geometry" with no missing data:
+
 
 ```{r}
 #| eval: false
@@ -509,9 +579,11 @@ selectedroadlines <- roadlines32647 %>%
   select("highway", "geometry")
 ```
 
+
 ### 5.3.3 Retaining selected classes of highway
 
 The code chunk below is used to determine the types of highways in the *selectedroadlines* data frame:
+
 
 ```{r}
 #| eval: false
@@ -520,6 +592,7 @@ unique_highway <- sort(unique_highway)
 
 unique_highway
 ```
+
 
 To determine which classes of highway to retain for analysis, the default access restrictions based on the interpretation of Thailand's Road Traffic Act, 1979 was referenced ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification)):
 
@@ -595,6 +668,7 @@ A detailed explanation on the type of highways and whether they are included for
 | unclassified     | A significant thru-traffic road used to reach the next settlement or another road of equal or higher importance regardless of its physical conditions. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))            | Yes                                                                                                         |
 +------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 
+
 ```{r}
 #| eval: false
 selectedroadlines <- selectedroadlines %>%
@@ -602,20 +676,24 @@ selectedroadlines <- selectedroadlines %>%
   mutate(highway = recode(highway, "parth" = "path"))
 ```
 
+
 ### **5.3.4 Clipping the data to be within area of interest**
 
 We require only a subset of the *selectedroadlines* data to just roads within our area of interest, BMR and hence we utilise st_intersection() to find retain roads that are within the BMR boundaries given by *provincedata32647:*
+
 
 ```{r}
 #| eval: false
 roadsbkk <- st_intersection(selectedroadlines,provincedata32647)
 ```
 
+
 This reduced the data to 564485 rows of data.
 
 ### 5.3.4.1 Interim saving as new rds file
 
 We save this cleaned data as a new rds file in the interim to facilitate further analysis and to avoid re-running *st_intersection()* function above:
+
 
 ```{r}
 #| eval: false
@@ -626,16 +704,20 @@ write_rds(roadsbkk,"data/rds/roadsbkkinterim.rds")
 roadsbkkinterim <- read_rds("data/rds/roadsbkkinterim.rds")
 ```
 
+
 ### 5.3.5 Visualising the cleaned *roadsbkk* data
 
 While we have managed to trim the original dataset from 2792590 rows to 564485 (\~20% of original dataset size), it is important that we plot the geometry of the data to determine if we would be able to meaningfully analyse it. Based on the plot below, it can be seen that there is still too much data causing overcrowding of the map.
+
 
 ```{r}
 #| eval: false
 plot(st_geometry(roadsbkkinterim))
 ```
 
+
 We first plot the distribution of classes of highway in the *roadsbkkinterim* dataset:
+
 
 ```{r}
 road_counts <- roadsbkkinterim %>%
@@ -651,6 +733,7 @@ ggplot(road_counts, aes(x = fct_reorder(highway, n))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+
 From the above, it is noted that service and residential highways make up 47.9% and 44.7% of the total road lines in the dataset. Beyond the information provided in the table above on highway details, we note the following about the service and residential highways:
 
 -   service: denotes ways used for vehicle access to a building, parking lot, service station, business estate, beach, campsite etc. they are usually not part of the public street network and may be inaccessible to the general public ([source](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dservice))
@@ -661,23 +744,28 @@ Given the limited scale (in terms of size and potential impact to the general po
 
 Dropping service and residential highways:
 
+
 ```{r}
 roadsbkk <- roadsbkkinterim %>%
   filter(!(highway %in% c("service","residential")))
 ```
 
+
 The number of rows has dropped from 564485 to 41886 rows, which makes the data more manageable.
 
 We take a quick look at the geometry - while there are still a lot of data lines, the plot has cleaned up significantly and we will proceed with this data:
+
 
 ```{r}
 #| eval: false
 plot(st_geometry(roadsbkk))
 ```
 
+
 ### 5.3.6 Checking the geometry of *roadsbkk*
 
 We then check the geometry of *roadsbkk:*
+
 
 ```{r}
 #| eval: false
@@ -689,16 +777,20 @@ geometry_types <- roadsbkk %>%
 geometry_types
 ```
 
+
 As seen from the output above, the *roadsbkk* data comprises both linestring and multilinestring geometries. Linestring represents a single line, while MultiLinestring represents a collection of multiple lines. We need to simplify the data structure by converting multilinestring to linestring geometry to facilitate downstream analysis as the use of multilinestring might lead to error.
 
 We utilise the [st_cast()](https://r-spatial.github.io/sf/reference/st_cast.html) function to break down multilinestring geometries to linestring geometries:
+
 
 ```{r}
 #| eval: false
 roadsbkk <- st_cast(roadsbkk,"LINESTRING",group_or_split = TRUE)
 ```
 
+
 We double check the geometry types and note from the output below that the geometry is now just linestring:
+
 
 ```{r}
 #| eval: false
@@ -710,9 +802,11 @@ geometry_types <- roadsbkk %>%
 geometry_types
 ```
 
+
 ### 5.3.7 Re-saving as new rds file
 
 We save this cleaned data as a rds file:
+
 
 ```{r}
 #| eval: false
@@ -723,11 +817,13 @@ write_rds(roadsbkk,"data/rds/roadsbkk.rds")
 roadsbkk <- read_rds("data/rds/roadsbkk.rds")
 ```
 
+
 ## 6. Exploratory Data Analysis (EDA)
 
 We carry some EDA to understand how the occurrences of road accidents could be influenced by different factors.
 
 ### 6.1 Distribution of Road Accidents across Provinces
+
 
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(province_en, province_en, .fun = length))) + 
@@ -736,9 +832,11 @@ ggplot(roadacc, aes(x = fct_reorder(province_en, province_en, .fun = length))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+
 As noted from the plot, Bangkok has the highest occurrences of road accidents in the BMR, followed by Samut Prakan, Pathum Thani, Samut Sakhon, Nakhon Pathom and Nonthaburi.
 
 ### 6.2 Distribution of Road Accidents by agency
+
 
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(agency, agency, .fun = length))) + 
@@ -746,6 +844,7 @@ ggplot(roadacc, aes(x = fct_reorder(agency, agency, .fun = length))) +
   labs(title = "Distribution of Road Accidents by Agency", x = "Agency", y = "Count") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
 
 As noted from the plot, the Department of Highways is responsible for the most occurrences of road accidents in the BMR, followed by Department of Rural Roads and Expressway Authority of Thailand.
 
@@ -758,6 +857,7 @@ We also analyse the road accidents by time, namely by year, by month, by day of 
 ::: panel-tabset
 ## By year
 
+
 ```{r}
 ggplot(roadacc, aes(x = inc_year)) + 
   geom_bar(fill = "slategrey") +
@@ -765,9 +865,11 @@ ggplot(roadacc, aes(x = inc_year)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
 
+
 We note from the plot that the number of road accidents has generally been increasing from 2019 to 2022.
 
 ## By year (at province level)
+
 
 ```{r}
 ggplot(roadacc, aes(x = inc_year)) + 
@@ -776,6 +878,7 @@ ggplot(roadacc, aes(x = inc_year)) +
   facet_wrap(~province_en)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
+
 
 -   We note from above that the number of road accidents has generally been increasing in Bangkok and Samut Prakan from 2019 to 2022.
 
@@ -792,6 +895,7 @@ ggplot(roadacc, aes(x = inc_year)) +
 
 We also observe the data by month using cycle plots that would enable us to observe cyclical/seasonal patterns, if present.
 
+
 ```{r}
 #| eval: false
 roadacc_month <- roadacc %>%
@@ -799,7 +903,9 @@ roadacc_month <- roadacc %>%
   summarise(count = n(), .groups = 'drop')
 ```
 
+
 We save *roadacc_month* as a rds file:
+
 
 ```{r}
 #| eval: false 
@@ -810,7 +916,9 @@ write_rds(roadacc_month,"data/rds/roadacc_month.rds")
 roadacc_month <- read_rds("data/rds/roadacc_month.rds")
 ```
 
+
 ### 6.3.2.1 Plotting distribution of road accidents by month across the years
+
 
 ```{r}
 hline.data <- roadacc_month %>%
@@ -834,6 +942,7 @@ ggplot(data = roadacc_month, aes(x = inc_year, y = count)) +
         legend.position = "none")
 ```
 
+
 Based on the plot, we observe the following:
 
 -   **Occurrences of road accidents in Jan and Feb seem to generally be decreasing over the years**, with the number of road accidents in 2022 for both months falling below the average number of road accidents for the month across 2019 to 2022.
@@ -847,6 +956,7 @@ Based on the plot, we observe the following:
 We further observe the occurrence of road accidents by month at the province level:
 
 ::: {.callout-note icon="false" collapse="true"}
+
 ```{r}
 #| eval: false
 roadacc_month_bkk <- roadacc %>%
@@ -880,7 +990,9 @@ roadacc_month_ss <- roadacc %>%
   summarise(count = n(), .groups = 'drop')
 ```
 
+
 Saving them as rds files:
+
 
 ```{r}
 #| eval: false
@@ -892,7 +1004,9 @@ write_rds(roadacc_month_np,"data/rds/roadacc_month_np.rds")
 write_rds(roadacc_month_ss,"data/rds/roadacc_month_ss.rds")
 ```
 
+
 Loading the newly created rds files into R:
+
 
 ```{r}
 roadacc_month_bkk <- read_rds("data/rds/roadacc_month_bkk.rds")
@@ -902,10 +1016,12 @@ roadacc_month_pt <- read_rds("data/rds/roadacc_month_pt.rds")
 roadacc_month_np <- read_rds("data/rds/roadacc_month_np.rds")
 roadacc_month_ss <- read_rds("data/rds/roadacc_month_ss.rds")
 ```
+
 :::
 
 ::: panel-tabset
 ## Bangkok
+
 
 ```{r}
 hline.data <- roadacc_month_bkk %>%
@@ -929,6 +1045,7 @@ ggplot(data = roadacc_month_bkk, aes(x = inc_year, y = count)) +
         legend.position = "none")
 ```
 
+
 The following observations were made:
 
 -   **Occurrences of road accidents in Jan seem to be fluctuating,** with the number of road accidents decreasing from 2019 to 2021 then increasing in 2022.
@@ -940,6 +1057,7 @@ The following observations were made:
 -   **Occurrences of road accidents in Mar to Jun generally do not fluctuate much over the years.**
 
 ## Samut Prakan
+
 
 ```{r}
 hline.data <- roadacc_month_sp %>%
@@ -963,6 +1081,7 @@ ggplot(data = roadacc_month_sp, aes(x = inc_year, y = count)) +
         legend.position = "none")
 ```
 
+
 The following observations were made:
 
 -   **Occurrences of road accidents in Jan seem to generally be decreasing over the years**, with the number of road accidents in 2022 falling below the average number of road accidents for the month across 2019 to 2022.
@@ -972,6 +1091,7 @@ The following observations were made:
 -   **Occurrences of road accidents in Feb to Mar and Sep to Oct increased initially then fell towards 2022.**
 
 ## Nonthaburi
+
 
 ```{r}
 hline.data <- roadacc_month_n %>%
@@ -995,6 +1115,7 @@ ggplot(data = roadacc_month_n, aes(x = inc_year, y = count)) +
         legend.position = "none")
 ```
 
+
 The following observations were made:
 
 -   **Occurrences of road accidents in Feb seem to generally be decreasing over the years.**
@@ -1008,6 +1129,7 @@ The following observations were made:
 -   **As compared to Bangkok, Samut Prakan and Pathum Thani, the number of road accidents in Nonthaburi seem to be lesser, indicating that roads are more well managed in Nonthaburi.**
 
 ## Pathum Thani
+
 
 ```{r}
 hline.data <- roadacc_month_pt %>%
@@ -1031,6 +1153,7 @@ ggplot(data = roadacc_month_pt, aes(x = inc_year, y = count)) +
         legend.position = "none")
 ```
 
+
 The following observations were made:
 
 -   **Occurrences of road accidents in Jun to Aug and Oct seem to generally be increasing over the years.** This could be explained by the rainier seasons in Thailand during this period.
@@ -1038,6 +1161,7 @@ The following observations were made:
 -   **Occurrences of road accidents in Jan, Feb, Sep and Dec seem to fluctuate generally around the monthly average across the years.**
 
 ## Nakhon Pathom
+
 
 ```{r}
 hline.data <- roadacc_month_np %>%
@@ -1061,6 +1185,7 @@ ggplot(data = roadacc_month_np, aes(x = inc_year, y = count)) +
         legend.position = "none")
 ```
 
+
 The following observations were made:
 
 -   **Occurrences of road accidents in Jan to Mar, May, Jul to Dec seem to generally be decreasing over the years.**
@@ -1068,6 +1193,7 @@ The following observations were made:
 -   **Based on these observations, it seems like road accidents are much lesser in Nakhon Pathom as compared to the other provinces and it is the only province with no obvious increase in occurrences of road accidents across the years, this indicates that the province is more well managed as compared to the other 5 provinces.**
 
 ## Samut Sakhon
+
 
 ```{r}
 hline.data <- roadacc_month_ss %>%
@@ -1091,6 +1217,7 @@ ggplot(data = roadacc_month_ss, aes(x = inc_year, y = count)) +
         legend.position = "none")
 ```
 
+
 The following observations were made:
 
 -   **Occurrences of road accidents in Jan, Feb, Apr and Jun seem to generally be decreasing over the years.**
@@ -1103,6 +1230,7 @@ The following observations were made:
 ::: panel-tabset
 ## Overall
 
+
 ```{r}
 ggplot(roadacc, aes(x = inc_dayofweek)) + 
   geom_bar(fill = "slategrey") +
@@ -1110,9 +1238,11 @@ ggplot(roadacc, aes(x = inc_dayofweek)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
 
+
 We note from the plot that road accidents occur mostly on Fri and Sat and this could be explained by these days being the start of the weekend, and more people and vehicles may be out on the roads and in public places, which increase the chances of road accidents occuring.
 
 ## Breakdown by province
+
 
 ```{r}
 p0 <- ggplot(roadacc, aes(x = inc_dayofweek)) + 
@@ -1124,6 +1254,7 @@ p0 <- ggplot(roadacc, aes(x = inc_dayofweek)) +
 ggplotly(p0)
 ```
 
+
 **Across the provinces, it is obvious that road accidents occur most often on Fri and Sat in Bangkok. However, for the other provinces, the difference is not so obvious and it seems like the occurrences of road accidents are more well spread out across the week.** This could be explained by Bangkok being a prime tourist destination and major urban centre, and it could attract a greater crowd from within and outside of Thailand over the weekend, hence leading to greater traffic on the road and higher chances of road accidents occurring.
 :::
 
@@ -1131,6 +1262,7 @@ ggplotly(p0)
 
 ::: panel-tabset
 ## Overall
+
 
 ```{r}
 ggplot(roadacc, aes(x = inc_time)) + 
@@ -1142,9 +1274,11 @@ ggplot(roadacc, aes(x = inc_time)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
 
+
 **Based on the chart, it is observed that road accidents occur more often between 7am to 11pm as compared to 12 midnight to 6am.** This could be explained by 7am to 11pm being the time when most are awake for their daily activities and the roads are likely to have higher activity, which result in higher chances of occurrences of road accidents. **The top two timings at which road accidents occur are at 9am and 7pm** and this could be explained by it being the peak hour at which the general population i.e. workers, school students get to and get off work and school.
 
 ## Breakdown by province
+
 
 ```{r}
 p1 <- ggplot(roadacc, aes(x = inc_time)) + 
@@ -1159,6 +1293,7 @@ p1 <- ggplot(roadacc, aes(x = inc_time)) +
 ggplotly(p1)
 ```
 
+
 Bangkok, Samut Prakan and Pathum Thani also seem to follow the general observation seen under the overall chart for occurrences of road accidents by time day i.e. road accidents generally occur more during 7am to 11pm and peak timings are during the going to and getting off work/school hours at around 9am and 7pm. This is less obvious for the other provinces.
 :::
 
@@ -1167,6 +1302,7 @@ Bangkok, Samut Prakan and Pathum Thani also seem to follow the general observati
 ::: panel-tabset
 ## Overall
 
+
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(weather_condition, weather_condition, .fun = length))) + 
   geom_bar(fill = "slategrey") +
@@ -1174,9 +1310,11 @@ ggplot(roadacc, aes(x = fct_reorder(weather_condition, weather_condition, .fun =
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
 
+
 Based on the plot, road accidents mostly occur in clear weather conditions, followed by rainy weather conditions and dark weather conditions. This could imply that road accidents are more heavily influenced by other behavioural or environmental factors besides the weather condition.
 
 ## Breakdown by Province
+
 
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(weather_condition, weather_condition, .fun = length))) + 
@@ -1185,6 +1323,7 @@ ggplot(roadacc, aes(x = fct_reorder(weather_condition, weather_condition, .fun =
   facet_wrap(~province_en)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
+
 
 Across provinces, similar observations were made as it was observed that road accidents mostly occur during clear weather conditions, followed by rainy and then dark weather conditions.
 :::
@@ -1194,6 +1333,7 @@ Across provinces, similar observations were made as it was observed that road ac
 ::: panel-tabset
 ## Overall
 
+
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(road_description, road_description, .fun = length))) + 
   geom_bar(fill = "slategrey") +
@@ -1201,9 +1341,11 @@ ggplot(roadacc, aes(x = fct_reorder(road_description, road_description, .fun = l
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
 
+
 Based on the plot, road accidents mostly occur on straight roads, roads categorised as other, followed by wide curve and then grade-separated intersection/ramps. **Combining this observation with that for weather conditions - that road accidents mostly occur during clear weather conditions and straight roads - which are conditions under which one would not expect road accidents to occur, it could imply that the occurrence of road accidents are more heavily influenced by behavioural factors.**
 
 ## Breakdown by Province
+
 
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(road_description, road_description, .fun = length))) + 
@@ -1212,6 +1354,7 @@ ggplot(roadacc, aes(x = fct_reorder(road_description, road_description, .fun = l
   facet_wrap(~province_en)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
+
 
 Across provinces, similar observations were made as it was observed that road accidents mostly occur on straight roads, roads categorised as other, followed by wide curve and then grade-separated intersection/ramps.
 :::
@@ -1221,6 +1364,7 @@ Across provinces, similar observations were made as it was observed that road ac
 ::: panel-tabset
 ## Overall
 
+
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(slope_description, slope_description, .fun = length))) + 
   geom_bar(fill = "slategrey") +
@@ -1228,9 +1372,11 @@ ggplot(roadacc, aes(x = fct_reorder(slope_description, slope_description, .fun =
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
 
+
 Based on the plot, road accidents where there are no slopes. **Combining this observation with the above observations - that road accidents mostly occur during clear weather conditions and on straight roads with no slope - which are conditions under which one would not expect road accidents to occur, it could imply that the occurrence of road accidents are more heavily influenced by behavioural factors.**
 
 ## Breakdown by Province
+
 
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(slope_description, slope_description, .fun = length))) + 
@@ -1239,6 +1385,7 @@ ggplot(roadacc, aes(x = fct_reorder(slope_description, slope_description, .fun =
   facet_wrap(~province_en)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
+
 
 Across provinces, similar observations were made as it was observed that road accidents mostly occur on roads with no slope.
 :::
@@ -1248,6 +1395,7 @@ Across provinces, similar observations were made as it was observed that road ac
 ::: panel-tabset
 ## Overall
 
+
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(vehicle_type, vehicle_type, .fun = length))) + 
   geom_bar(fill = "slategrey") +
@@ -1255,11 +1403,13 @@ ggplot(roadacc, aes(x = fct_reorder(vehicle_type, vehicle_type, .fun = length)))
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
 
+
 Based on the plot, road accidents mostly involve private/passenger car, followed by 4-wheel pickup truck, motorcycle as the top 3 vehicles. These are small to mid-sized vehicles.
 
 ## Breakdown by Province
 
 We do a more detailed analysis at the province level:
+
 
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(vehicle_type, vehicle_type, .fun = length))) +
@@ -1268,6 +1418,7 @@ ggplot(roadacc, aes(x = fct_reorder(vehicle_type, vehicle_type, .fun = length)))
   facet_wrap(~province_en)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
+
 
 **Bangkok and Samut Prakan follow the same general observation seen under the overall chart for vehicle type involved in road accidents i.e. road accidents mostly involve private/passenger car, followed by 4-wheel pickup truck, motorcycle as the top 3 vehicles.** However the following were observed for the other provinces:
 
@@ -1278,12 +1429,14 @@ ggplot(roadacc, aes(x = fct_reorder(vehicle_type, vehicle_type, .fun = length)))
 
 ### 6.8 Distribution of Road Accidents by presumed cause
 
+
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(presumed_cause, presumed_cause, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Presumed Cause", x = "Presumed Cause", y = "Count") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+
 
 The top presumed cause for accident is speeding.
 
@@ -1292,6 +1445,7 @@ The top presumed cause for accident is speeding.
 ::: panel-tabset
 ## Overall
 
+
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length))) + 
   geom_bar(fill = "slategrey") +
@@ -1299,9 +1453,11 @@ ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length)
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
+
 The top two presumed cause for road accidents are rear-end collision and rollover/fallen on straight road.
 
 ## Breakdown by Province
+
 
 ```{r}
 ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length))) + 
@@ -1311,10 +1467,12 @@ ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length)
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
+
 **Bangkok, Pathum Thani and Samut Prakan follow the same general observation seen under the overall chart that the top two presumed cause for road accidents are rear-end collision followed by rollover/fallen on straight road. For Nakhon Pathom, Nonthaburi and Samut Sakhon, the top presumed cause is rollover/fallen on straight road followed by rear-end collision.**
 :::
 
 ### 6.10 Distribution of number of vehicles involved
+
 
 ```{r}
 summary_stats <- roadacc %>%
@@ -1352,9 +1510,11 @@ ggplot(roadacc,
   scale_fill_viridis_d()
 ```
 
+
 **Across the provinces, the median number of vehicles involved in road accidents are either one or two.** However, the maximum number of vehicles that had been involved in road accidents were 12 (Pathum Thani), 11 (Bangkok), 10 (Samut Prakan), 9 (Nonthaburi and Samut Sakhon) and 8 (Nakhon Pathom), indicating that while not common, there are large-scale incidents involving large number of vehicles.
 
 ### 6.11 Distribution of number of fatalities
+
 
 ```{r}
 summary_stats <- roadacc %>%
@@ -1392,9 +1552,11 @@ ggplot(roadacc,
   scale_fill_viridis_d()
 ```
 
+
 Across the provinces, the median number of fatalities is 0. However, while few, there are road accidents that occur with higher number of fatalities - the highest being 13 (Samut Prakan), followed by 6 (Pathum Thani), 3 (Bangkok, Nonthaburi) and 2 (Nakhon Pathom and Samut Sakhon).
 
 ### 6.12 Distribution of number of injuries
+
 
 ```{r}
 summary_stats <- roadacc %>%
@@ -1432,6 +1594,7 @@ ggplot(roadacc,
   scale_fill_viridis_d()
 ```
 
+
 Across the provinces, the median number of injuries is 0. However, while few, there are road accidents that occur with higher number of injuries - the highest being 51 (Pathum Thani), followed by 31 (Bangkok), 30 (Nakhon Pathom), 28 (Samut Prakan), 14 (Samut Sakhon) and 11 (Nonthaburi).
 
 ## 7. Data Wrangling for Spatial Point Pattern Analysis
@@ -1440,30 +1603,38 @@ Across the provinces, the median number of injuries is 0. However, while few, th
 
 To carry out spatial point pattern analysis - the evaluation of the pattern or distribution of a set of points on a surface - we need to convert the data from sf format to ppp format:
 
+
 ```{r}
 roadacc_ppp <- as.ppp(roadacc)
 roadacc_ppp
 ```
 
+
 The code chunk below plots *roadacc_ppp* for visualisation:
+
 
 ```{r}
 plot(roadacc_ppp)
 ```
 
+
 We take a quick look at the summary statistics of the *roadacc_ppp* object using the code chunk below:
+
 
 ```{r}
 summary(roadacc_ppp)
 ```
 
+
 ### 7.2 Checking for duplicate points
 
 In spatial point patterns analysis, a significant issue is the presence of duplicates as the statistical methodology used for spatial point patterns processes is based largely on the assumption that process are simple i.e. that the points cannot be coincident. We check for duplication in a *ppp* object via the code chunk below:
 
+
 ```{r}
 any(duplicated(roadacc_ppp))
 ```
+
 
 The data does not have any duplicated points.
 
@@ -1471,11 +1642,14 @@ The data does not have any duplicated points.
 
 When analysing spatial point patterns, it is a good practice to confine the analysis within a geographical area like Singapore boundary. In **spatstat**, an object called *owin* is specially designed to represent this polygonal region. The code chunk below is used to covert *provincedata32647* SpatialPolygon object into owin object of **spatstat**:
 
+
 ```{r}
 provinceowin <- as.owin(provincedata32647)
 ```
 
+
 The ouput object can be displayed by using *plot()* function
+
 
 ```{r}
 plot(provinceowin)
@@ -1485,9 +1659,11 @@ plot(provinceowin)
 summary(provinceowin)
 ```
 
+
 ### 7.4 Combining **point events object and owin object**
 
 We extract road accident events that are located within the BMR by using the code chunk below:
+
 
 ```{r}
 roadacc_owin_ppp = roadacc_ppp[provinceowin]
@@ -1501,6 +1677,7 @@ plot(roadacc_owin_ppp)
 summary(roadacc_owin_ppp)
 ```
 
+
 ## 8. Kernel Density Estimation (KDE)
 
 We will proceed to compute the KDE of road accidents in the BMR.
@@ -1510,6 +1687,7 @@ We will proceed to compute the KDE of road accidents in the BMR.
 We will derive adaptive KDE using *density.adaptive()* of spatstat. Adaptive schemes adjust itself according to the density of data - shorter bandwidths are used where data are dense and longer where sparse. This helps to mitigate against highly skewed distribution of spatial point patterns.
 
 However, before we do so, we convert the unit of measurement to kilometer as the default unit of measurement of EPSG: 32647 is in metres, which would make the values hard to comprehend:
+
 
 ```{r}
 roadacc_owin_ppp.km <- rescale.ppp(roadacc_owin_ppp,
@@ -1522,28 +1700,35 @@ kde_roadacc_adaptive <- adaptive.density(roadacc_owin_ppp.km, method = "kernel")
 plot(kde_roadacc_adaptive)
 ```
 
+
 ### 8.1.1 Converting KDE output into grid object
 
 We convert the KDE output for mapping purposes:
+
 
 ```{r}
 gridded_kde_roadacc_adaptive <- as.SpatialGridDataFrame.im(kde_roadacc_adaptive)
 spplot(gridded_kde_roadacc_adaptive)
 ```
 
+
 ### 8.1.2 Converting gridded output into raster
 
 Next, we will convert the gridded KDE object into a RasterLayer object using *raster()* of **raster package**:
+
 
 ```{r}
 kde_roadacc_adaptive_raster <- raster(kde_roadacc_adaptive)
 ```
 
+
 We view the properties of *kde_roadacc_adaptive_raster* RasterLayer:
+
 
 ```{r}
 kde_roadacc_adaptive_raster
 ```
+
 
 Note that the CRS property is NA.
 
@@ -1551,16 +1736,19 @@ Note that the CRS property is NA.
 
 We hence assign CRS information to the *kde_roadacc_adaptive_raster* RasterLayer:
 
+
 ```{r}
 projection(kde_roadacc_adaptive_raster) <- CRS("+init=EPSG:32647")
 kde_roadacc_adaptive_raster
 ```
+
 
 The CRS property is now completed.
 
 ### 8.1.4 Visualising the output in tmap
 
 We will display the raster in cartographic quality map using **tmap package**:
+
 
 ```{r}
 tm_shape(kde_roadacc_adaptive_raster)+
@@ -1573,11 +1761,13 @@ tm_shape(kde_roadacc_adaptive_raster)+
             frame = FALSE)
 ```
 
+
 ### 8.2 Comparing Spatial Point Patterns using KDE
 
 ### 8.2.1 Extracting study areas
 
 The code chunk will be used to extract the different provinces:
+
 
 ```{r}
 bkk <- provincedata32647 %>%
@@ -1594,7 +1784,9 @@ ss <- provincedata32647 %>%
   filter(ADM1_EN == "Samut Sakhon")
 ```
 
+
 ### 8.2.2 Creating owin object:
+
 
 ```{r}
 bkk_owin = as.owin(bkk)
@@ -1605,9 +1797,11 @@ sp_owin = as.owin(sp)
 ss_owin = as.owin(ss)
 ```
 
+
 ### 8.2.3 Combining road accident points and study area
 
 By using the code chunk below, we are able to extract road accidents that is within the specific province to carry out our analysis later on.
+
 
 ```{r}
 roadacc_bkk_ppp = roadacc_ppp[bkk_owin]
@@ -1618,7 +1812,9 @@ roadacc_sp_ppp = roadacc_ppp[sp_owin]
 roadacc_ss_ppp = roadacc_ppp[ss_owin]
 ```
 
+
 Next, *rescale.ppp()* function is used to transform the unit of measurement from metre to kilometre:
+
 
 ```{r}
 roadacc_bkk_ppp.km = rescale.ppp(roadacc_bkk_ppp,1000,"km")
@@ -1629,7 +1825,9 @@ roadacc_sp_ppp.km = rescale.ppp(roadacc_sp_ppp,1000,"km")
 roadacc_ss_ppp.km = rescale.ppp(roadacc_ss_ppp,1000,"km")
 ```
 
+
 We then plot the 6 provinces and the locations of the road accidents:
+
 
 ```{r}
 par(mfrow=c(3,2))
@@ -1641,9 +1839,11 @@ plot(roadacc_sp_ppp.km,main="Samut Prakan")
 plot(roadacc_ss_ppp.km,main="Samut Sakhon")
 ```
 
+
 ### 8.2.4 Computing KDE
 
 The code chunk below is used to compute the KDE of the 6 provinces:
+
 
 ```{r}
 options(repr.plot.width=12, repr.plot.height=8)
@@ -1680,6 +1880,7 @@ plot(density(roadacc_ss_ppp.km,
      main="Samut Sakhon")
 ```
 
+
 ## 9. Nearest Neighbour Analysis
 
 We will perform the Clark-Evans test of aggregation for spatial point pattern:
@@ -1697,6 +1898,7 @@ The 95% confidence interval will be used.
 ::: panel-tabset
 ## Overall BMR
 
+
 ```{r}
 clarkevans.test(roadacc_owin_ppp.km,
                 correction = "none",
@@ -1705,9 +1907,11 @@ clarkevans.test(roadacc_owin_ppp.km,
                 nsim = 99)
 ```
 
+
 Since p-value is less than 0.05, we reject the null hypothesis at 95% confidence interval. There is sufficient evidence to indicate that the distribution of road accidents is not randomly distributed.
 
 ## Bangkok
+
 
 ```{r}
 clarkevans.test(roadacc_bkk_ppp.km,
@@ -1717,7 +1921,9 @@ clarkevans.test(roadacc_bkk_ppp.km,
                 nsim=999)
 ```
 
+
 ## Nakhon Pathom
+
 
 ```{r}
 clarkevans.test(roadacc_np_ppp.km,
@@ -1727,7 +1933,9 @@ clarkevans.test(roadacc_np_ppp.km,
                 nsim=999)
 ```
 
+
 ## Nonthaburi
+
 
 ```{r}
 clarkevans.test(roadacc_n_ppp.km,
@@ -1737,7 +1945,9 @@ clarkevans.test(roadacc_n_ppp.km,
                 nsim=999)
 ```
 
+
 ## Pathum Thani
+
 
 ```{r}
 clarkevans.test(roadacc_pt_ppp.km,
@@ -1747,7 +1957,9 @@ clarkevans.test(roadacc_pt_ppp.km,
                 nsim=999)
 ```
 
+
 ## Samut Prakan
+
 
 ```{r}
 clarkevans.test(roadacc_sp_ppp.km,
@@ -1757,7 +1969,9 @@ clarkevans.test(roadacc_sp_ppp.km,
                 nsim=999)
 ```
 
+
 ## Samut Sakhon
+
 
 ```{r}
 clarkevans.test(roadacc_ss_ppp.km,
@@ -1766,11 +1980,13 @@ clarkevans.test(roadacc_ss_ppp.km,
                 alternative=c("two.sided"),
                 nsim=999)
 ```
+
 :::
 
 Based on the results above, for which p-values are less than 0.05, we reject the null hypothesis at 95% confidence interval. There is sufficient evidence to indicate that the distribution of road accidents in all provinces is not randomly distributed.
 
 ## 10. Network Constrained Spatial Point Patterns Analysis
+
 
 ```{r}
 tmap_mode('view')
@@ -1784,11 +2000,13 @@ tm_shape(roadacc)+
 tmap_mode('plot')
 ```
 
+
 ## 11. Network KDE (NKDE) Analysis
 
 ### 11.1 Preparing the lixels objects
 
 Before computing NKDE, the *roadsbkk* object needs to be cut into lixels with a specified minimal distance. We do this using [lixelize_lines()](https://jeremygelb.github.io/spNetwork/reference/lixelize_lines.html) of **spNetwork** as shown in the code chunk below.
+
 
 ```{r}
 #| eval: false
@@ -1797,14 +2015,17 @@ lixels <- lixelize_lines(roadsbkk,
                          mindist = NULL)
 ```
 
+
 ### 11.2 Generating line centre points
 
 Next, *lines_center()* of **spNetwork** will be used to generate a SpatialPointsDataFrame (i.e. samples) with line centre points as shown in the code chunk below:
+
 
 ```{r}
 #| eval: false
 samples <- lines_center(lixels)
 ```
+
 
 The points are located at center of the line based on the length of the line.
 
@@ -1812,12 +2033,15 @@ The points are located at center of the line based on the length of the line.
 
 Prior to performing NKDE calculations:
 
+
 ```{r}
 #| eval: false
 future::plan(future::multisession(workers=2))
 ```
 
+
 We will compute NKDE using the code chunk below:
+
 
 ```{r}
 #| eval: false
@@ -1838,12 +2062,15 @@ densities <- nkde(roadsbkk,
                   verbose = FALSE)
 ```
 
+
 ### 11.3.1 Visualising NKDE
 
 Before visualising NKDE values, we use the code chunk below to insert the computed density values into *samples* and *lixels* objects as density field. We also multiply the densities by 1000 to rescale the density values from metres (as the EPSG 32647 projection system is in metres which make the computed density values very small and hard to comprehend) to number of events per kilometer:
+
 
 ```{r}
 #| eval: false
 samples$density <- densities*1000
 lixels$density <- densities*1000
 ```
+
