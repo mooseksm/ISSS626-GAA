@@ -1778,9 +1778,6 @@ tm_shape(roadacc)+
   tm_dots()+
   tm_shape(roadsbkk)+
   tm_lines()
-```
-
-```{r}
 tmap_mode('plot')
 ```
 
