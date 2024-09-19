@@ -14,6 +14,12 @@ execute:
 
 # Take-Home Exercise 1: **Geospatial Analytics for Public Good**
 
+::: {.callout-note collapse="true" appearance="minimal"}
+```{r}
+options(timeout = 2000)
+```
+:::
+
 ## 1. Background
 
 According to the World Health Organisation (WHO), road traffic accidents cause the death of approximately 1.19 million people each year and leave between 20 to 50 million people with non-fatal injuries. Vulnerable road users, such as pedestrians, cyclists and motorcyclists, make up more than half of all road traffic deaths.
@@ -644,15 +650,19 @@ ggplot(road_counts, aes(x = fct_reorder(highway, n))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Dropping the classes of highway that comprise \<= 0.5% of total classes of highway:
+From the above, it is noted that service and residential highways make up 47.9% and 44.7% of the total road lines in the dataset. Beyond the information provided in the table above on highway details, we note the following about the service and residential highways:
+
+-   service: denotes ways used for vehicle access to a building, parking lot, service station, business estate, beach, campsite etc. they are usually not part of the public street network and may be inaccessible to the general public ([source](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dservice))
+
+-   residential: roads are typically short in length and likely to have lower speed limits and traffic calming measures in place ([source](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dresidential))
+
+Given the limited scale (in terms of size and potential impact to the general population) and that the sheer volume of the service and residential roads could overcrowd the other road lines in the data, we will omit them from our analysis:
+
+Dropping service and residential highways:
 
 ```{r}
 roadsbkk <- roadsbkkinterim %>%
-  filter(!(highway %in% c("road","corridor","busway",
-                          "tertiary_link","trunk_link",
-                          "motorway","motorway_link",
-                          "secondary_link","primary_link",
-                          "trunk")))
+  filter(!(highway %in% c("service","residential")))
 ```
 
 We then take a quick look at the geometry - while there are still a lot of data lines, the plot has cleaned up slightly and we will proceed with this data for now:
@@ -780,6 +790,7 @@ ggplot(roadacc, aes(x = inc_year)) +
 We also observe the data by month using cycle plots that would enable us to observe cyclical/seasonal patterns, if present.
 
 ```{r}
+#| eval: false
 roadacc_month <- roadacc %>%
   group_by(inc_year,inc_month) %>%
   summarise(count = n(), .groups = 'drop')
@@ -983,13 +994,13 @@ ggplot(data = roadacc_month_n, aes(x = inc_year, y = count)) +
 
 The following observations were made:
 
--   **Occurrences of road accidents in Feb and May seem to generally be decreasing over the years.**
+-   **Occurrences of road accidents in Feb seem to generally be decreasing over the years.**
 
 -   **Occurrences of road accidents in Jan seem to generally be increasing over the years.**
 
 -   **Occurrences of road accidents in Jul, Aug, Nov and Dec increased initially then fell towards 2022.**
 
--   **Occurrences of road accidents in Apr, Jun, Sep and Oct seem to fluctuate generally around the monthly average across the years.**
+-   **Occurrences of road accidents in Mar to Jun, Sep and Oct seem to fluctuate generally around the monthly average across the years.**
 
 -   **As compared to Bangkok, Samut Prakan and Pathum Thani, the number of road accidents in Nonthaburi seem to be lesser, indicating that roads are more well managed in Nonthaburi.**
 
@@ -1081,7 +1092,7 @@ The following observations were made:
 
 -   **Occurrences of road accidents in Jan, Feb, Apr and Jun seem to generally be decreasing over the years.**
 -   **Occurrences of road accidents in Jul to Dec seem to be increasing over the years.** Based on this observation alone, the increase in road accidents could potentially be due to the hotter and rainier seasons in Jul to Oct and the presence of a higher population due to peak tourist seasons in Nov and Dec.
--   **Occurrences of road accidents in Apr and May seem to fluctuate generally around the monthly average across the years.**
+-   **Occurrences of road accidents in Mar and May seem to fluctuate generally around the monthly average across the years.**
 :::
 
 ### 6.3.3 By day of week
@@ -1110,7 +1121,7 @@ p0 <- ggplot(roadacc, aes(x = inc_dayofweek)) +
 ggplotly(p0)
 ```
 
-Across the provinces, it is obvious that road accidents occur most often on Fri and Sat in Bangkok. However, for the other provinces, the difference is not so obvious and it seems like the occurrences of road accidents are more well spread out across the week. This could be explained by Bangkok being a prime tourist destination and major urban centre, and it could attract a greater crowd from within and outside of Thailand over the weekend, hence leading to greater traffic on the road and higher chances of road accidents occurring.
+**Across the provinces, it is obvious that road accidents occur most often on Fri and Sat in Bangkok. However, for the other provinces, the difference is not so obvious and it seems like the occurrences of road accidents are more well spread out across the week.** This could be explained by Bangkok being a prime tourist destination and major urban centre, and it could attract a greater crowd from within and outside of Thailand over the weekend, hence leading to greater traffic on the road and higher chances of road accidents occurring.
 :::
 
 ### 6.3.4 By time of day
@@ -1421,15 +1432,6 @@ ggplot(roadacc,
 Across the provinces, the median number of injuries is 0. However, while few, there are road accidents that occur with higher number of injuries - the highest being 51 (Pathum Thani), followed by 31 (Bangkok), 30 (Nakhon Pathom), 28 (Samut Prakan), 14 (Samut Sakhon) and 11 (Nonthaburi).
 
 ## 7 Data Wrangling for Spatial Point Pattern Analysis
-
-Let's first visualise the cleaned *roadacc* data:
-
-```{r}
-tmap_mode('view')
-tm_shape(roadacc)+
-  tm_dots()
-tmap_mode('plot')
-```
 
 ### 7.1 Converting data to ppp format for Spatial Point Pattern Analysis
 
