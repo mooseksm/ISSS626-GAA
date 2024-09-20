@@ -433,10 +433,9 @@ provincedata32647 <- read_rds("data/rds/provincedata32647.rds")
 We visualise our *provincedata32647:*
 
 ```{r}
-tmap_mode('view')
+tmap_mode('plot')
 tm_shape(provincedata32647)+
   tm_polygons()
-tmap_mode('plot')
 ```
 
 ### 5.3 Thailand Roads (OpenStreetMap Export) on HDX
@@ -630,14 +629,13 @@ We carry some EDA to understand how the occurrences of road accidents could be i
 
 ```{r}
 #| dropdown: true
-tmap_mode('view')
+tmap_mode('plot')
 tm_shape(provincedata32647) + 
   tm_polygons() +           
   tm_shape(roadacc) + 
   tm_dots(col ='red') +
   tm_shape(roadsbkk)+
   tm_lines(col = 'black')
-tmap_mode('plot')
 ```
 
 As seen from the map above, road accidents within the BMR seem to be more concentrated within the provinces on the right side (Bangkok, Pathum Thani and Samut Prakan). Plotting the distribution of road accidents across provinces, we note from the plot below that Bangkok has the highest occurrences of road accidents in the BMR, followed by Samut Prakan, Pathum Thani, Samut Sakhon, Nakhon Pathom and Nonthaburi.
