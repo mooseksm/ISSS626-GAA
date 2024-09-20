@@ -503,7 +503,7 @@ Further observations are as follows:
 
 ## 9. Nearest Neighbour Analysis
 
-We will perform the Clark-Evans test of aggregation for spatial point pattern:
+After running KDE which shows the density of road accidents over the BMR, we will perform the Clark-Evans test of aggregation to statistically validate the degree of spatial clustering or dispersion of the road accident points by comparing the observed mean nearest neighbor distance with the expected average distance between neighbours in a hypothetical random distribution.
 
 The test hypotheses are:
 
@@ -515,11 +515,9 @@ The 95% confidence interval will be used.
 
 ### 9.1 Testing spatial point patterns using Clark and Evans Test
 
-::: panel-tabset
-## Overall BMR
+### 9.1.1 Nearest Neighbour Analysis for overall data
 
 ```{r}
-#| eval: false 
 clarkevans.test(roadacc_owin_ppp.km,
                 correction = "none",
                 clipregion = "province_owin",
@@ -527,12 +525,16 @@ clarkevans.test(roadacc_owin_ppp.km,
                 nsim = 999)
 ```
 
-Since p-value is less than 0.05, we reject the null hypothesis at 95% confidence interval. There is sufficient evidence to indicate that the distribution of road accidents is not randomly distributed.
+-   Since p-value is less than 0.05, **there is sufficient evidence to reject the null hypothesis H0** that the distribution of road accidents is randomly distributed.
 
+-   This is further supported by the R value of 0.19092. As this R value is less than 1, it indicates that **the pattern exhibits clustering and that the road accidents tend to occur close to one another and not in a dispersed/regular manner.**
+
+### 9.1.2 Nearest Neighbour Analysis for each province
+
+::: panel-tabset
 ## Bangkok
 
 ```{r}
-#| eval: false 
 clarkevans.test(roadacc_bkk_ppp.km,
                 correction="none",
                 clipregion=NULL,
@@ -596,7 +598,7 @@ clarkevans.test(roadacc_ss_ppp.km,
 ```
 :::
 
-Based on the results above, for which p-values are less than 0.05, we reject the null hypothesis at 95% confidence interval. There is sufficient evidence to indicate that the distribution of road accidents in all provinces is not randomly distributed.
+Based on the results above, for which all R values are less than 1 and all p-values are less than 0.05, we **reject the null hypothesis** at 95% confidence interval. **There is sufficient evidence to indicate that the distribution of road accidents in all provinces is not randomly distributed and instead exhibit clustering.**
 
 ## 10. Network Constrained Spatial Point Patterns Analysis
 
