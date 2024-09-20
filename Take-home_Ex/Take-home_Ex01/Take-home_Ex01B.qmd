@@ -23,13 +23,14 @@ options(timeout = 3000)
 ```
 
 ```{r}
-#| dropdown: true
+#| code-fold: true
 pacman::p_load(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly)
 ```
 
 ```{r}
+#| code-fold: true
 # loading datasets for analysis
-#refer to Part 1A for earlier steps on data wranglign
+#refer to Part 1A for earlier steps on data wrangling
 roadacc <- read_rds("data/rds/roadacc.rds")
 roadsbkk <- read_rds("data/rds/roadsbkk.rds")
 provincedata32647 <- read_rds("data/rds/provincedata32647.rds")
@@ -138,21 +139,21 @@ For first-order SPPA, we will:
 
 ### 7.2.1 Kernel Density Estimation (KDE)
 
-We will proceed to compute the KDE of road accidents in the BMR.
-
-### 7.2.1.1 Computing KDE using adaptive bandwidth
-
-We will derive adaptive KDE using *density.adaptive()* of spatstat. Adaptive schemes adjust itself according to the density of data - shorter bandwidths are used where data are dense and longer where sparse. This helps to mitigate against highly skewed distribution of spatial point patterns.
-
-However, before we do so, we convert the unit of measurement to kilometer as the default unit of measurement of EPSG: 32647 is in metres, which would make the values hard to comprehend:
+We will proceed to compute the KDE of road accidents in the BMR. However, before we do so, we convert the unit of measurement to kilometer as the default unit of measurement of EPSG: 32647 is in metres, which would make the values hard to comprehend:
 
 ```{r}
 roadacc_owin_ppp.km <- rescale.ppp(roadacc_owin_ppp,1000,"km")
 ```
 
+### 7.2.1.1 Computing KDE using adaptive bandwidth
+
+We will derive adaptive KDE using *density.adaptive()* of spatstat. Adaptive schemes adjust itself according to the density of data - shorter bandwidths are used where data are dense and longer where sparse. This helps to mitigate against highly skewed distribution of spatial point patterns.
+
 ```{r}
-#| eval: false 
-kde_roadacc_adaptive <- adaptive.density(roadacc_owin_ppp.km, method = "kernel") 
+kde_roadacc_adaptive <- adaptive.density(roadacc_owin_ppp.km, method = "kernel")
+```
+
+```{r}
 plot(kde_roadacc_adaptive)
 ```
 
@@ -161,7 +162,6 @@ plot(kde_roadacc_adaptive)
 We convert the KDE output for mapping purposes:
 
 ```{r}
-#| eval: false 
 gridded_kde_roadacc_adaptive <- as.SpatialGridDataFrame.im(kde_roadacc_adaptive)
 
 spplot(gridded_kde_roadacc_adaptive)
@@ -172,14 +172,12 @@ spplot(gridded_kde_roadacc_adaptive)
 Next, we will convert the gridded KDE object into a RasterLayer object using *raster()* of **raster package**:
 
 ```{r}
-#| eval: false 
 kde_roadacc_adaptive_raster <- raster(kde_roadacc_adaptive)
 ```
 
 We view the properties of *kde_roadacc_adaptive_raster* RasterLayer:
 
 ```{r}
-#| eval: false 
 kde_roadacc_adaptive_raster
 ```
 
@@ -190,7 +188,6 @@ Note that the CRS property is NA.
 We hence assign CRS information to the *kde_roadacc_adaptive_raster* RasterLayer:
 
 ```{r}
-#| eval: false 
 projection(kde_roadacc_adaptive_raster) <- CRS("+init=EPSG:32647")
 
 kde_roadacc_adaptive_raster
@@ -203,8 +200,6 @@ The CRS property is now completed.
 We will display the raster in cartographic quality map using **tmap package**:
 
 ```{r}
-#| eval: false 
-
 tm_shape(kde_roadacc_adaptive_raster)+   
   tm_raster("layer",palette = "viridis")+   
   tm_layout(legend.outside = TRUE,             
@@ -215,14 +210,15 @@ tm_shape(kde_roadacc_adaptive_raster)+
             frame = FALSE)
 ```
 
+From the plot above, we note that road accidents occur more intensely along the road lines in Bangkok and Samut Prakan. To better understand how the intensity of road accidents occur across the BMR, we will extract the six provinces as different study areas for analysis and comparison in the next section.
+
 ### 8.2 Comparing Spatial Point Patterns using KDE
 
 ### 8.2.1 Extracting study areas
 
-The code chunk will be used to extract the different provinces:
+The code chunk will be used to extract the different provinces as different study areas:
 
 ```{r}
-#| eval: false 
 bkk <- provincedata32647 %>%
   filter(ADM1_EN == "Bangkok")
 np <- provincedata32647 %>% 
@@ -237,10 +233,9 @@ ss <- provincedata32647 %>%
   filter(ADM1_EN == "Samut Sakhon")
 ```
 
-### 8.2.2 Creating owin object:
+### 8.2.2 Creating owin object for each study area
 
 ```{r}
-#| eval: false 
 bkk_owin = as.owin(bkk)
 np_owin = as.owin(np) 
 n_owin = as.owin(n) 
@@ -254,7 +249,6 @@ ss_owin = as.owin(ss)
 By using the code chunk below, we are able to extract road accidents that is within the specific province to carry out our analysis later on.
 
 ```{r}
-#| eval: false 
 roadacc_bkk_ppp = roadacc_ppp[bkk_owin]
 roadacc_np_ppp = roadacc_ppp[np_owin]
 roadacc_n_ppp = roadacc_ppp[n_owin]
@@ -263,10 +257,9 @@ roadacc_sp_ppp = roadacc_ppp[sp_owin]
 roadacc_ss_ppp = roadacc_ppp[ss_owin]
 ```
 
-Next, *rescale.ppp()* function is used to transform the unit of measurement from metre to kilometre:
+Next, *rescale.ppp()* function is used to transform the unit of measurement from metres to kilometres as EPSG: 32647 is in metres which would produce density values that are too small to comprehend.
 
 ```{r}
-#| eval: false 
 roadacc_bkk_ppp.km = rescale.ppp(roadacc_bkk_ppp,1000,"km")
 roadacc_np_ppp.km = rescale.ppp(roadacc_np_ppp,1000,"km")
 roadacc_n_ppp.km = rescale.ppp(roadacc_n_ppp,1000,"km")
@@ -278,8 +271,6 @@ roadacc_ss_ppp.km = rescale.ppp(roadacc_ss_ppp,1000,"km")
 We then plot the 6 provinces and the locations of the road accidents:
 
 ```{r}
-#| eval: false 
-
 par(mfrow=c(2,3))
 plot(roadacc_bkk_ppp.km,main="Bangkok")
 plot(roadacc_np_ppp.km,main="Nakhon Pathom")
@@ -289,50 +280,226 @@ plot(roadacc_sp_ppp.km,main="Samut Prakan")
 plot(roadacc_ss_ppp.km,main="Samut Sakhon")
 ```
 
-### 8.2.4 Computing KDE
+### 8.2.4 Computing KDE for each study area
 
-The code chunk below is used to compute the KDE of the 6 provinces:
+We will also derive adaptive KDE using *density.adaptive()* of spatstat for all six provinces:
 
 ```{r}
-#| eval: false 
-
-par(mfrow=c(2,3)) 
-plot(density(roadacc_bkk_ppp.km,
-             sigma=bw.diggle,
-             edge=TRUE,
-             kernel="gaussian"),
-     main="Bangkok") 
-
-plot(density(roadacc_np_ppp.km,
-             sigma=bw.diggle,
-             edge=TRUE,
-             kernel="gaussian"),
-     main="Nakhon Pathom") 
-
-plot(density(roadacc_n_ppp.km,
-             sigma=bw.diggle,
-             edge=TRUE,
-             kernel="gaussian"),
-     main="Nonthaburi") 
-
-plot(density(roadacc_pt_ppp.km,
-             sigma=bw.diggle,
-             edge=TRUE,
-             kernel="gaussian"),
-     main="Pathum Thani")
-
-plot(density(roadacc_sp_ppp.km,
-             sigma=bw.diggle,
-             edge=TRUE,
-             kernel="gaussian"),
-     main="Samut Prakan") 
-
-plot(density(roadacc_ss_ppp.km,
-             sigma=bw.diggle,
-             edge=TRUE,
-             kernel="gaussian"),
-     main="Samut Sakhon")
+kde_bkk_adaptive <- adaptive.density(roadacc_bkk_ppp.km, method = "kernel")
+kde_np_adaptive <- adaptive.density(roadacc_np_ppp.km, method = "kernel")
+kde_n_adaptive <- adaptive.density(roadacc_n_ppp.km, method = "kernel")
+kde_pt_adaptive <- adaptive.density(roadacc_pt_ppp.km, method = "kernel")
+kde_sp_adaptive <- adaptive.density(roadacc_sp_ppp.km, method = "kernel")
+kde_ss_adaptive <- adaptive.density(roadacc_ss_ppp.km, method = "kernel")
 ```
+
+We will then convert the KDE output into a grid object for mapping purposes:
+
+```{r}
+gridded_kde_bkk_adaptive <- as.SpatialGridDataFrame.im(kde_bkk_adaptive)
+gridded_kde_np_adaptive <- as.SpatialGridDataFrame.im(kde_np_adaptive)
+gridded_kde_n_adaptive <- as.SpatialGridDataFrame.im(kde_n_adaptive)
+gridded_kde_pt_adaptive <- as.SpatialGridDataFrame.im(kde_pt_adaptive)
+gridded_kde_sp_adaptive <- as.SpatialGridDataFrame.im(kde_sp_adaptive)
+gridded_kde_ss_adaptive <- as.SpatialGridDataFrame.im(kde_ss_adaptive)
+```
+
+::: panel-tabset
+## Bangkok
+
+```{r}
+spplot(gridded_kde_bkk_adaptive)
+```
+
+## Nakhon Pathom
+
+```{r}
+spplot(gridded_kde_np_adaptive)
+```
+
+## Nonthaburi
+
+```{r}
+spplot(gridded_kde_n_adaptive)
+```
+
+## Pathum Thani
+
+```{r}
+spplot(gridded_kde_pt_adaptive)
+```
+
+## Samut Prakan
+
+```{r}
+spplot(gridded_kde_sp_adaptive)
+```
+
+## Samut Sakhon
+
+```{r}
+spplot(gridded_kde_ss_adaptive)
+```
+:::
+
+Next, we will convert the gridded KDE object into a RasterLayer object using *raster()* of **raster package** and assign the CRS of EPSG 32647:
+
+::: panel-tabset
+## Bangkok
+
+```{r}
+kde_bkk_adaptive_raster <- raster(kde_bkk_adaptive)
+projection(kde_bkk_adaptive_raster) <- CRS("+init=EPSG:32647")  
+kde_bkk_adaptive_raster
+```
+
+## Nakhon Pathom
+
+```{r}
+kde_np_adaptive_raster <- raster(kde_np_adaptive)
+projection(kde_np_adaptive_raster) <- CRS("+init=EPSG:32647")  
+kde_np_adaptive_raster
+```
+
+## Nonthaburi
+
+```{r}
+kde_n_adaptive_raster <- raster(kde_n_adaptive)
+projection(kde_n_adaptive_raster) <- CRS("+init=EPSG:32647")  
+kde_n_adaptive_raster
+```
+
+## Pathum Thani
+
+```{r}
+kde_pt_adaptive_raster <- raster(kde_pt_adaptive)
+projection(kde_pt_adaptive_raster) <- CRS("+init=EPSG:32647")  
+kde_pt_adaptive_raster
+```
+
+## Samut Prakan
+
+```{r}
+kde_sp_adaptive_raster <- raster(kde_sp_adaptive)
+projection(kde_sp_adaptive_raster) <- CRS("+init=EPSG:32647")  
+kde_sp_adaptive_raster
+```
+
+## Samut Sakhon
+
+```{r}
+kde_ss_adaptive_raster <- raster(kde_ss_adaptive)
+projection(kde_ss_adaptive_raster) <- CRS("+init=EPSG:32647")
+kde_ss_adaptive_raster
+```
+:::
+
+### 8.1.4 Visualising the output in tmap
+
+We will display the raster in cartographic quality map using **tmap package**:
+
+::: panel-tabset
+## Bangkok
+
+```{r}
+tm_shape(kde_bkk_adaptive_raster)+
+  tm_raster("layer",palette = "viridis")+
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right",
+            legend.position = c("right","bottom"),
+            main.title = "Distribution of road accidents in Bangkok (adaptive bandwidth)",
+            main.title.size = 0.8,
+            frame = FALSE)
+```
+
+## Nakhon Pathom
+
+```{r}
+tm_shape(kde_np_adaptive_raster)+
+  tm_raster("layer",palette = "viridis")+
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right",
+            legend.position = c("right","bottom"),
+            main.title = "Distribution of road accidents in Nakhon Pathom (adaptive bandwidth)",
+            main.title.size = 0.8,
+            frame = FALSE)
+```
+
+## Nonthaburi
+
+```{r}
+tm_shape(kde_n_adaptive_raster)+
+  tm_raster("layer",palette = "viridis")+
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right",
+            legend.position = c("right","bottom"),
+            main.title = "Distribution of road accidents in Nonthaburi (adaptive bandwidth)",
+            main.title.size = 0.8,
+            frame = FALSE)
+```
+
+## Pathum Thani
+
+```{r}
+tm_shape(kde_pt_adaptive_raster)+
+  tm_raster("layer",palette = "viridis")+
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right",
+            legend.position = c("right","bottom"),
+            main.title = "Distribution of road accidents in Pathum Thani (adaptive bandwidth)",
+            main.title.size = 0.8,
+            frame = FALSE)
+```
+
+## Samut Prakan
+
+```{r}
+tm_shape(kde_sp_adaptive_raster)+
+  tm_raster("layer",palette = "viridis")+
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right",
+            legend.position = c("right","bottom"),
+            main.title = "Distribution of road accidents in Samut Prakan (adaptive bandwidth)",
+            main.title.size = 0.8,
+            frame = FALSE)
+```
+
+## Samut Sakhon
+
+```{r}
+tm_shape(kde_ss_adaptive_raster)+
+  tm_raster("layer",palette = "viridis")+
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right",
+            legend.position = c("right","bottom"),
+            main.title = "Distribution of road accidents in Samut Sakhon (adaptive bandwidth)",
+            main.title.size = 0.8,
+            frame = FALSE)
+```
+:::
+
+From the plots above, we note the maximum KDE for each province (in descending order) and details for each province as follows:
+
+-   [Samut Prakan]{.underline} - up to 600 to 800. Most of the road accidents optically seem to occur at 4 short segments.
+
+-   [Bangkok]{.underline} - up to 300 to 400. Most of the road accidents optically seem to occur at 4 short segments.
+
+-   [Samut Sakhon]{.underline}: Max density up to 250 to 300. Most of the road accidents seem to occur along the same major road.
+
+-   [Pathum Thani]{.underline} - up to 200 to 250. Most of the road accidents seem to occur along the same major road.
+
+-   [Nonthaburi]{.underline} - up to 40 to 50. Most of the road accidents optically seem to occur at 8 segments.
+
+-   [Nakhon Pathom]{.underline} - up to 15 to 20. Most of the road accidents optically seem to occur at one major road and 3 mid-sized road segments.
+
+Further observations are as follows:
+
+-   Notably, while Bangkok is a known tourist destination/major urban hub, it ranks second to Samut Prakan in terms of road accident density.
+
+```{=html}
+<!-- -->
+```
+-   Road accidents seem more scattered in Nonthaburi and Nakhon Pathom which suggest that there could be more complex road systems in these areas where accidents could occur at various points.
 
 ## 9. Nearest Neighbour Analysis
 
