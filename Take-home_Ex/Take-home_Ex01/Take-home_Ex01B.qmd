@@ -147,7 +147,6 @@ We will derive adaptive KDE using *density.adaptive()* of spatstat. Adaptive sch
 However, before we do so, we convert the unit of measurement to kilometer as the default unit of measurement of EPSG: 32647 is in metres, which would make the values hard to comprehend:
 
 ```{r}
-#| eval: false 
 roadacc_owin_ppp.km <- rescale.ppp(roadacc_owin_ppp,1000,"km")
 ```
 
