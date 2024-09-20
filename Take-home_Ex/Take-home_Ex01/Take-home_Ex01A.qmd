@@ -14,13 +14,11 @@ execute:
 
 # Take-Home Exercise 1: **Geospatial Analytics for Public Good (Part 1A)**
 
-::: {.callout-note collapse="true" icon="false"}
 ```{r}
 #| echo: false
 # increased timeout to mitigate error issues during rendering
 options(timeout = 2000)
 ```
-:::
 
 ## 1. Background
 
@@ -105,7 +103,7 @@ Taking a glimpse at the data to determine the fields in the data:
 glimpse(roadacc)
 ```
 
-There are 81735 rows and 18 variables. Further details about the important variables that would be needed for analysis can be found in the dropdown box below:
+There are 81735 rows and 18 variables. Further details about the important variables that would be needed for analysis can be found in the drop-down box below:
 
 ::: {.callout-caution collapse="true"}
 ## More information about variables for analysis
@@ -175,11 +173,9 @@ We then determine the unique provinces within the dataset and scan through the p
 unique_provinces <- roadacc %>% 
   distinct(province_en) %>%
   arrange(province_en)
-
-DT::datatable(unique_provinces,class = "compact")
 ```
 
-Our region of interest comprises Bangkok and five adjacent provinces of Nakhon Pathom, Nonthaburi, Pathum Thani, Samut Prakan and Samut Sakhon.
+Based on observations, there were no spelling mistakes. As such we can proceed with filtering the data to keep our region of interest which comprises Bangkok and five adjacent provinces of Nakhon Pathom, Nonthaburi, Pathum Thani, Samut Prakan and Samut Sakhon:
 
 ```{r}
 #| eval: false
@@ -209,13 +205,6 @@ roadacc$acc_code[duplicated(roadacc$acc_code) == TRUE]
 ```
 
 There are no duplicate entries.
-
-Generating summary statistics of *roadacc*:
-
-```{r}
-#| eval: false
-summary(roadacc)
-```
 
 ::: callout-note
 ## In-class notes from Prof Kam:
@@ -511,7 +500,7 @@ missing_counts <- sapply(roadlines32647, function(x) sum(is.na(x)))
 print(missing_counts)
 ```
 
-Based on the result above, more than 60% of data is missing for the variable "source" and more than 80% of data is missing for the variables "name", "name_en", "surface", "smoothness", "width", "lanes", "oneway", "bridge", "layer", "source" and "name_th". Given the extent of missing data, we will omit these columns as they would not provide useful information for analysis and only retain the relevant/useful columns "highway" and "geometry" with no missing data:
+Based on the result we obtained, more than 60% of data is missing for the variable "source" and more than 80% of data is missing for the variables "name", "name_en", "surface", "smoothness", "width", "lanes", "oneway", "bridge", "layer", "source" and "name_th". Given the extent of missing data, we will omit these columns as they would not provide useful information for analysis and only retain the relevant/useful columns "highway" and "geometry" with no missing data:
 
 ```{r}
 #| eval: false
@@ -587,7 +576,7 @@ geometry_types <- roadsbkk %>%
 geometry_types
 ```
 
-As seen from the output above, the *roadsbkk* data comprises both linestring and multilinestring geometries. Linestring represents a single line, while MultiLinestring represents a collection of multiple lines. We need to simplify the data structure by converting multilinestring to linestring geometry to facilitate downstream analysis as the use of multilinestring might lead to error.
+Based on the output from above, the *roadsbkk* data comprises both linestring and multilinestring geometries. Linestring represents a single line, while MultiLinestring represents a collection of multiple lines. We need to simplify the data structure by converting multilinestring to linestring geometry to facilitate downstream analysis as the use of multilinestring might lead to error.
 
 We utilise the [st_cast()](https://r-spatial.github.io/sf/reference/st_cast.html) function to break down multilinestring geometries to linestring geometries:
 
@@ -628,7 +617,7 @@ We carry some EDA to understand how the occurrences of road accidents could be i
 ### 6.1 Distribution of Road Accidents across Provinces
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 tmap_mode('plot')
 tm_shape(provincedata32647) + 
   tm_polygons() +           
@@ -641,7 +630,7 @@ tm_shape(provincedata32647) +
 As seen from the map above, road accidents within the BMR seem to be more concentrated within the provinces on the right side (Bangkok, Pathum Thani and Samut Prakan). Plotting the distribution of road accidents across provinces, we note from the plot below that Bangkok has the highest occurrences of road accidents in the BMR, followed by Samut Prakan, Pathum Thani, Samut Sakhon, Nakhon Pathom and Nonthaburi.
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(province_en, province_en, .fun = length))) + 
   geom_bar(fill = "skyblue") +
   labs(title = "Distribution of Road Accidents across Provinces", x = "Province", y = "Count") +
@@ -651,7 +640,7 @@ ggplot(roadacc, aes(x = fct_reorder(province_en, province_en, .fun = length))) +
 ### 6.2 Distribution of Road Accidents by agency
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(agency, agency, .fun = length))) + 
   geom_bar(fill = "lightgreen") +
   labs(title = "Distribution of Road Accidents by Agency", x = "Agency", y = "Count") +
@@ -666,11 +655,8 @@ We also analyse the road accidents by time, namely by year, by month, by day of 
 
 ### 6.3.1 By year
 
-::: panel-tabset
-## Distribution by year (at province level)
-
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = inc_year)) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Year", x = "Year", y = "Count") +
@@ -687,22 +673,18 @@ ggplot(roadacc, aes(x = inc_year)) +
 -   We note that the number of road accidents in Samut Sakhon fell from 2019 to 2021 but increased in 2022.
 
 -   Of the 6 provinces, we note that only Nakhon Pathom experienced a fall in road accidents from 2019 to 2022.
-:::
 
 ### 6.3.2 By month
 
 We also observe the data by month using cycle plots that would enable us to observe cyclical/seasonal patterns, if present.
 
-### 6.3.2.1 Plotting distribution of road accidents by month
-
-::: panel-tabset
-## By month across years
+### 6.3.2.1 By month across years
 
 To plot the distribution of road accidents by months across the years, we create a *roadacc_month* file that groups the road accidents per month for each year.
 
 ```{r}
 #| eval: false
-#| dropdown: true
+#| drop-down: true
 roadacc_month <- roadacc %>%
   group_by(inc_year,inc_month) %>%
   summarise(count = n(), .groups = 'drop')
@@ -710,17 +692,17 @@ roadacc_month <- roadacc %>%
 
 ```{r}
 #| eval: false
-#| dropdown: true
+#| drop-down: true
 write_rds(roadacc_month,"data/rds/roadacc_month.rds")
 ```
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 roadacc_month <- read_rds("data/rds/roadacc_month.rds")
 ```
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 hline.data <- roadacc_month %>%
   group_by(inc_month) %>%
   summarise(avgvalue = mean(count))
@@ -749,15 +731,11 @@ Based on the plot, we observe the following:
 -   **Occurrences of road accidents in Jul, Aug, Oct to Dec seem to generally be increasing over the years.** Based on this observation alone, the increase in road accidents could potentially be due to the rainy season between Jul to Oct and the presence of a higher population due to peak tourist seasons in Nov and Dec.
 
 -   **Occurrences of road accidents in Mar to Jun and Sep generally do not fluctuate much over the years.**
-:::
 
-### 6.3.2.2 Plotting distribution of road accidents by month by province
+### 6.3.2.2 By month by province
 
-We further observe the occurrence of road accidents by month at the province level:
-
-::: {.callout-note icon="false" collapse="true"}
 ```{r}
-#| dropdown: true
+#| drop-down: true
 #| eval: false
 roadacc_month_bkk <- roadacc %>%
   filter(province_en=="Bangkok") %>%
@@ -793,7 +771,7 @@ roadacc_month_ss <- roadacc %>%
 Saving them as rds files:
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 #| eval: false
 write_rds(roadacc_month_bkk,"data/rds/roadacc_month_bkk.rds")
 write_rds(roadacc_month_sp,"data/rds/roadacc_month_sp.rds")
@@ -806,7 +784,7 @@ write_rds(roadacc_month_ss,"data/rds/roadacc_month_ss.rds")
 Loading the newly created rds files into R:
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 roadacc_month_bkk <- read_rds("data/rds/roadacc_month_bkk.rds")
 roadacc_month_sp <- read_rds("data/rds/roadacc_month_sp.rds")
 roadacc_month_n <- read_rds("data/rds/roadacc_month_n.rds")
@@ -814,13 +792,12 @@ roadacc_month_pt <- read_rds("data/rds/roadacc_month_pt.rds")
 roadacc_month_np <- read_rds("data/rds/roadacc_month_np.rds")
 roadacc_month_ss <- read_rds("data/rds/roadacc_month_ss.rds")
 ```
-:::
 
 ::: panel-tabset
 ## Bangkok
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 hline.data <- roadacc_month_bkk %>%
   group_by(inc_month) %>%
   summarise(avgvalue = mean(count))
@@ -855,7 +832,7 @@ The following observations were made:
 ## Samut Prakan
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 hline.data <- roadacc_month_sp %>%
   group_by(inc_month) %>%
   summarise(avgvalue = mean(count))
@@ -888,7 +865,7 @@ The following observations were made:
 ## Nonthaburi
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 hline.data <- roadacc_month_n %>%
   group_by(inc_month) %>%
   summarise(avgvalue = mean(count))
@@ -925,7 +902,7 @@ The following observations were made:
 ## Pathum Thani
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 hline.data <- roadacc_month_pt %>%
   group_by(inc_month) %>%
   summarise(avgvalue = mean(count))
@@ -956,7 +933,7 @@ The following observations were made:
 ## Nakhon Pathom
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 hline.data <- roadacc_month_np %>%
   group_by(inc_month) %>%
   summarise(avgvalue = mean(count))
@@ -987,7 +964,7 @@ The following observations were made:
 ## Samut Sakhon
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 hline.data <- roadacc_month_ss %>%
   group_by(inc_month) %>%
   summarise(avgvalue = mean(count))
@@ -1022,7 +999,7 @@ The following observations were made:
 ## Overall
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = inc_dayofweek)) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Day of Week", x = "Day of Week", y = "Count") +
@@ -1034,7 +1011,7 @@ We note from the plot that road accidents occur mostly on Fri and Sat and this c
 ## Breakdown by province
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = inc_dayofweek)) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Day of Week", x = "Day of Week", y = "Count") +
@@ -1051,7 +1028,7 @@ ggplot(roadacc, aes(x = inc_dayofweek)) +
 ## Overall
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = inc_time)) + 
   geom_histogram(binwidth = 1, fill = "slategrey", color = "black") +
   scale_x_continuous(breaks = seq(0, 23, 1))+
@@ -1066,8 +1043,7 @@ ggplot(roadacc, aes(x = inc_time)) +
 ## Breakdown by province
 
 ```{r}
-#| dropdown: true
-#| eval: false
+#| drop-down: true
 ggplot(roadacc, aes(x = inc_time)) + 
   geom_histogram(binwidth = 1, fill = "slategrey", color = "black") +
   scale_x_continuous(breaks = seq(0, 23, 1))+
@@ -1087,7 +1063,7 @@ Bangkok, Samut Prakan and Pathum Thani also seem to follow the general observati
 ## Overall
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(weather_condition, weather_condition, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Weather Condition", x = "Weather Condition", y = "Count") +
@@ -1099,8 +1075,7 @@ Based on the plot, it can be seen that road accidents most frequently occur duri
 ## Breakdown by Province
 
 ```{r}
-#| dropdown: true
-#| eval: false
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(weather_condition, weather_condition, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Weather Condition", x = "Weather Condition", y = "Count") +
@@ -1117,7 +1092,7 @@ Across provinces, similar observations were made as it was observed that road ac
 ## Overall
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(road_description, road_description, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Road Description", x = "Road Description", y = "Count") +
@@ -1129,8 +1104,7 @@ Based on the plot, road accidents mostly occur on straight roads, roads categori
 ## Breakdown by Province
 
 ```{r}
-#| dropdown: true
-#| eval: false
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(road_description, road_description, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Road Description", x = "Road Description", y = "Count") +
@@ -1141,18 +1115,13 @@ ggplot(roadacc, aes(x = fct_reorder(road_description, road_description, .fun = l
 Across provinces, similar observations were made as it was observed that road accidents mostly occur on straight roads, roads categorised as other, followed by wide curve and then grade-separated intersection/ramps.
 :::
 
-```{r}
-#| echo: false
-gc()  # Garbage collection to free memory
-```
-
 ### 6.6 Distribution of Road Accidents by slope description
 
 ::: panel-tabset
 ## Overall
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(slope_description, slope_description, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Slope Description", x = "Slope Description", y = "Count") +
@@ -1164,8 +1133,7 @@ Based on the plot, road accidents where there are no slopes. **Combining this ob
 ## Breakdown by Province
 
 ```{r}
-#| dropdown: true
-#| eval: false
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(slope_description, slope_description, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Slope Description", x = "Slope Description", y = "Count") +
@@ -1182,7 +1150,7 @@ Across provinces, similar observations were made as it was observed that road ac
 ## Overall
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(vehicle_type, vehicle_type, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Vehicle Type", x = "Vehicle Type", y = "Count") +
@@ -1196,8 +1164,7 @@ Based on the plot, road accidents mostly involve private/passenger car, followed
 We do a more detailed analysis at the province level:
 
 ```{r}
-#| dropdown: true
-#| eval: false
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(vehicle_type, vehicle_type, .fun = length))) +
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Vehicle Type", x = "Vehicle Type", y = "Count") +
@@ -1215,7 +1182,7 @@ ggplot(roadacc, aes(x = fct_reorder(vehicle_type, vehicle_type, .fun = length)))
 ### 6.8 Distribution of Road Accidents by presumed cause
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(presumed_cause, presumed_cause, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Presumed Cause", x = "Presumed Cause", y = "Count") +
@@ -1230,7 +1197,7 @@ The top presumed cause for accident is speeding.
 ## Overall
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Accident Type", x = "Accident Type Cause", y = "Count") +
@@ -1242,8 +1209,7 @@ The top two presumed cause for road accidents are rear-end collision and rollove
 ## Breakdown by Province
 
 ```{r}
-#| dropdown: true
-#| eval: false
+#| drop-down: true
 ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length))) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Accident Type", x = "Accident Type Cause", y = "Count") +
@@ -1257,7 +1223,7 @@ ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length)
 ### 6.10 Distribution of number of vehicles involved
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 summary_stats <- roadacc %>%
   group_by(province_en) %>%
   summarise(
@@ -1298,7 +1264,7 @@ ggplot(roadacc,
 ### 6.11 Distribution of number of fatalities
 
 ```{r}
-#| dropdown: true
+#| drop-down: true
 summary_stats <- roadacc %>%
   group_by(province_en) %>%
   summarise(
@@ -1339,7 +1305,7 @@ Across the provinces, the median number of fatalities is 0. However, while few, 
 ### 6.12 Distribution of number of injuries
 
 ```{r}
-#| dropdown: false
+#| drop-down: true
 summary_stats <- roadacc %>%
   group_by(province_en) %>%
   summarise(
