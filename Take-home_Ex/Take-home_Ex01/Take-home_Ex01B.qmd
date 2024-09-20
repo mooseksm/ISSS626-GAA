@@ -1,0 +1,483 @@
+---
+title: "Take-home Exercise 1B"
+author: "Kock Si Min"
+date: September 2, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# Take-Home Exercise 1: **Geospatial Analytics for Public Good (Part 1B)**
+
+### Loading the necessary R packages and data created in [Part 1A](https://isss626-ksm.netlify.app/take-home_ex/take-home_ex01/take-home_ex01a)
+
+```{r}
+#| echo: false
+# increased timeout to mitigate error issues during rendering
+options(timeout = 3000)
+```
+
+```{r}
+#| dropdown: true
+pacman::p_load(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly)
+```
+
+```{r}
+# loading datasets for analysis
+#refer to Part 1A for earlier steps on data wranglign
+roadacc <- read_rds("data/rds/roadacc.rds")
+roadsbkk <- read_rds("data/rds/roadsbkk.rds")
+provincedata32647 <- read_rds("data/rds/provincedata32647.rds")
+roadacc_month_bkk <- read_rds("data/rds/roadacc_month_bkk.rds")
+roadacc_month_sp <- read_rds("data/rds/roadacc_month_sp.rds")
+roadacc_month_n <- read_rds("data/rds/roadacc_month_n.rds")
+roadacc_month_pt <- read_rds("data/rds/roadacc_month_pt.rds")
+roadacc_month_np <- read_rds("data/rds/roadacc_month_np.rds")
+roadacc_month_ss <- read_rds("data/rds/roadacc_month_ss.rds")
+```
+
+## 7. Spatial Point Pattern Analysis (SPPA)
+
+We will conduct a Spatial Point Pattern Analysis (SPPA) to evaluate the distribution of road accidents within the Bangkok Metropolitan Region (BMR).
+
+The specific questions we would like to answer are as follows:
+
+-   are the road accidents in BMR randomly distributed throughout the region?
+
+-   if no, then where are the locations with higher concentration of road accidents?
+
+Specifically, we will be carrying out the following SPPA methods:
+
+-   First-order SPPA
+
+-   Spatial analysis of road traffic accidents using Network SPPA methods.
+
+-   Spatio-temporal analysis of road accidents using Temporal Network SPPA methods.
+
+## 7.1 Data Wrangling for SPPA
+
+### 7.1.1 Converting data to ppp format for Spatial Point Pattern Analysis
+
+Before we carry out spatial point pattern analysis, we need to convert the data from sf format to ppp format:
+
+```{r}
+roadacc_ppp <- as.ppp(roadacc)
+roadacc_ppp
+```
+
+The code chunk below plots *roadacc_ppp* for visualisation:
+
+```{r}
+plot(roadacc_ppp)
+```
+
+We take a quick look at the summary statistics of the *roadacc_ppp* object using the code chunk below:
+
+```{r}
+summary(roadacc_ppp)
+```
+
+### 7.1.2 Checking for duplicate points
+
+In SPPA, a significant issue is the presence of duplicates as the statistical methodology used for spatial point patterns processes is based largely on the assumption that process are simple i.e. that the points cannot be coincident. We check for duplication in a *ppp* object via the code chunk below:
+
+```{r}
+any(duplicated(roadacc_ppp))
+```
+
+The data does not have any duplicated points.
+
+### 7.1.3 **Creating an *owin* object**
+
+When analysing spatial point patterns, it is a good practice to confine the analysis within a geographical area like Singapore boundary. In **spatstat**, an object called *owin* is specially designed to represent this polygonal region. The code chunk below is used to covert *provincedata32647* SpatialPolygon object into owin object of **spatstat**:
+
+```{r}
+provinceowin <- as.owin(provincedata32647)
+```
+
+The ouput object can be displayed by using *plot()* function
+
+```{r}
+plot(provinceowin)
+```
+
+```{r}
+summary(provinceowin)
+```
+
+### 7.1.4 Combining **point events object and owin object**
+
+We extract road accident events that are located within the BMR by using the code chunk below:
+
+```{r}
+roadacc_owin_ppp = roadacc_ppp[provinceowin]
+```
+
+```{r}
+plot(roadacc_owin_ppp)
+```
+
+```{r}
+summary(roadacc_owin_ppp)
+```
+
+## 7.2 First-order SPPA
+
+The first-order SPPA will study how the intensity of road accidents vary across the BMR i.e. identify whether road accidents are more concentrated in areas due to underlying properties of the spatial environment.
+
+For first-order SPPA, we will:
+
+-   derive the **kernel density estimation (KDE)** layer for visualising and exploring the intensity of point processes,
+
+-   perform **Confirmatory SPPA** using **Nearest Neighbour** statistics to determine if the road accidents are randomly distributed or influenced by underlying properties of the spatial environment.
+
+### 7.2.1 Kernel Density Estimation (KDE)
+
+We will proceed to compute the KDE of road accidents in the BMR.
+
+### 7.2.1.1 Computing KDE using adaptive bandwidth
+
+We will derive adaptive KDE using *density.adaptive()* of spatstat. Adaptive schemes adjust itself according to the density of data - shorter bandwidths are used where data are dense and longer where sparse. This helps to mitigate against highly skewed distribution of spatial point patterns.
+
+However, before we do so, we convert the unit of measurement to kilometer as the default unit of measurement of EPSG: 32647 is in metres, which would make the values hard to comprehend:
+
+```{r}
+roadacc_owin_ppp.km <- rescale.ppp(roadacc_owin_ppp,1000,"km")
+```
+
+```{r}
+kde_roadacc_adaptive <- adaptive.density(roadacc_owin_ppp.km, method = "kernel") 
+plot(kde_roadacc_adaptive)
+```
+
+### 8.1.1 Converting KDE output into grid object
+
+We convert the KDE output for mapping purposes:
+
+```{r}
+gridded_kde_roadacc_adaptive <- as.SpatialGridDataFrame.im(kde_roadacc_adaptive)
+
+spplot(gridded_kde_roadacc_adaptive)
+```
+
+### 8.1.2 Converting gridded output into raster
+
+Next, we will convert the gridded KDE object into a RasterLayer object using *raster()* of **raster package**:
+
+```{r}
+kde_roadacc_adaptive_raster <- raster(kde_roadacc_adaptive)
+```
+
+We view the properties of *kde_roadacc_adaptive_raster* RasterLayer:
+
+```{r}
+kde_roadacc_adaptive_raster
+```
+
+Note that the CRS property is NA.
+
+### 8.1.3 Assigning projection system
+
+We hence assign CRS information to the *kde_roadacc_adaptive_raster* RasterLayer:
+
+```{r}
+projection(kde_roadacc_adaptive_raster) <- CRS("+init=EPSG:32647")
+
+kde_roadacc_adaptive_raster
+```
+
+The CRS property is now completed.
+
+### 8.1.4 Visualising the output in tmap
+
+We will display the raster in cartographic quality map using **tmap package**:
+
+```{r}
+tm_shape(kde_roadacc_adaptive_raster)+   
+  tm_raster("layer",palette = "viridis")+   
+  tm_layout(legend.outside = TRUE,             
+            legend.outside.position = "right",             
+            legend.position = c("right","bottom"),             
+            main.title = "Distribution of road accidents (adaptive bandwidth)", 
+            main.title.size = 0.8,             
+            frame = FALSE)
+```
+
+### 8.2 Comparing Spatial Point Patterns using KDE
+
+### 8.2.1 Extracting study areas
+
+The code chunk will be used to extract the different provinces:
+
+```{r}
+bkk <- provincedata32647 %>%
+  filter(ADM1_EN == "Bangkok")
+np <- provincedata32647 %>% 
+  filter(ADM1_EN == "Nakhon Pathom") 
+n <- provincedata32647 %>%   
+  filter(ADM1_EN == "Nonthaburi") 
+pt <- provincedata32647 %>%   
+  filter(ADM1_EN == "Pathum Thani") 
+sp <- provincedata32647 %>%   
+  filter(ADM1_EN == "Samut Prakan") 
+ss <- provincedata32647 %>%   
+  filter(ADM1_EN == "Samut Sakhon")
+```
+
+### 8.2.2 Creating owin object:
+
+```{r}
+bkk_owin = as.owin(bkk)
+np_owin = as.owin(np) 
+n_owin = as.owin(n) 
+pt_owin = as.owin(pt) 
+sp_owin = as.owin(sp) 
+ss_owin = as.owin(ss)
+```
+
+### 8.2.3 Combining road accident points and study area
+
+By using the code chunk below, we are able to extract road accidents that is within the specific province to carry out our analysis later on.
+
+```{r}
+roadacc_bkk_ppp = roadacc_ppp[bkk_owin]
+roadacc_np_ppp = roadacc_ppp[np_owin]
+roadacc_n_ppp = roadacc_ppp[n_owin]
+roadacc_pt_ppp = roadacc_ppp[pt_owin]
+roadacc_sp_ppp = roadacc_ppp[sp_owin]
+roadacc_ss_ppp = roadacc_ppp[ss_owin]
+```
+
+Next, *rescale.ppp()* function is used to transform the unit of measurement from metre to kilometre:
+
+```{r}
+roadacc_bkk_ppp.km = rescale.ppp(roadacc_bkk_ppp,1000,"km")
+roadacc_np_ppp.km = rescale.ppp(roadacc_np_ppp,1000,"km")
+roadacc_n_ppp.km = rescale.ppp(roadacc_n_ppp,1000,"km")
+roadacc_pt_ppp.km = rescale.ppp(roadacc_pt_ppp,1000,"km")
+roadacc_sp_ppp.km = rescale.ppp(roadacc_sp_ppp,1000,"km")
+roadacc_ss_ppp.km = rescale.ppp(roadacc_ss_ppp,1000,"km")
+```
+
+We then plot the 6 provinces and the locations of the road accidents:
+
+```{r}
+par(mfrow=c(2,3))
+plot(roadacc_bkk_ppp.km,main="Bangkok")
+plot(roadacc_np_ppp.km,main="Nakhon Pathom")
+plot(roadacc_n_ppp.km,main="Nonthaburi") 
+plot(roadacc_pt_ppp.km,main="Pathum Thani")
+plot(roadacc_sp_ppp.km,main="Samut Prakan")
+plot(roadacc_ss_ppp.km,main="Samut Sakhon")
+```
+
+### 8.2.4 Computing KDE
+
+The code chunk below is used to compute the KDE of the 6 provinces:
+
+```{r}
+par(mfrow=c(2,3)) 
+plot(density(roadacc_bkk_ppp.km,
+             sigma=bw.diggle,
+             edge=TRUE,
+             kernel="gaussian"),
+     main="Bangkok") 
+
+plot(density(roadacc_np_ppp.km,
+             sigma=bw.diggle,
+             edge=TRUE,
+             kernel="gaussian"),
+     main="Nakhon Pathom") 
+
+plot(density(roadacc_n_ppp.km,
+             sigma=bw.diggle,
+             edge=TRUE,
+             kernel="gaussian"),
+     main="Nonthaburi") 
+
+plot(density(roadacc_pt_ppp.km,
+             sigma=bw.diggle,
+             edge=TRUE,
+             kernel="gaussian"),
+     main="Pathum Thani")
+
+plot(density(roadacc_sp_ppp.km,
+             sigma=bw.diggle,
+             edge=TRUE,
+             kernel="gaussian"),
+     main="Samut Prakan") 
+
+plot(density(roadacc_ss_ppp.km,
+             sigma=bw.diggle,
+             edge=TRUE,
+             kernel="gaussian"),
+     main="Samut Sakhon")
+```
+
+## 9. Nearest Neighbour Analysis
+
+We will perform the Clark-Evans test of aggregation for spatial point pattern:
+
+The test hypotheses are:
+
+H0: The distribution of road accidents is randomly distributed.
+
+H1: The distribution of road accidents is not randomly distributed.
+
+The 95% confidence interval will be used.
+
+### 9.1 Testing spatial point patterns using Clark and Evans Test
+
+::: panel-tabset
+## Overall BMR
+
+```{r}
+clarkevans.test(roadacc_owin_ppp.km,
+                correction = "none",
+                clipregion = "province_owin",
+                alternative = c("clustered"),
+                nsim = 999)
+```
+
+Since p-value is less than 0.05, we reject the null hypothesis at 95% confidence interval. There is sufficient evidence to indicate that the distribution of road accidents is not randomly distributed.
+
+## Bangkok
+
+```{r}
+clarkevans.test(roadacc_bkk_ppp.km,
+                correction="none",
+                clipregion=NULL,
+                alternative=c("two.sided"),
+                nsim=999)
+```
+
+## Nakhon Pathom
+
+```{r}
+clarkevans.test(roadacc_np_ppp.km,
+                correction="none",
+                clipregion=NULL,
+                alternative=c("two.sided"),
+                nsim=999)
+```
+
+## Nonthaburi
+
+```{r}
+clarkevans.test(roadacc_n_ppp.km,
+                correction="none",
+                clipregion=NULL,
+                alternative=c("two.sided"),
+                nsim=999)
+```
+
+## Pathum Thani
+
+```{r}
+clarkevans.test(roadacc_pt_ppp.km,
+                correction="none",
+                clipregion=NULL,
+                alternative=c("two.sided"),
+                nsim=999)
+```
+
+## Samut Prakan
+
+```{r}
+clarkevans.test(roadacc_sp_ppp.km,
+                correction="none",
+                clipregion=NULL,
+                alternative=c("two.sided"),
+                nsim=999)
+```
+
+## Samut Sakhon
+
+```{r}
+clarkevans.test(roadacc_ss_ppp.km,
+                correction="none",
+                clipregion=NULL,
+                alternative=c("two.sided"),
+                nsim=999)
+```
+:::
+
+Based on the results above, for which p-values are less than 0.05, we reject the null hypothesis at 95% confidence interval. There is sufficient evidence to indicate that the distribution of road accidents in all provinces is not randomly distributed.
+
+## 10. Network Constrained Spatial Point Patterns Analysis
+
+```{r}
+tmap_mode('view')
+tm_shape(roadacc)+
+  tm_dots()+
+  tm_shape(roadsbkk)+
+  tm_lines()
+tmap_mode('plot')
+```
+
+## 11. Network KDE (NKDE) Analysis
+
+### 11.1 Preparing the lixels objects
+
+Before computing NKDE, the *roadsbkk* object needs to be cut into lixels with a specified minimal distance. We do this using [lixelize_lines()](https://jeremygelb.github.io/spNetwork/reference/lixelize_lines.html) of **spNetwork** as shown in the code chunk below.
+
+```{r}
+#| eval: false 
+lixels <- lixelize_lines(roadsbkk,                          5000,                          mindist = NULL)
+```
+
+### 11.2 Generating line centre points
+
+Next, *lines_center()* of **spNetwork** will be used to generate a SpatialPointsDataFrame (i.e. samples) with line centre points as shown in the code chunk below:
+
+```{r}
+#| eval: false 
+samples <- lines_center(lixels)
+```
+
+The points are located at center of the line based on the length of the line.
+
+## 11.3 Performing NKDE
+
+Prior to performing NKDE calculations:
+
+```{r}
+#| eval: false
+future::plan(future::multisession(workers=2))
+```
+
+We will compute NKDE using the code chunk below:
+
+```{r}
+#| eval: false 
+densities <- nkde(roadsbkk,
+                  events = roadacc,
+                  w = rep(1,nrow(roadacc)),
+                  samples = samples,
+                  kernel_name = "quartic",
+                  bw = 300,
+                  div = "bw",
+                  method = "discontinuous",
+                  digits = 1,
+                  tol = 1,
+                  grid_shape = c(10,10),
+                  max_depth = 8,
+                  agg = 5,
+                  sparse = TRUE,
+                  verbose = FALSE)
+```
+
+### 11.3.1 Visualising NKDE
+
+Before visualising NKDE values, we use the code chunk below to insert the computed density values into *samples* and *lixels* objects as density field. We also multiply the densities by 1000 to rescale the density values from metres (as the EPSG 32647 projection system is in metres which make the computed density values very small and hard to comprehend) to number of events per kilometer:
+
+```{r}
+#| eval: false 
+samples$density <- densities*1000 
+lixels$density <- densities*1000
+```
