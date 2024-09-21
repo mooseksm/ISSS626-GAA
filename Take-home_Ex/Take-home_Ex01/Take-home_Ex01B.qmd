@@ -167,7 +167,7 @@ bw <- bw.diggle(roadacc_owin_ppp)
 bw
 ```
 
-### 8.1.1 Converting KDE output into grid object
+### 7.2.1.2 Converting KDE output into grid object
 
 We convert the KDE output for mapping purposes:
 
@@ -176,7 +176,7 @@ gridded_kde_roadacc_bw <- as.SpatialGridDataFrame.im(kde_roadacc_bw)
 spplot(gridded_kde_roadacc_bw)
 ```
 
-### 8.1.2 Converting gridded output into raster
+### 7.2.1.3 Converting gridded output into raster
 
 Next, we will convert the gridded KDE object into a RasterLayer object using *raster()* of **raster package**:
 
@@ -192,7 +192,7 @@ kde_roadacc_bw_raster
 
 Note that the CRS property is NA.
 
-### 8.1.3 Assigning projection system
+### 7.2.1.4 Assigning projection system
 
 We hence assign CRS information to the *kde_roadacc_bw_raster* RasterLayer:
 
@@ -204,7 +204,7 @@ kde_roadacc_bw_raster
 
 The CRS property is now completed.
 
-### 8.1.4 Visualising the output in tmap
+### 7.2.1.5 Visualising the output in tmap
 
 We will display the raster in cartographic quality map using **tmap package**:
 
@@ -222,9 +222,9 @@ tm_shape(kde_roadacc_bw_raster)+
 
 From the plot above, we note that road accidents occur more intensely along the road lines in Bangkok and Samut Prakan. To better understand how the intensity of road accidents occur across the BMR, we will extract the six provinces as different study areas for analysis and comparison in the next section.
 
-### 8.2 Comparing Spatial Point Patterns using KDE
+### 7.3 Comparing Spatial Point Patterns using KDE
 
-### 8.2.1 Extracting study areas
+### 7.3.1 Extracting study areas
 
 The code chunk will be used to extract the different provinces as different study areas:
 
@@ -244,7 +244,7 @@ ss <- provincedata32647 %>%
   filter(ADM1_EN == "Samut Sakhon")
 ```
 
-### 8.2.2 Creating owin object for each study area
+### 7.3.2 Creating owin object for each study area
 
 ```{r}
 #| eval: false
@@ -256,7 +256,7 @@ sp_owin = as.owin(sp)
 ss_owin = as.owin(ss)
 ```
 
-### 8.2.3 Combining road accident points and study area
+### 7.3.3 Combining road accident points and study area
 
 By using the code chunk below, we are able to extract road accidents that is within the specific province to carry out our analysis later on.
 
@@ -316,7 +316,7 @@ plot(roadacc_sp_ppp.km,main="Samut Prakan")
 plot(roadacc_ss_ppp.km,main="Samut Sakhon")
 ```
 
-### 8.2.4 Computing KDE for each study area
+### 7.3.4 Computing KDE for each study area
 
 We will also derive KDE using *bw.diggle()* of spatstat for all six provinces:
 
@@ -422,7 +422,7 @@ kde_ss_bw_raster
 ```
 :::
 
-### 8.1.4 Visualising the output in tmap
+### 7.3.5 Visualising the output in tmap
 
 We will display the raster in cartographic quality map using **tmap package**:
 
@@ -525,7 +525,7 @@ Further comments are as follows:
 -   Notably, while Bangkok is a known tourist destination/major urban hub, it ranks second to Samut Prakan in terms of road accident density.
 -   Road accidents seem more scattered in Nonthaburi and Nakhon Pathom which suggest that there could be more complex road systems in these areas where accidents could occur at various points.
 
-## 9. Nearest Neighbour Analysis
+## 8. Nearest Neighbour Analysis
 
 After running KDE which shows the density of road accidents over the BMR, we will perform the Clark-Evans test of aggregation to statistically validate the degree of spatial clustering or dispersion of the road accident points by comparing the observed mean nearest neighbor distance with the expected average distance between neighbours in a hypothetical random distribution.
 
@@ -537,9 +537,9 @@ H1: The distribution of road accidents is not randomly distributed.
 
 The 95% confidence interval will be used.
 
-### 9.1 Testing spatial point patterns using Clark and Evans Test
+### 8.1 Testing spatial point patterns using Clark and Evans Test
 
-### 9.1.1 Nearest Neighbour Analysis for overall data
+### 8.1.1 Nearest Neighbour Analysis for overall data
 
 ```{r}
 clarkevans.test(roadacc_owin_ppp.km,
@@ -553,7 +553,7 @@ clarkevans.test(roadacc_owin_ppp.km,
 
 -   This is further supported by the R value of 0.19092. As this R value is less than 1, it indicates that **the pattern exhibits clustering and that the road accidents tend to occur close to one another and not in a dispersed/regular manner.**
 
-### 9.1.2 Nearest Neighbour Analysis for each province
+### 8.1.2 Nearest Neighbour Analysis for each province
 
 ::: panel-tabset
 ## Bangkok
@@ -619,7 +619,7 @@ clarkevans.test(roadacc_ss_ppp.km,
 
 Based on the results above, for which all R values are less than 1 and all p-values are less than 0.05, we **reject the null hypothesis** at 95% confidence interval. **There is sufficient evidence to indicate that the distribution of road accidents in all provinces is not randomly distributed and instead exhibit clustering.**
 
-## 10. Network Constrained SPPA
+## 9. Network Constrained SPPA
 
 Network constrained SPPA (NetSPPA) is a collection of SAPPA methods specially developed for analysing spatial point events that occur on or alongside a network. In this case, it can be used for the analysis of road accidents that occur on or alongside the road lines network in the BMR.
 
@@ -633,11 +633,11 @@ tm_shape(roadacc)+
   tm_lines()
 ```
 
-### 10.1 Network KDE (NKDE) Analysis
+### 9.1 Network KDE (NKDE) Analysis
 
 NKDE is used to visualise and explore the intensity of point processes i.e. road accidents along the network i.e. road lines.
 
-### 10.1.1 Determining appropriate bandwidth
+### 9.1.1 Determining appropriate bandwidth
 
 Before we compute NKDE, we need to select an appropriate bandwidth ([reference](https://cran.r-project.org/web/packages/spNetwork/vignettes/NKDE.html)). In this case we will use the K nearest neighbour adaptive bandwidth. Under this method, the K nearest neighbour distance could be used as a locally adapted bandwidth for intensity estimation.
 
@@ -686,7 +686,7 @@ Based on the histogram above, we note that there are some events for which the 2
 trimmed_bw <- ifelse(bws > 10000,10000, bws)
 ```
 
-### 10.1.2 Preparing the lixels objects
+### 9.1.2 Preparing the lixels objects
 
 Before computing NKDE, the *roadsbkk* object needs to be cut into lixels with a specified minimal distance. We do this using [lixelize_lines()](https://jeremygelb.github.io/spNetwork/reference/lixelize_lines.html) of **spNetwork.**
 
@@ -698,7 +698,7 @@ To determine the appropriate lixel size to use, we need to consider several fact
 
 -   [road network characteristics]{.underline}: more complex road networks may benefit from shorter lixels to indicate the finer details of the road lines while larger road networks may work better with longer lixels.
 
-Based on the analysis of K-nearest neighbors with adaptive bandwidth under [10.1.1 Determining appropriate bandwidth], we observe from the histogram that most road accidents occur within 1000m to 2000m of each other. We hence set the lixel lengths within this distance to help capture the density of accidents more effectively:
+Based on the analysis of K-nearest neighbors with adaptive bandwidth under [9.1.1 Determining appropriate bandwidth], we observe from the histogram that most road accidents occur within 1000m to 2000m of each other. We hence set the lixel lengths within this distance to help capture the density of accidents more effectively:
 
 ```{r}
 lixels <- lixelize_lines(roadsbkk,
@@ -742,7 +742,7 @@ write_rds(densities,"data/rds/densities.rds")
 densities <- read_rds("data/rds/densities.rds")
 ```
 
-### 10.1.3 Visualising NKDE
+### 9.1.3 Visualising NKDE
 
 Before visualising NKDE values, we insert the computed density values into *samples* and *lixels* objects as density field. We also multiply the densities by 1000 to rescale the density values from metres (as the EPSG 32647 projection system is in metres which make the computed density values very small and hard to comprehend) to number of events per kilometer. We then map the result:
 
@@ -795,9 +795,13 @@ Based on the plot above, we observe the following:
 
 -   Denser occurrence of road accidents at intersections of road segments
 
-## 11. Temporal Network SPPA
+## 10. Temporal SPPA
 
-### 11.1 Temporal Analysis of Road Accidents by Month
+Events recorded on a network often have a temporal dimension. This is also applicable for road accidents in BMR which have incident datetime data. This will allow us to understand the distribution of road accidents across time and identify if there are certain time periods where road accidents might occur more often.
+
+We will explore the density of road accidents in time, specifically by month, by day of week and by time of day. EDA exploring these time elements in the data can be found in [Part 1A](https://isss626-ksm.netlify.app/take-home_ex/take-home_ex01/take-home_ex01a#distribution-of-road-accidents-by-time).
+
+### 10.1 Temporal Analysis of Road Accidents by Month
 
 ```{r}
 roadacc$inc_month <- as.numeric(roadacc$inc_month)
@@ -805,10 +809,20 @@ roadacc$inc_dayofweek <- as.numeric(roadacc$inc_dayofweek)
 roadacc$inc_time <- as.numeric(roadacc$inc_time)
 ```
 
+We utilise the [tkde()](https://search.r-project.org/CRAN/refmans/spNetwork/html/tkde.html) function to calculate the temporal kernel density estimate.
+
+We initialize the weights by creating a vector *w* where each element is 1, with a length equal to the number of rows in the *roadacc* data. This means that each road accident will be equally weight in the KDE calculation.
+
+We also generate a sample range starting from the minimum to maximum month in *inc_month* column of the *roadacc dataset*, with increments of 0.5. As a recap, *inc_month* represents the month of the occurrence of the incident.
+
 ```{r}
 w <- rep(1,nrow(roadacc))
 samples <- seq(min(roadacc$inc_month),max(roadacc$inc_month),0.5)
+```
 
+The kernel density estimation is calculated for several bandwidths (bw 1 to bw 6 as seen in the codes below). Each bandwidth gives a different smoothing effect on the density estimate. bw 1 gives a more sensitive estimate, capturing fine details in the distribution of road accidents while larger bandwidth bw 6 will create a smoother density estimate by averaging over a wider range of data points.
+
+```{r}
 month_kernel_val <- data.frame(
   bw_1 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 1, kernel_name = "quartic"),
   bw_2 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 2, kernel_name = "quartic"),
@@ -816,31 +830,36 @@ month_kernel_val <- data.frame(
   bw_4 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 4, kernel_name = "quartic"),
   bw_5 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 5, kernel_name = "quartic"),
   bw_6 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 6, kernel_name = "quartic"),
-  time = samples
+  month = samples
 )
 ```
 
 ```{r}
-month_lab <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-
-df_month <- reshape2::melt(month_kernel_val, id.vars = "time")
+df_month <- reshape2::melt(month_kernel_val, id.vars = "month")
 
 df_month$variable <- as.factor(df_month$variable)
 
 ggplot(data = df_month)+
-  geom_line(aes(x=time,y=value))+
-  scale_x_continuous(breaks =1:12, labels = month_lab) +
+  geom_line(aes(x=month,y=value))+
+  scale_x_continuous(breaks =1:12, labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")) +
   facet_wrap(vars(variable),ncol=2, scales="free")+
-  labs(title = "Temporal NKDE for Occurrence of Road Accidents by Month", x = "Month", y="Density")+
+  labs(title = "Temporal KDE for Occurrence of Road Accidents by Month", x = "Month", y="Density")+
   theme(axis.text = element_text(size = 5))
 ```
 
-It seems that a bandwidth of 3 best captures the bimodal shape of the temporal dimension of road accidents.
+Based on the plots above, we observe that:
 
-### 11.2 Temporal Analysis of Road Accidents by Day of Week
+-   the density curve for bw 1 is more jagged, reflecting more clearly the variations between the months - there are more significant drops in densities of road accidents in Feb, May and Nov while there are significant increases in densities of road accidents slightly before Apr, Oct and Dec.
+
+-    the density curve starts to smooth out from bw 2 and bw 3 and bw 4 seem to best capture the bimodal shape of the temporal dimension of road accidents before the bimodal shape starts to be less obvious in bw 5 and is entirely gone in bw 6 (this is hence why we stop at bw 6 and do not explore further bandwidths).
+
+-   for bw 3 and 4, it is clear that occurrence of road accidents is most dense in Mar to Apr and Oct period. This could potentially be explained by the Songkran (Thai New Year) Festival that occurs yearly in April which could have led to more traffic and pedestrians on the road, increasing the chances of accidents.
+
+### 10.2 Temporal Analysis of Road Accidents by Day of Week
+
+We conduct a similar analysis to study the distribution of road accidents by day of week. It is important to recall that we assigned the week to start from Monday during the data wrangling steps in [Part 1A](https://isss626-ksm.netlify.app/take-home_ex/take-home_ex01/take-home_ex01a#creating-new-variables-representing-month-day-of-week-time-of-day-as-well-as-gap-between-incident-and-reporting-time).
 
 ```{r}
-#| eval: false
 w <- rep(1,nrow(roadacc))
 samples <- seq(min(roadacc$inc_dayofweek),max(roadacc$inc_dayofweek),0.5)
 
@@ -849,25 +868,65 @@ day_kernel_val <- data.frame(
   bw_2 = tkde(roadacc$inc_dayofweek, w=w, samples = samples, bw = 2, kernel_name = "quartic"),
   bw_3 = tkde(roadacc$inc_dayofweek, w=w, samples = samples, bw = 3, kernel_name = "quartic"),
   bw_4 = tkde(roadacc$inc_dayofweek, w=w, samples = samples, bw = 4, kernel_name = "quartic"),
+  day = samples
+)
+```
+
+```{r}
+df_day <- reshape2::melt(day_kernel_val, id.vars = "day")
+df_day$variable <- as.factor(df_day$variable)
+
+ggplot(data = df_day)+
+  geom_line(aes(x=day,y=value))+
+  scale_x_continuous(breaks =1:7, labels = c("Mon","Tues","Wed","Thu","Fri","Sat","Sun")) +
+  facet_wrap(vars(variable),ncol=2, scales="free")+
+  labs(title = "Temporal KDE for Occurrence of Road Accidents by Day of the Week", x = "Day", y="Density")+
+  theme(axis.text = element_text(size = 5))
+```
+
+Based on the plots above, we observe that:
+
+-   the density curve for bw 1 is more jagged, reflecting more clearly the variations between the days - there are more significant increases in densities of road accidents from Fri to Sat. This could be explained by Fri and Sat being the start of the weekend and more traffic and pedestrians being out on the road for social activities.
+
+-    the density curve starts to smooth out in bw 2 and seem to best capture the bimodal shape of the temporal dimension of road accidents - the density of road accidents increase between Fri to Sat and then drop on Sun and Mon before increasing on Tues again. As stated in the above point, the increase between Fri and Sat can be explained by these days being the start of the weekend, the drop in Sun and Mon could be due to less traffic as people start to get ready for the work/school week ahead and potentially even Mon blues when less people might travel to work. The increase in road accidents from Tues could be due to the steady stream of office workers/school children heading to office/school.
+
+-   The bimodal shape becomes less obvious/almost entirely gone in bw3 and 4 (this is hence why we stop at bw 4 and do not explore further bandwidths).
+
+### 10.3 Temporal Analysis of Road Accidents by Time of Day
+
+We conduct a similar analysis to study the distribution of road accidents by time of day.
+
+```{r}
+w <- rep(1,nrow(roadacc))
+samples <- seq(min(roadacc$inc_time),max(roadacc$inc_time),0.5)
+
+time_kernel_val <- data.frame(
+  bw_1 = tkde(roadacc$inc_time, w=w, samples = samples, bw = 1, kernel_name = "quartic"),
+  bw_2 = tkde(roadacc$inc_time, w=w, samples = samples, bw = 2, kernel_name = "quartic"),
+  bw_3 = tkde(roadacc$inc_time, w=w, samples = samples, bw = 3, kernel_name = "quartic"),
+  bw_4 = tkde(roadacc$inc_time, w=w, samples = samples, bw = 4, kernel_name = "quartic"),
+  bw_5 = tkde(roadacc$inc_time, w=w, samples = samples, bw = 5, kernel_name = "quartic"),
+  bw_6 = tkde(roadacc$inc_time, w=w, samples = samples, bw = 6, kernel_name = "quartic"),
   time = samples
 )
 ```
 
 ```{r}
-#| eval: false
-day_lab <- c("Sun", "Mon", "Tues", "Wed", "Thu", "Fri", "Sat")
+df_time <- reshape2::melt(time_kernel_val, id.vars = "time")
+df_time$variable <- as.factor(df_time$variable)
 
-df_day <- reshape2::melt(day_kernel_val, id.vars = "day")
-df_day$variable <- as.factor(df_day$variable)
-
-ggplot(data = df_day)+
-  geom_line(aes(x=inc_dayofweek,y=value))+
-  scale_x_continuous(breaks =7, labels = day_lab) +
+ggplot(data = df_time)+
+  geom_line(aes(x=time,y=value))+
+  scale_x_continuous(breaks =1:24) +
   facet_wrap(vars(variable),ncol=2, scales="free")+
-  labs(title = "Temporal NKDE for Occurrence of Road Accidents by Day of the Week", x = "Day", y="Density")+
+  labs(title = "Temporal KDE for Occurrence of Road Accidents by Time of Day", x = "Time", y="Density")+
   theme(axis.text = element_text(size = 5))
 ```
 
-### Spatial dimension
+Based on the plots above, we observe that:
 
-Before considering the spatio-temporal case, we can also investigate the spatial dimension.
+-   the density curve for bw 1 is more jagged, reflecting more clearly the variations between the hours of the day - there are more significant increases in densities of road accidents from 7am. This could be explained by 7am being the start of the day and more traffic and pedestrians being out on the road for their daily activities.
+
+-    the density curve starts to smooth out from bw 2 showing the period of 7am to 11am as the peak of the density of road accidents, how it dips from 12pm to 1pm (which could be explained by it being lunch hour and regular workers might be having their lunch rather than being out on the road) and the slight increase between 6pm to 8pm which is the knock-off time for office workers, hence leading to more traffic and pedestrians on the road. the density of road accidents dip significantly from 11pm which could be explained by it being the end of the day for most people hence leading to less traffic on the road and lower chances of road accidents occurring.
+
+-   the density curve starts to smooth out significantly from bw 3 onwards before forming an entirely smooth hump in bw 6 (this is hence why we stop at bw 6 and do not explore further bandwidths).
