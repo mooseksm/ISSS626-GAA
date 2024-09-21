@@ -19,12 +19,12 @@ execute:
 ```{r}
 #| echo: false
 # increased timeout to mitigate error issues during rendering
-options(timeout = 3000)
+options(timeout = 5000)
 ```
 
 ```{r}
 #| code-fold: true
-pacman::p_load(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly)
+pacman::p_load(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly,RColorBrewer)
 ```
 
 ```{r}
@@ -628,7 +628,7 @@ Before we go into the analysis, we visualise the geospatial data (to save bandwi
 ```{r}
 tmap_mode('plot')
 tm_shape(roadacc)+
-  tm_dots()+
+  tm_dots(col = "red")+
   tm_shape(roadsbkk)+
   tm_lines()
 ```
@@ -637,11 +637,60 @@ tm_shape(roadacc)+
 
 NKDE is used to visualise and explore the intensity of point processes i.e. road accidents along the network i.e. road lines.
 
-### 10.1.1 Preparing the lixels objects
+### 10.1.1 Determining appropriate bandwidth
+
+Before we compute NKDE, we need to select an appropriate bandwidth ([reference](https://cran.r-project.org/web/packages/spNetwork/vignettes/NKDE.html)). In this case we will use the K nearest neighbour adaptive bandwidth. Under this method, the K nearest neighbour distance could be used as a locally adapted bandwidth for intensity estimation.
+
+We will first use the nearest neighbour distance to understand the distance between road accident points along the road lines in BMR - we do this by running *nndist()* function on our ppp object:
+
+```{r}
+nnd_dist <- nndist(roadacc_owin_ppp.km)
+summary(nnd_dist)
+```
+
+The median and max distance between road lines in BMR is 0.01303 km and 7.73467 km respectively.
+
+We first aggregate events that are very close i.e. round up of median distance \~15 metres away:
+
+```{r}
+roadacc$weight <- 1
+roadacc_agg <- aggregate_points(roadacc,15, weight = "weight")
+```
+
+We then calculate for each event its distance to its 20th neighbour:
+
+```{r}
+knn_dists <- network_knn(origins = roadacc_agg,
+                         lines = roadsbkk,
+                         k = 30,
+                         maxdistance = 5000,
+                         line_weight = "length",
+                         digits = 2,
+                         tol = 0.1)
+```
+
+```{r}
+bws <- knn_dists$distances[,20]
+
+ggplot()+
+  geom_histogram(aes(x=bws),
+                 fill = "white",
+                 color = "black",
+                 bins = 50)+
+  labs(x = "distance to 20th neighbour (metres)")
+```
+
+Based on the histogram above, we note that there are some events for which the 20th neighbour is very far. We decide to trim the bandwidth at 10000 metres.
+
+```{r}
+trimmed_bw <- ifelse(bws > 10000,10000, bws)
+```
+
+### 10.1.2 Preparing the lixels objects
 
 Before computing NKDE, the *roadsbkk* object needs to be cut into lixels with a specified minimal distance. We do this using [lixelize_lines()](https://jeremygelb.github.io/spNetwork/reference/lixelize_lines.html) of **spNetwork.**
 
-However, to determine the appropriate lixel size to use, we need to consider several factors such as the scale of our study, density of accidents. road network characteristics. Some reasons are provided below:
+To determine the appropriate lixel size to use, we need to consider several factors such as the scale of our study, density of accidents. road network characteristics. Some reasons are provided below:
 
 -   [scale of study]{.underline}: shorter lixels may allow capturing of finer details for study of road accidents at a local scale however longer lixels may be more suitable to study patterns over larger distances.
 
@@ -649,75 +698,176 @@ However, to determine the appropriate lixel size to use, we need to consider sev
 
 -   [road network characteristics]{.underline}: more complex road networks may benefit from shorter lixels to indicate the finer details of the road lines while larger road networks may work better with longer lixels.
 
-### 10.1.1.1 Nearest Neighbour Distance to determine lixel size
-
-To determine the appropriate lixel size, we can use nearest neighbour distance to understand the distance between road lines. It can help to ensure that we do not choose too small a lixel size i.e. ensuring that lixels would at least contain one accident.
-
-We first calculate the mean nearest neighbour distance between road accident points along the road lines in BMR. We do this by running *nndist()* function on our ppp object *roadacc_owin_ppp.km*:
-
-```{r}
-nnd_dist <- nndist(roadacc_owin_ppp.km)
-```
-
-```{r}
-summary(nnd_dist)
-```
-
-The median and max distance between road lines in BMR is 0.01303 km and 7.73467 km respectively.
-
-As a start, we hence set the lixel length to XXm (as *roadsbkk* is in EPSG 32647 for which the unit of measurement is in metres) and the minimum length of a lixel to NULL.
+Based on the analysis of K-nearest neighbors with adaptive bandwidth under [10.1.1 Determining appropriate bandwidth], we observe from the histogram that most road accidents occur within 1000m to 2000m of each other. We hence set the lixel lengths within this distance to help capture the density of accidents more effectively:
 
 ```{r}
 lixels <- lixelize_lines(roadsbkk,
-                         700,
-                         mindist = NULL)
-```
-
-### 10.1.2 Generating line centre points
-
-Next, *lines_center()* of **spNetwork** will be used to generate a SpatialPointsDataFrame (i.e. samples) with line centre points as shown in the code chunk below:
-
-```{r}
+                         2000,
+                         mindist = 1000)
 samples <- lines_center(lixels)
 ```
 
-The points are located at center of the line based on the length of the line.
-
-### 10.1.3 Performing NKDE
-
-We will compute NKDE using the code chunk below:
-
 ```{r}
 #| eval: false
-densities <- nkde(roadsbkk,
-                  events = roadacc,
-                  w = rep(1,nrow(roadacc)),
+densities <- nkde(lines = roadsbkk,
+                  events = roadacc_agg,
+                  w = roadacc_agg$weight,
                   samples = samples,
                   kernel_name = "quartic",
-                  bw = 13,
+                  bw = trimmed_bw,
                   div = "bw",
+                  adaptive = FALSE,
                   method = "simple",
                   digits = 1,
                   tol = 1,
                   grid_shape = c(5,5),
-                  max_depth = 8,
-                  agg = 5,
-                  sparse = TRUE,
-                  verbose = FALSE)
+                  verbose = FALSE,
+                  diggle_correction = FALSE,
+                  study_area = NULL,
+                  max_depth = 5,
+                  agg = NULL,
+                  sparse = TRUE)
 ```
 
-### 10.1.4 Visualising NKDE
-
-Before visualising NKDE values, we use the code chunk below to insert the computed density values into *samples* and *lixels* objects as density field. We also multiply the densities by 1000 to rescale the density values from metres (as the EPSG 32647 projection system is in metres which make the computed density values very small and hard to comprehend) to number of events per kilometer:
+To minimise re-running the code above, we save densities generated as a new rds file:
 
 ```{r}
+#| code-fold: true
 #| eval: false
-samples$density <- densities*1000 
+write_rds(densities,"data/rds/densities.rds")
+```
+
+```{r}
+#| code-fold: true
+densities <- read_rds("data/rds/densities.rds")
+```
+
+### 10.1.3 Visualising NKDE
+
+Before visualising NKDE values, we insert the computed density values into *samples* and *lixels* objects as density field. We also multiply the densities by 1000 to rescale the density values from metres (as the EPSG 32647 projection system is in metres which make the computed density values very small and hard to comprehend) to number of events per kilometer. We then map the result:
+
+```{r}
+# rescaling to help the mapping
+samples$density <- densities*1000
 lixels$density <- densities*1000
 ```
 
+```{r}
+#| eval: false
+colorRamp <- brewer.pal(n = 5, name = "Spectral")
+colorRamp <- rev(colorRamp)
+
+samples2 <- samples[order(samples$density),]
+title <- paste0("Road accident density by kilometres in BMR,",
+                "\nusing an adaptive bandwidth (20th nearest neighbour)")
+
+tmap_mode('plot')
+tm_shape(roadsbkk) + 
+  tm_lines("black") + 
+  tm_shape(samples2) + 
+  tm_dots("density", style = "kmeans", palette = colorRamp, n = 5, size = 0.1) + 
+  tm_layout(legend.outside = TRUE, 
+            main.title = title, main.title.size = 1)
+```
+
+Plotting it in the lixel density format:
+
+```{r}
+colorRamp <- brewer.pal(n = 5, name = "RdYlGn")
+colorRamp <- rev(colorRamp)
+
+lix_density_break <- quantile(lixels$density, probs = seq(0, 1, length.out = 5))
+title <- paste0("Road accident density by kilometres in BMR,",
+                "\nusing an adaptive bandwidth (20th nearest neighbour)")
+
+tmap_mode('plot')
+tm_shape(lixels) +
+  tm_lines(col = "density", palette = colorRamp, breaks = lix_density_break) +
+  tm_shape(roadacc_agg) +
+  tm_dots(col = "black", size = 0.01)+
+  tm_layout(legend.outside = TRUE, 
+            main.title = title, main.title.size = 1)
+```
+
+Based on the plot above, we observe the following:
+
+-   Dense occurrence of road accidents within central Bangkok along intricate road networks where there are more complicated road lines
+
+-   Denser occurrence of road accidents at intersections of road segments
+
 ## 11. Temporal Network SPPA
 
-With reference to this site, similar steps were taken to derive the temporal network SPPA for road accidents in BMR.
+### 11.1 Temporal Analysis of Road Accidents by Month
 
-= WIP =
+```{r}
+roadacc$inc_month <- as.numeric(roadacc$inc_month)
+roadacc$inc_dayofweek <- as.numeric(roadacc$inc_dayofweek)
+roadacc$inc_time <- as.numeric(roadacc$inc_time)
+```
+
+```{r}
+w <- rep(1,nrow(roadacc))
+samples <- seq(min(roadacc$inc_month),max(roadacc$inc_month),0.5)
+
+month_kernel_val <- data.frame(
+  bw_1 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 1, kernel_name = "quartic"),
+  bw_2 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 2, kernel_name = "quartic"),
+  bw_3 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 3, kernel_name = "quartic"),
+  bw_4 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 4, kernel_name = "quartic"),
+  bw_5 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 5, kernel_name = "quartic"),
+  bw_6 = tkde(roadacc$inc_month, w=w, samples = samples, bw = 6, kernel_name = "quartic"),
+  time = samples
+)
+```
+
+```{r}
+month_lab <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+df_month <- reshape2::melt(month_kernel_val, id.vars = "time")
+
+df_month$variable <- as.factor(df_month$variable)
+
+ggplot(data = df_month)+
+  geom_line(aes(x=time,y=value))+
+  scale_x_continuous(breaks =1:12, labels = month_lab) +
+  facet_wrap(vars(variable),ncol=2, scales="free")+
+  labs(title = "Temporal NKDE for Occurrence of Road Accidents by Month", x = "Month", y="Density")+
+  theme(axis.text = element_text(size = 5))
+```
+
+It seems that a bandwidth of 3 best captures the bimodal shape of the temporal dimension of road accidents.
+
+### 11.2 Temporal Analysis of Road Accidents by Day of Week
+
+```{r}
+#| eval: false
+w <- rep(1,nrow(roadacc))
+samples <- seq(min(roadacc$inc_dayofweek),max(roadacc$inc_dayofweek),0.5)
+
+day_kernel_val <- data.frame(
+  bw_1 = tkde(roadacc$inc_dayofweek, w=w, samples = samples, bw = 1, kernel_name = "quartic"),
+  bw_2 = tkde(roadacc$inc_dayofweek, w=w, samples = samples, bw = 2, kernel_name = "quartic"),
+  bw_3 = tkde(roadacc$inc_dayofweek, w=w, samples = samples, bw = 3, kernel_name = "quartic"),
+  bw_4 = tkde(roadacc$inc_dayofweek, w=w, samples = samples, bw = 4, kernel_name = "quartic"),
+  time = samples
+)
+```
+
+```{r}
+#| eval: false
+day_lab <- c("Sun", "Mon", "Tues", "Wed", "Thu", "Fri", "Sat")
+
+df_day <- reshape2::melt(day_kernel_val, id.vars = "day")
+df_day$variable <- as.factor(df_day$variable)
+
+ggplot(data = df_day)+
+  geom_line(aes(x=inc_dayofweek,y=value))+
+  scale_x_continuous(breaks =7, labels = day_lab) +
+  facet_wrap(vars(variable),ncol=2, scales="free")+
+  labs(title = "Temporal NKDE for Occurrence of Road Accidents by Day of the Week", x = "Day", y="Density")+
+  theme(axis.text = element_text(size = 5))
+```
+
+### Spatial dimension
+
+Before considering the spatio-temporal case, we can also investigate the spatial dimension.
