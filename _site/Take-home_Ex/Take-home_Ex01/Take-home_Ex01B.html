@@ -261,13 +261,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#network-constrained-sppa" id="toc-network-constrained-sppa" class="nav-link" data-scroll-target="#network-constrained-sppa">10. Network Constrained SPPA</a>
   <ul class="collapse">
   <li><a href="#network-kde-nkde-analysis" id="toc-network-kde-nkde-analysis" class="nav-link" data-scroll-target="#network-kde-nkde-analysis">10.1 Network KDE (NKDE) Analysis</a></li>
-  <li><a href="#preparing-the-lixels-objects" id="toc-preparing-the-lixels-objects" class="nav-link" data-scroll-target="#preparing-the-lixels-objects">10.1.1 Preparing the lixels objects</a></li>
-  <li><a href="#nearest-neighbour-distance-to-determine-lixel-size" id="toc-nearest-neighbour-distance-to-determine-lixel-size" class="nav-link" data-scroll-target="#nearest-neighbour-distance-to-determine-lixel-size">10.1.1.1 Nearest Neighbour Distance to determine lixel size</a></li>
-  <li><a href="#generating-line-centre-points" id="toc-generating-line-centre-points" class="nav-link" data-scroll-target="#generating-line-centre-points">10.1.2 Generating line centre points</a></li>
-  <li><a href="#performing-nkde" id="toc-performing-nkde" class="nav-link" data-scroll-target="#performing-nkde">10.1.3 Performing NKDE</a></li>
-  <li><a href="#visualising-nkde" id="toc-visualising-nkde" class="nav-link" data-scroll-target="#visualising-nkde">10.1.4 Visualising NKDE</a></li>
+  <li><a href="#determining-appropriate-bandwidth" id="toc-determining-appropriate-bandwidth" class="nav-link" data-scroll-target="#determining-appropriate-bandwidth">10.1.1 Determining appropriate bandwidth</a></li>
+  <li><a href="#preparing-the-lixels-objects" id="toc-preparing-the-lixels-objects" class="nav-link" data-scroll-target="#preparing-the-lixels-objects">10.1.2 Preparing the lixels objects</a></li>
+  <li><a href="#visualising-nkde" id="toc-visualising-nkde" class="nav-link" data-scroll-target="#visualising-nkde">10.1.3 Visualising NKDE</a></li>
   </ul></li>
-  <li><a href="#temporal-network-sppa" id="toc-temporal-network-sppa" class="nav-link" data-scroll-target="#temporal-network-sppa">11. Temporal Network SPPA</a></li>
+  <li><a href="#temporal-network-sppa" id="toc-temporal-network-sppa" class="nav-link" data-scroll-target="#temporal-network-sppa">11. Temporal Network SPPA</a>
+  <ul class="collapse">
+  <li><a href="#temporal-analysis-of-road-accidents-by-month" id="toc-temporal-analysis-of-road-accidents-by-month" class="nav-link" data-scroll-target="#temporal-analysis-of-road-accidents-by-month">11.1 Temporal Analysis of Road Accidents by Month</a></li>
+  <li><a href="#temporal-analysis-of-road-accidents-by-day-of-week" id="toc-temporal-analysis-of-road-accidents-by-day-of-week" class="nav-link" data-scroll-target="#temporal-analysis-of-road-accidents-by-day-of-week">11.2 Temporal Analysis of Road Accidents by Day of Week</a></li>
+  <li><a href="#spatial-dimension" id="toc-spatial-dimension" class="nav-link" data-scroll-target="#spatial-dimension">Spatial dimension</a></li>
+  </ul></li>
   </ul></li>
   </ul>
 </nav>
@@ -301,7 +304,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 21, 2024</p>
+      <p class="date-modified">September 22, 2024</p>
     </div>
   </div>
     
@@ -319,7 +322,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly,RColorBrewer)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -1153,7 +1156,7 @@ alternative hypothesis: two-sided</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">'plot'</span>)</span>
 <span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(roadacc)<span class="sc">+</span></span>
-<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>()<span class="sc">+</span></span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"red"</span>)<span class="sc">+</span></span>
 <span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(roadsbkk)<span class="sc">+</span></span>
 <span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_lines</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -1168,82 +1171,241 @@ alternative hypothesis: two-sided</code></pre>
 <h3 class="anchored" data-anchor-id="network-kde-nkde-analysis">10.1 Network KDE (NKDE) Analysis</h3>
 <p>NKDE is used to visualise and explore the intensity of point processes i.e.&nbsp;road accidents along the network i.e.&nbsp;road lines.</p>
 </section>
-<section id="preparing-the-lixels-objects" class="level3">
-<h3 class="anchored" data-anchor-id="preparing-the-lixels-objects">10.1.1 Preparing the lixels objects</h3>
-<p>Before computing NKDE, the <em>roadsbkk</em> object needs to be cut into lixels with a specified minimal distance. We do this using <a href="https://jeremygelb.github.io/spNetwork/reference/lixelize_lines.html">lixelize_lines()</a>&nbsp;of&nbsp;<strong>spNetwork.</strong></p>
-<p>However, to determine the appropriate lixel size to use, we need to consider several factors such as the scale of our study, density of accidents. road network characteristics. Some reasons are provided below:</p>
-<ul>
-<li><p><u>scale of study</u>: shorter lixels may allow capturing of finer details for study of road accidents at a local scale however longer lixels may be more suitable to study patterns over larger distances.</p></li>
-<li><p><u>density of accidents</u>: high road accident density areas may benefit from shorter lixels that would enable the capture of precise clustering on small road segments. however, long lixels can help to smooth out analysis for less dense areas and avoid overrepresenting sparsely populated segments</p></li>
-<li><p><u>road network characteristics</u>: more complex road networks may benefit from shorter lixels to indicate the finer details of the road lines while larger road networks may work better with longer lixels.</p></li>
-</ul>
-</section>
-<section id="nearest-neighbour-distance-to-determine-lixel-size" class="level3">
-<h3 class="anchored" data-anchor-id="nearest-neighbour-distance-to-determine-lixel-size">10.1.1.1 Nearest Neighbour Distance to determine lixel size</h3>
-<p>To determine the appropriate lixel size, we can use nearest neighbour distance to understand the distance between road lines. It can help to ensure that we do not choose too small a lixel size i.e.&nbsp;ensuring that lixels would at least contain one accident.</p>
-<p>We first calculate the mean nearest neighbour distance between road accident points along the road lines in BMR. We do this by running <em>nndist()</em> function on our ppp object <em>roadacc_owin_ppp.km</em>:</p>
+<section id="determining-appropriate-bandwidth" class="level3">
+<h3 class="anchored" data-anchor-id="determining-appropriate-bandwidth">10.1.1 Determining appropriate bandwidth</h3>
+<p>Before we compute NKDE, we need to select an appropriate bandwidth (<a href="https://cran.r-project.org/web/packages/spNetwork/vignettes/NKDE.html">reference</a>). In this case we will use the K nearest neighbour adaptive bandwidth. Under this method, the K nearest neighbour distance could be used as a locally adapted bandwidth for intensity estimation.</p>
+<p>We will first use the nearest neighbour distance to understand the distance between road accident points along the road lines in BMR - we do this by running <em>nndist()</em> function on our ppp object:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>nnd_dist <span class="ot">&lt;-</span> <span class="fu">nndist</span>(roadacc_owin_ppp.km)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(nnd_dist)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>nnd_dist <span class="ot">&lt;-</span> <span class="fu">nndist</span>(roadacc_owin_ppp.km)</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(nnd_dist)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 0.00000 0.00123 0.01303 0.07336 0.04663 7.73467 </code></pre>
 </div>
 </div>
 <p>The median and max distance between road lines in BMR is 0.01303 km and 7.73467 km respectively.</p>
-<p>As a start, we hence set the lixel length to XXm (as <em>roadsbkk</em> is in EPSG 32647 for which the unit of measurement is in metres) and the minimum length of a lixel to NULL.</p>
+<p>We first aggregate events that are very close i.e.&nbsp;round up of median distance ~15 metres away:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>lixels <span class="ot">&lt;-</span> <span class="fu">lixelize_lines</span>(roadsbkk,</span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>                         <span class="dv">700</span>,</span>
-<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">mindist =</span> <span class="cn">NULL</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>roadacc<span class="sc">$</span>weight <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>roadacc_agg <span class="ot">&lt;-</span> <span class="fu">aggregate_points</span>(roadacc,<span class="dv">15</span>, <span class="at">weight =</span> <span class="st">"weight"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then calculate for each event its distance to its 20th neighbour:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>knn_dists <span class="ot">&lt;-</span> <span class="fu">network_knn</span>(<span class="at">origins =</span> roadacc_agg,</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">lines =</span> roadsbkk,</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">k =</span> <span class="dv">30</span>,</span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">maxdistance =</span> <span class="dv">5000</span>,</span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>                         <span class="at">line_weight =</span> <span class="st">"length"</span>,</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>                         <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>                         <span class="at">tol =</span> <span class="fl">0.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>bws <span class="ot">&lt;-</span> knn_dists<span class="sc">$</span>distances[,<span class="dv">20</span>]</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>()<span class="sc">+</span></span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="fu">aes</span>(<span class="at">x=</span>bws),</span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">fill =</span> <span class="st">"white"</span>,</span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">color =</span> <span class="st">"black"</span>,</span>
+<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">bins =</span> <span class="dv">50</span>)<span class="sc">+</span></span>
+<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"distance to 20th neighbour (metres)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex01B_files/figure-html/unnamed-chunk-56-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the histogram above, we note that there are some events for which the 20th neighbour is very far. We decide to trim the bandwidth at 10000 metres.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>trimmed_bw <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(bws <span class="sc">&gt;</span> <span class="dv">10000</span>,<span class="dv">10000</span>, bws)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="generating-line-centre-points" class="level3">
-<h3 class="anchored" data-anchor-id="generating-line-centre-points">10.1.2 Generating line centre points</h3>
-<p>Next,&nbsp;<em>lines_center()</em>&nbsp;of&nbsp;<strong>spNetwork</strong>&nbsp;will be used to generate a SpatialPointsDataFrame (i.e.&nbsp;samples) with line centre points as shown in the code chunk below:</p>
+<section id="preparing-the-lixels-objects" class="level3">
+<h3 class="anchored" data-anchor-id="preparing-the-lixels-objects">10.1.2 Preparing the lixels objects</h3>
+<p>Before computing NKDE, the <em>roadsbkk</em> object needs to be cut into lixels with a specified minimal distance. We do this using <a href="https://jeremygelb.github.io/spNetwork/reference/lixelize_lines.html">lixelize_lines()</a>&nbsp;of&nbsp;<strong>spNetwork.</strong></p>
+<p>To determine the appropriate lixel size to use, we need to consider several factors such as the scale of our study, density of accidents. road network characteristics. Some reasons are provided below:</p>
+<ul>
+<li><p><u>scale of study</u>: shorter lixels may allow capturing of finer details for study of road accidents at a local scale however longer lixels may be more suitable to study patterns over larger distances.</p></li>
+<li><p><u>density of accidents</u>: high road accident density areas may benefit from shorter lixels that would enable the capture of precise clustering on small road segments. however, long lixels can help to smooth out analysis for less dense areas and avoid overrepresenting sparsely populated segments</p></li>
+<li><p><u>road network characteristics</u>: more complex road networks may benefit from shorter lixels to indicate the finer details of the road lines while larger road networks may work better with longer lixels.</p></li>
+</ul>
+<p>Based on the analysis of K-nearest neighbors with adaptive bandwidth under <a href="#determining-appropriate-bandwidth">10.1.1 Determining appropriate bandwidth</a>, we observe from the histogram that most road accidents occur within 1000m to 2000m of each other. We hence set the lixel lengths within this distance to help capture the density of accidents more effectively:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">&lt;-</span> <span class="fu">lines_center</span>(lixels)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>lixels <span class="ot">&lt;-</span> <span class="fu">lixelize_lines</span>(roadsbkk,</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>                         <span class="dv">2000</span>,</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">mindist =</span> <span class="dv">1000</span>)</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">&lt;-</span> <span class="fu">lines_center</span>(lixels)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The points are located at center of the line based on the length of the line.</p>
-</section>
-<section id="performing-nkde" class="level3">
-<h3 class="anchored" data-anchor-id="performing-nkde">10.1.3 Performing NKDE</h3>
-<p>We will compute NKDE using the code chunk below:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>densities <span class="ot">&lt;-</span> <span class="fu">nkde</span>(roadsbkk,</span>
-<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">events =</span> roadacc,</span>
-<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">w =</span> <span class="fu">rep</span>(<span class="dv">1</span>,<span class="fu">nrow</span>(roadacc)),</span>
-<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">samples =</span> samples,</span>
-<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">kernel_name =</span> <span class="st">"quartic"</span>,</span>
-<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">bw =</span> <span class="dv">13</span>,</span>
-<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">div =</span> <span class="st">"bw"</span>,</span>
-<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">method =</span> <span class="st">"simple"</span>,</span>
-<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">digits =</span> <span class="dv">1</span>,</span>
-<span id="cb78-10"><a href="#cb78-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tol =</span> <span class="dv">1</span>,</span>
-<span id="cb78-11"><a href="#cb78-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">grid_shape =</span> <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">5</span>),</span>
-<span id="cb78-12"><a href="#cb78-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">max_depth =</span> <span class="dv">8</span>,</span>
-<span id="cb78-13"><a href="#cb78-13" aria-hidden="true" tabindex="-1"></a>                  <span class="at">agg =</span> <span class="dv">5</span>,</span>
-<span id="cb78-14"><a href="#cb78-14" aria-hidden="true" tabindex="-1"></a>                  <span class="at">sparse =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb78-15"><a href="#cb78-15" aria-hidden="true" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>densities <span class="ot">&lt;-</span> <span class="fu">nkde</span>(<span class="at">lines =</span> roadsbkk,</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">events =</span> roadacc_agg,</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">w =</span> roadacc_agg<span class="sc">$</span>weight,</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">samples =</span> samples,</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">kernel_name =</span> <span class="st">"quartic"</span>,</span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">bw =</span> trimmed_bw,</span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">div =</span> <span class="st">"bw"</span>,</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">adaptive =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">method =</span> <span class="st">"simple"</span>,</span>
+<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">digits =</span> <span class="dv">1</span>,</span>
+<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tol =</span> <span class="dv">1</span>,</span>
+<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">grid_shape =</span> <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">5</span>),</span>
+<span id="cb80-13"><a href="#cb80-13" aria-hidden="true" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb80-14"><a href="#cb80-14" aria-hidden="true" tabindex="-1"></a>                  <span class="at">diggle_correction =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb80-15"><a href="#cb80-15" aria-hidden="true" tabindex="-1"></a>                  <span class="at">study_area =</span> <span class="cn">NULL</span>,</span>
+<span id="cb80-16"><a href="#cb80-16" aria-hidden="true" tabindex="-1"></a>                  <span class="at">max_depth =</span> <span class="dv">5</span>,</span>
+<span id="cb80-17"><a href="#cb80-17" aria-hidden="true" tabindex="-1"></a>                  <span class="at">agg =</span> <span class="cn">NULL</span>,</span>
+<span id="cb80-18"><a href="#cb80-18" aria-hidden="true" tabindex="-1"></a>                  <span class="at">sparse =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>To minimise re-running the code above, we save densities generated as a new rds file:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(densities,<span class="st">"data/rds/densities.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>densities <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/densities.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
 <section id="visualising-nkde" class="level3">
-<h3 class="anchored" data-anchor-id="visualising-nkde">10.1.4 Visualising NKDE</h3>
-<p>Before visualising NKDE values, we use the code chunk below to insert the computed density values into <em>samples</em> and <em>lixels</em> objects as density field. We also multiply the densities by 1000 to rescale the density values from metres (as the EPSG 32647 projection system is in metres which make the computed density values very small and hard to comprehend) to number of events per kilometer:</p>
+<h3 class="anchored" data-anchor-id="visualising-nkde">10.1.3 Visualising NKDE</h3>
+<p>Before visualising NKDE values, we insert the computed density values into <em>samples</em> and <em>lixels</em> objects as density field. We also multiply the densities by 1000 to rescale the density values from metres (as the EPSG 32647 projection system is in metres which make the computed density values very small and hard to comprehend) to number of events per kilometer. We then map the result:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>samples<span class="sc">$</span>density <span class="ot">&lt;-</span> densities<span class="sc">*</span><span class="dv">1000</span> </span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>lixels<span class="sc">$</span>density <span class="ot">&lt;-</span> densities<span class="sc">*</span><span class="dv">1000</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rescaling to help the mapping</span></span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>samples<span class="sc">$</span>density <span class="ot">&lt;-</span> densities<span class="sc">*</span><span class="dv">1000</span></span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>lixels<span class="sc">$</span>density <span class="ot">&lt;-</span> densities<span class="sc">*</span><span class="dv">1000</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>colorRamp <span class="ot">&lt;-</span> <span class="fu">brewer.pal</span>(<span class="at">n =</span> <span class="dv">5</span>, <span class="at">name =</span> <span class="st">"Spectral"</span>)</span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>colorRamp <span class="ot">&lt;-</span> <span class="fu">rev</span>(colorRamp)</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>samples2 <span class="ot">&lt;-</span> samples[<span class="fu">order</span>(samples<span class="sc">$</span>density),]</span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>title <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Road accident density by kilometres in BMR,"</span>,</span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>                <span class="st">"</span><span class="sc">\n</span><span class="st">using an adaptive bandwidth (20th nearest neighbour)"</span>)</span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">'plot'</span>)</span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(roadsbkk) <span class="sc">+</span> </span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_lines</span>(<span class="st">"black"</span>) <span class="sc">+</span> </span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(samples2) <span class="sc">+</span> </span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="st">"density"</span>, <span class="at">style =</span> <span class="st">"kmeans"</span>, <span class="at">palette =</span> colorRamp, <span class="at">n =</span> <span class="dv">5</span>, <span class="at">size =</span> <span class="fl">0.1</span>) <span class="sc">+</span> </span>
+<span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">legend.outside =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title =</span> title, <span class="at">main.title.size =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Plotting it in the lixel density format:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>colorRamp <span class="ot">&lt;-</span> <span class="fu">brewer.pal</span>(<span class="at">n =</span> <span class="dv">5</span>, <span class="at">name =</span> <span class="st">"RdYlGn"</span>)</span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>colorRamp <span class="ot">&lt;-</span> <span class="fu">rev</span>(colorRamp)</span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>lix_density_break <span class="ot">&lt;-</span> <span class="fu">quantile</span>(lixels<span class="sc">$</span>density, <span class="at">probs =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">5</span>))</span>
+<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>title <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Road accident density by kilometres in BMR,"</span>,</span>
+<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a>                <span class="st">"</span><span class="sc">\n</span><span class="st">using an adaptive bandwidth (20th nearest neighbour)"</span>)</span>
+<span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-8"><a href="#cb85-8" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">'plot'</span>)</span>
+<span id="cb85-9"><a href="#cb85-9" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lixels) <span class="sc">+</span></span>
+<span id="cb85-10"><a href="#cb85-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_lines</span>(<span class="at">col =</span> <span class="st">"density"</span>, <span class="at">palette =</span> colorRamp, <span class="at">breaks =</span> lix_density_break) <span class="sc">+</span></span>
+<span id="cb85-11"><a href="#cb85-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(roadacc_agg) <span class="sc">+</span></span>
+<span id="cb85-12"><a href="#cb85-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">col =</span> <span class="st">"black"</span>, <span class="at">size =</span> <span class="fl">0.01</span>)<span class="sc">+</span></span>
+<span id="cb85-13"><a href="#cb85-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">legend.outside =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb85-14"><a href="#cb85-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title =</span> title, <span class="at">main.title.size =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex01B_files/figure-html/unnamed-chunk-64-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the plot above, we observe the following:</p>
+<ul>
+<li><p>Dense occurrence of road accidents within central Bangkok along intricate road networks where there are more complicated road lines</p></li>
+<li><p>Denser occurrence of road accidents at intersections of road segments</p></li>
+</ul>
 </section>
 </section>
 <section id="temporal-network-sppa" class="level2">
 <h2 class="anchored" data-anchor-id="temporal-network-sppa">11. Temporal Network SPPA</h2>
-<p>With reference to this site, similar steps were taken to derive the temporal network SPPA for road accidents in BMR.</p>
-<p>= WIP =</p>
+<section id="temporal-analysis-of-road-accidents-by-month" class="level3">
+<h3 class="anchored" data-anchor-id="temporal-analysis-of-road-accidents-by-month">11.1 Temporal Analysis of Road Accidents by Month</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>roadacc<span class="sc">$</span>inc_month <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(roadacc<span class="sc">$</span>inc_month)</span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>roadacc<span class="sc">$</span>inc_dayofweek <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(roadacc<span class="sc">$</span>inc_dayofweek)</span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>roadacc<span class="sc">$</span>inc_time <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(roadacc<span class="sc">$</span>inc_time)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>w <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">1</span>,<span class="fu">nrow</span>(roadacc))</span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(roadacc<span class="sc">$</span>inc_month),<span class="fu">max</span>(roadacc<span class="sc">$</span>inc_month),<span class="fl">0.5</span>)</span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>month_kernel_val <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_1 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_month, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">1</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_2 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_month, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">2</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_3 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_month, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">3</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_4 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_month, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">4</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_5 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_month, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">5</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb87-10"><a href="#cb87-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_6 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_month, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">6</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb87-11"><a href="#cb87-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> samples</span>
+<span id="cb87-12"><a href="#cb87-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>month_lab <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Jan"</span>, <span class="st">"Feb"</span>, <span class="st">"Mar"</span>, <span class="st">"Apr"</span>, <span class="st">"May"</span>, <span class="st">"Jun"</span>, <span class="st">"Jul"</span>, <span class="st">"Aug"</span>, <span class="st">"Sep"</span>, <span class="st">"Oct"</span>, <span class="st">"Nov"</span>, <span class="st">"Dec"</span>)</span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>df_month <span class="ot">&lt;-</span> reshape2<span class="sc">::</span><span class="fu">melt</span>(month_kernel_val, <span class="at">id.vars =</span> <span class="st">"time"</span>)</span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>df_month<span class="sc">$</span>variable <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(df_month<span class="sc">$</span>variable)</span>
+<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-7"><a href="#cb88-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> df_month)<span class="sc">+</span></span>
+<span id="cb88-8"><a href="#cb88-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x=</span>time,<span class="at">y=</span>value))<span class="sc">+</span></span>
+<span id="cb88-9"><a href="#cb88-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span><span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, <span class="at">labels =</span> month_lab) <span class="sc">+</span></span>
+<span id="cb88-10"><a href="#cb88-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(variable),<span class="at">ncol=</span><span class="dv">2</span>, <span class="at">scales=</span><span class="st">"free"</span>)<span class="sc">+</span></span>
+<span id="cb88-11"><a href="#cb88-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Temporal NKDE for Occurrence of Road Accidents by Month"</span>, <span class="at">x =</span> <span class="st">"Month"</span>, <span class="at">y=</span><span class="st">"Density"</span>)<span class="sc">+</span></span>
+<span id="cb88-12"><a href="#cb88-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex01B_files/figure-html/unnamed-chunk-67-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>It seems that a bandwidth of 3 best captures the bimodal shape of the temporal dimension of road accidents.</p>
+</section>
+<section id="temporal-analysis-of-road-accidents-by-day-of-week" class="level3">
+<h3 class="anchored" data-anchor-id="temporal-analysis-of-road-accidents-by-day-of-week">11.2 Temporal Analysis of Road Accidents by Day of Week</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a>w <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">1</span>,<span class="fu">nrow</span>(roadacc))</span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(roadacc<span class="sc">$</span>inc_dayofweek),<span class="fu">max</span>(roadacc<span class="sc">$</span>inc_dayofweek),<span class="fl">0.5</span>)</span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>day_kernel_val <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_1 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_dayofweek, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">1</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb89-6"><a href="#cb89-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_2 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_dayofweek, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">2</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb89-7"><a href="#cb89-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_3 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_dayofweek, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">3</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb89-8"><a href="#cb89-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">bw_4 =</span> <span class="fu">tkde</span>(roadacc<span class="sc">$</span>inc_dayofweek, <span class="at">w=</span>w, <span class="at">samples =</span> samples, <span class="at">bw =</span> <span class="dv">4</span>, <span class="at">kernel_name =</span> <span class="st">"quartic"</span>),</span>
+<span id="cb89-9"><a href="#cb89-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> samples</span>
+<span id="cb89-10"><a href="#cb89-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a>day_lab <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Sun"</span>, <span class="st">"Mon"</span>, <span class="st">"Tues"</span>, <span class="st">"Wed"</span>, <span class="st">"Thu"</span>, <span class="st">"Fri"</span>, <span class="st">"Sat"</span>)</span>
+<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a>df_day <span class="ot">&lt;-</span> reshape2<span class="sc">::</span><span class="fu">melt</span>(day_kernel_val, <span class="at">id.vars =</span> <span class="st">"day"</span>)</span>
+<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a>df_day<span class="sc">$</span>variable <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(df_day<span class="sc">$</span>variable)</span>
+<span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb90-6"><a href="#cb90-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> df_day)<span class="sc">+</span></span>
+<span id="cb90-7"><a href="#cb90-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x=</span>inc_dayofweek,<span class="at">y=</span>value))<span class="sc">+</span></span>
+<span id="cb90-8"><a href="#cb90-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span><span class="dv">7</span>, <span class="at">labels =</span> day_lab) <span class="sc">+</span></span>
+<span id="cb90-9"><a href="#cb90-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(variable),<span class="at">ncol=</span><span class="dv">2</span>, <span class="at">scales=</span><span class="st">"free"</span>)<span class="sc">+</span></span>
+<span id="cb90-10"><a href="#cb90-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Temporal NKDE for Occurrence of Road Accidents by Day of the Week"</span>, <span class="at">x =</span> <span class="st">"Day"</span>, <span class="at">y=</span><span class="st">"Density"</span>)<span class="sc">+</span></span>
+<span id="cb90-11"><a href="#cb90-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="spatial-dimension" class="level3">
+<h3 class="anchored" data-anchor-id="spatial-dimension">Spatial dimension</h3>
+<p>Before considering the spatio-temporal case, we can also investigate the spatial dimension.</p>
 
 
+</section>
 </section>
 </section>
 
