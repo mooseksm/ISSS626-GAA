@@ -20,11 +20,13 @@ execute:
 #| echo: false
 # increased timeout to mitigate error issues during rendering
 options(timeout = 5000)
+# setting the seed for any simulation steps carried out in the exercise
+set.seed(1234)
 ```
 
 ```{r}
 #| code-fold: true
-pacman::p_load(sf,spatstat,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly,RColorBrewer)
+pacman::p_load(sf,spatstat,sparr,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly,RColorBrewer)
 ```
 
 ```{r}
@@ -639,7 +641,7 @@ NKDE is used to visualise and explore the intensity of point processes i.e. road
 
 ### 9.1.1 Determining appropriate bandwidth
 
-Before we compute NKDE, we need to select an appropriate bandwidth ([reference](https://cran.r-project.org/web/packages/spNetwork/vignettes/NKDE.html)). In this case we will use the K nearest neighbour adaptive bandwidth. Under this method, the K nearest neighbour distance could be used as a locally adapted bandwidth for intensity estimation.
+Before we compute NKDE, we need to select an appropriate bandwidth. In this case we will use the K nearest neighbour adaptive bandwidth ([reference](https://jeremygelb.github.io/spNetwork/articles/web_vignettes/AdaptiveBW.html)). Under this method, the K nearest neighbour distance could be used as a locally adapted bandwidth for intensity estimation.
 
 We will first use the nearest neighbour distance to understand the distance between road accident points along the road lines in BMR - we do this by running *nndist()* function on our ppp object:
 
@@ -851,7 +853,7 @@ Based on the plots above, we observe that:
 
 -   the density curve for bw 1 is more jagged, reflecting more clearly the variations between the months - there are more significant drops in densities of road accidents in Feb, May and Nov while there are significant increases in densities of road accidents slightly before Apr, Oct and Dec.
 
--    the density curve starts to smooth out from bw 2 and bw 3 and bw 4 seem to best capture the bimodal shape of the temporal dimension of road accidents before the bimodal shape starts to be less obvious in bw 5 and is entirely gone in bw 6 (this is hence why we stop at bw 6 and do not explore further bandwidths).
+-   the density curve starts to smooth out from bw 2 and bw 3 and bw 4 seem to best capture the bimodal shape of the temporal dimension of road accidents before the bimodal shape starts to be less obvious in bw 5 and is entirely gone in bw 6 (this is hence why we stop at bw 6 and do not explore further bandwidths).
 
 -   for bw 3 and 4, it is clear that occurrence of road accidents is most dense in Mar to Apr and Oct period. This could potentially be explained by the Songkran (Thai New Year) Festival that occurs yearly in April which could have led to more traffic and pedestrians on the road, increasing the chances of accidents.
 
@@ -888,7 +890,7 @@ Based on the plots above, we observe that:
 
 -   the density curve for bw 1 is more jagged, reflecting more clearly the variations between the days - there are more significant increases in densities of road accidents from Fri to Sat. This could be explained by Fri and Sat being the start of the weekend and more traffic and pedestrians being out on the road for social activities.
 
--    the density curve starts to smooth out in bw 2 and seem to best capture the bimodal shape of the temporal dimension of road accidents - the density of road accidents increase between Fri to Sat and then drop on Sun and Mon before increasing on Tues again. As stated in the above point, the increase between Fri and Sat can be explained by these days being the start of the weekend, the drop in Sun and Mon could be due to less traffic as people start to get ready for the work/school week ahead and potentially even Mon blues when less people might travel to work. The increase in road accidents from Tues could be due to the steady stream of office workers/school children heading to office/school.
+-   the density curve starts to smooth out in bw 2 and seem to best capture the bimodal shape of the temporal dimension of road accidents - the density of road accidents increase between Fri to Sat and then drop on Sun and Mon before increasing on Tues again. As stated in the above point, the increase between Fri and Sat can be explained by these days being the start of the weekend, the drop in Sun and Mon could be due to less traffic as people start to get ready for the work/school week ahead and potentially even Mon blues when less people might travel to work. The increase in road accidents from Tues could be due to the steady stream of office workers/school children heading to office/school.
 
 -   The bimodal shape becomes less obvious/almost entirely gone in bw3 and 4 (this is hence why we stop at bw 4 and do not explore further bandwidths).
 
@@ -927,6 +929,156 @@ Based on the plots above, we observe that:
 
 -   the density curve for bw 1 is more jagged, reflecting more clearly the variations between the hours of the day - there are more significant increases in densities of road accidents from 7am. This could be explained by 7am being the start of the day and more traffic and pedestrians being out on the road for their daily activities.
 
--    the density curve starts to smooth out from bw 2 showing the period of 7am to 11am as the peak of the density of road accidents, how it dips from 12pm to 1pm (which could be explained by it being lunch hour and regular workers might be having their lunch rather than being out on the road) and the slight increase between 6pm to 8pm which is the knock-off time for office workers, hence leading to more traffic and pedestrians on the road. the density of road accidents dip significantly from 11pm which could be explained by it being the end of the day for most people hence leading to less traffic on the road and lower chances of road accidents occurring.
+-   the density curve starts to smooth out from bw 2 showing the period of 7am to 11am as the peak of the density of road accidents, how it dips from 12pm to 1pm (which could be explained by it being lunch hour and regular workers might be having their lunch rather than being out on the road) and the slight increase between 6pm to 8pm which is the knock-off time for office workers, hence leading to more traffic and pedestrians on the road. the density of road accidents dip significantly from 11pm which could be explained by it being the end of the day for most people hence leading to less traffic on the road and lower chances of road accidents occurring.
 
 -   the density curve starts to smooth out significantly from bw 3 onwards before forming an entirely smooth hump in bw 6 (this is hence why we stop at bw 6 and do not explore further bandwidths).
+
+## 11. Spatio-Temporal SPPA
+
+We now combine the separate spatial and temporal analysis carried out in sections above under one combined spatio-temporal analysis.
+
+-   While spatial analysis helps us to understand the pattern of events i.e. road accidents across geographical locations, it treats time as static and might miss how phenomena evolves over time.
+
+-   While temporal analysis studies changes over time, it ignores spatial relationships and might overlook how events at different locations might be interconnected.
+
+-   Spatio-temporal analysis provides an understanding of how events, in this case road accidents, are change across both space and time.
+
+Under this section, the specific research questions we would like to answer are:
+
+-   are the locations of road accidents in BMR spatially and spatio-temporally independent?
+
+-   if the answer is no, where and when do the observed road accidents tend to cluster?
+
+### 11.1 Visualising geographic distribution of road accidents by month
+
+As a recap, we visualise the distribution of road accidents by month:
+
+```{r}
+tm_shape(provincedata32647)+
+  tm_polygons()+
+  tm_shape(roadacc)+
+  tm_dots(size=0.05,col = "blue",alpha =0.5)+
+  tm_facets(by="inc_month",
+            free.coords = FALSE,
+            drop.units = TRUE)
+```
+
+As can be seen, there seem to be more road accidents in Apr, Oct and Dec.
+
+### 11.2 Computing Spatio-Temporal KDE (STKDE) by month
+
+In this section, we will compute STKDE using [`spattemp.density()`](https://tilmandavies.github.io/sparr/reference/spattemp.density.html) of **sparr** package.
+
+### 11.2.1 Extracting road accidents by month
+
+The code chunk below removes the unwanted fields from *roadacc* dataframe as *as.ppp()* only requires the month and geometry field from the input *roadacc* sf dataframe.
+
+```{r}
+roadacc_month <- roadacc %>%
+  select(inc_month)
+```
+
+### 11.2.2 Creating ppp object
+
+The code chunk below is used to derive a ppp object frm the *roadacc_month* sf dataframe:
+
+```{r}
+roadacc_month_ppp <- as.ppp(roadacc_month)
+roadacc_month_ppp
+```
+
+The code chunk below is used to check that the output is in the correct object class:
+
+```{r}
+summary(roadacc_month_ppp)
+```
+
+We note that there are duplicated point events from the code below:
+
+```{r}
+any(duplicated(roadacc_month_ppp))
+```
+
+We use the *multiplicity()* function to count the number of co-incident points:
+
+```{r}
+multiplicity(roadacc_month_ppp)
+```
+
+```{r}
+sum(multiplicity(roadacc_month_ppp) > 1)
+```
+
+The output shows that there are 639 duplicated point events.
+
+We will resolve this using jittering, which will add a small pertubation to the duplicate points so that they do not occupy the exact same space:
+
+```{r}
+roadacc_month_ppp_jit <- rjitter(roadacc_month_ppp,
+                                 retry = TRUE,
+                                 nsim = 99,
+                                 drop = TRUE)
+```
+
+We then check for duplicated points to determine if the jittering was carried out successfully:
+
+```{r}
+any(duplicated(roadacc_month_ppp_jit))
+```
+
+The output indicates that there are no duplicated points.
+
+### 11.2.3 Including owin object
+
+The code chunk below is used to combine *roadacc_month_ppp* and *provinceowin* into one object:
+
+```{r}
+roadacc_month_owin_ppp <- roadacc_month_ppp[provinceowin]
+```
+
+```{r}
+summary(roadacc_month_owin_ppp)
+```
+
+We plot the *roadacc_month_owin_ppp* object to examine the correctness of the output object:
+
+```{r}
+plot(roadacc_month_owin_ppp)
+```
+
+### 11.2.4 Computing STKDE
+
+Next, we use `spattemp.density()` of sparr package is used to compute the STKDE:
+
+```{r}
+st_kde <- spattemp.density(roadacc_month_owin_ppp)
+summary(st_kde)
+```
+
+### 11.2.5 Plotting the STKDE object
+
+```{r}
+fullyear <- c(1,2,3,4,5,6,7,8,9,10,11,12)
+
+par(mfrow=c(2,3))
+for(i in fullyear){ 
+  plot(st_kde, i, 
+       override.par=FALSE, 
+       fix.range=TRUE, 
+       main=paste("KDE at month",i))
+}
+```
+
+## 12. Conclusion
+
+## 13. References
+
+-   <https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification>
+
+-   <https://cran.r-project.org/web/packages/spNetwork/vignettes/NKDE.html>
+
+-   <https://jeremygelb.github.io/spNetwork/articles/web_vignettes/AdaptiveBW.html>
+
+-   <https://jeremygelb.github.io/spNetwork/articles/NKDE.html>
+
+-   <https://jeremygelb.github.io/spNetwork/articles/TNKDE.html>
