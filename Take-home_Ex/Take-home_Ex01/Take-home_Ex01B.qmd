@@ -26,7 +26,7 @@ set.seed(1234)
 
 ```{r}
 #| code-fold: true
-pacman::p_load(sf,spatstat,sparr,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly,RColorBrewer)
+pacman::p_load(sf,spatstat,sparr,raster,maptools,tmap,tidyverse,spNetwork,DT,forcats,ggthemes,plotly,RColorBrewer,classInt,viridis,gifski)
 ```
 
 ```{r}
@@ -1405,6 +1405,154 @@ for(i in eveningtonight){
 ```
 
 As seen from the plots above, the occurrence of road accidents is more intense during the hours from 7am to 11pm as compared to midnight to dawn hours from 12am to 6am. The hotspots between 7am to 11pm are at similar locations, concentrated along the edges of Bangkok.
+
+### 11.4 Calculating Spatio-Temporal NKDE (for both space and time)
+
+We will determine the bandwidth selection for spatio-temporal NKDE in both space and time via likelihood cross validation.
+
+We first need to ensure that the *incident_datetime* field in *roadacc* data is of numeric field:
+
+```{r}
+roadacc$Time <- as.POSIXct(roadacc$incident_datetime,
+                           format = "%Y/%m/%d")
+start <- as.POSIXct("2019/01/01",format = "%Y/%m/%d")
+roadacc$Time <- difftime(roadacc$Time,start,units="days")
+roadacc$Time <- as.numeric(roadacc$Time)
+```
+
+We trial and error with a few values and also reference values used in similar parameters for [9.1.1 Determining appropriate bandwidth] i.e. agg = 15:
+
+```{r}
+#| eval: false
+cv_scores <- bw_tnkde_cv_likelihood_calc(bws_net=seq(50,2500,50),
+                                         bws_time=seq(5,200,5),
+                                         lines = roadsbkk,
+                                         events = roadacc,
+                                         time_field = "incident_datetime",
+                                         w = rep(1, nrow(roadacc)),
+                                         kernel_name = "quartic",
+                                         method = "discontinuous",
+                                         diggle_correction = FALSE,
+                                         max_depth = 5,
+                                         digits = 1,
+                                         tol = 1,
+                                         agg = 15,
+                                         sparse=TRUE,
+                                         grid_shape=c(5,5),
+                                         sub_sample=1,
+                                         verbose = FALSE,
+                                         check = TRUE)
+```
+
+We save the cv scores generated as a new rds file to avoid re-running the code above:
+
+```{r}
+#| eval: false
+#| code-fold: true
+write_rds(cv_scores,"data/rds/stkde_cvscores.rds")
+```
+
+```{r}
+stkde_cvscores <- read_rds("data/rds/stkde_cvscores.rds")
+```
+
+```{r}
+knitr::kable(stkde_cvscores)
+```
+
+According to the “leave one out cross validation” method, the optimal set of bandwidths seem to be 1700 metres and 195 days. As expected, larger bandwidths are required because the density of the events are spread both in space and time.
+
+```{r}
+#| eval: false
+# choosing sample in times (every 10 days)
+sample_time <- seq(min(roadacc$Time), max(roadacc$Time), 10)
+```
+
+```{r}
+#| eval: false
+# calculating densities
+tnkde_densities <- tnkde(lines = roadsbkk,
+                   events = roadacc,
+                   time_field = "Time",
+                   w = rep(1, nrow(roadacc)), 
+                   samples_loc = samples,
+                   samples_time = sample_time, 
+                   kernel_name = "quartic",
+                   bw_net = 1700, 
+                   bw_time = 195,
+                   adaptive = TRUE,
+                   trim_bw_net = 1800,
+                   trim_bw_time = 200,
+                   method = "discontinuous",
+                   div = "bw",
+                   max_depth = 5,
+                   digits = 1,
+                   tol = 0.01,
+                   agg = 15,
+                   grid_shape = c(5,5), 
+                   verbose  = FALSE)
+```
+
+We save the tnkde densities as a new rds file to avoid re-running the code above:
+
+```{r}
+#| eval: false
+#| code-fold: true
+write_rds(tnkde_densities,"data/rds/tnkde_densities.rds")
+```
+
+```{r}
+#| eval: false
+tnkde_densities <- read_rds("data/rds/tnkde_densities.rds")
+```
+
+```{r}
+#| eval: false
+# creating a color palette for all the densities
+all_densities <- c(tnkde_densities$k)
+color_breaks <- classIntervals(all_densities, n = 10, style = "kmeans")
+```
+
+```{r}
+#| eval: false
+# generating a map at each sample time
+all_maps <- lapply(1:ncol(tnkde_densities$k), function(i){
+  time <- sample_time[[i]]
+  date <- as.Date(start) + time
+  
+  samples$density <- (tnkde_densities$k)[,i]
+  samples$density <- samples$density*1000
+  map1 <- tm_shape(samples) + 
+  tm_dots(col = "density", size = 0.01,
+          breaks = color_breaks$brks, palette = viridis(10)) + 
+    tm_layout(legend.show=FALSE, main.title = as.character(date), main.title.size = 0.5)
+  return(map1)
+})
+```
+
+We save *all_maps* as a new rds file to avoid re-running the code above:
+
+```{r}
+#| eval: false
+#| code-fold: true
+write_rds(all_maps,"data/rds/all_maps.rds")
+```
+
+```{r}
+#| eval: false
+all_maps <- read_rds("data/rds/all_maps.rds")
+```
+
+```{r}
+#| eval: false
+# creating a gif with all the maps
+tmap_animation(all_maps, filename = "images/animated_map2.gif", 
+               width = 1000, height = 1000, dpi = 300, delay = 50)
+```
+
+```{r}
+knitr::include_graphics("images/animated_map2.gif")
+```
 
 ## 12. Conclusion
 
