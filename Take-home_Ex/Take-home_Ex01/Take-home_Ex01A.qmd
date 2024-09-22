@@ -12,7 +12,7 @@ execute:
   message: false
 ---
 
-# Take-Home Exercise 1: **Geospatial Analytics for Public Good (Part 1A)**
+# Take-Home Exercise 1: Geospatial Analytics for Public Good (Part 1A)
 
 ```{r}
 #| echo: false
@@ -550,7 +550,7 @@ selectedroadlines <- selectedroadlines %>%
   filter(highway %in% c("motorway","primary","secondary","tertiary","trunk"))
 ```
 
-### **5.3.4 Clipping the data to be within area of interest**
+### 5.3.4 Clipping the data to be within area of interest
 
 We require only a subset of the *selectedroadlines* data to just roads within our area of interest, BMR and hence we utilise st_intersection() to find retain roads that are within the BMR boundaries given by *provincedata32647:*
 
@@ -691,7 +691,7 @@ ggplot(roadacc, aes(x = inc_year)) +
 ggplot(roadacc, aes(x = inc_month)) + 
   geom_bar(fill = "slategrey") +
   labs(title = "Distribution of Road Accidents by Month", x = "Month", y = "Count")+
-  scale_x_continuous(breaks=1:12, labels = c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"))+
+  scale_x_discrete(limits = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
 ```
 
