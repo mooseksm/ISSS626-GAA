@@ -530,19 +530,19 @@ While there are several classes of highway, our analysis will focus on the major
 
 A detailed explanation on the selected major highways is indicated in the table below:
 
-+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+
-| Types of highway | Details                                                                                                                                                                                                                                                                                                                                    | Included for analysis? |
-+==================+============================================================================================================================================================================================================================================================================================================================================+========================+
-| motorway         | Expressway with full access control ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                                                            | Yes                    |
-+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+
-| primary          | Top-level urban road across the city connecting trunk to trunk, or road of equal or greater importance than the primary intercity highway that runs through that city ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                          | Yes                    |
-+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+
-| secondary        | Main urban road connecting primary to primary or higher, or road of equal or greater importance than the secondary intercity highway that runs through that city. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification)) | Yes                    |
-+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+
-| tertiary         | Roads that are more important than regular unclassified or residential roads, or roads that connect several unclassified or residential roads. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                    | Yes                    |
-+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+
-| trunk            | Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                   | Yes                    |
-+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+
++--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+
+| Types of highway         | Details                                                                                                                                                                                                                                                                                                                                    | Included for analysis?               |
++==========================+============================================================================================================================================================================================================================================================================================================================================+======================================+
+| motorway                 | Expressway with full access control ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                                                            | Yes                                  |
++--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+
+| primary                  | Top-level urban road across the city connecting trunk to trunk, or road of equal or greater importance than the primary intercity highway that runs through that city ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                          | Yes                                  |
++--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+
+| secondary                | Main urban road connecting primary to primary or higher, or road of equal or greater importance than the secondary intercity highway that runs through that city. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification)) | Yes                                  |
++--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+
+| tertiary                 | Roads that are more important than regular unclassified or residential roads, or roads that connect several unclassified or residential roads. Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                    | Yes                                  |
++--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+
+| trunk                    | Based on table above, motorcars, motorcycles and pedestrians all have access ([source](https://wiki.openstreetmap.org/wiki/WikiProject_Thailand#Highway_classification))                                                                                                                                                                   | Yes                                  |
++--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+
 
 ```{r}
 #| eval: false
@@ -567,6 +567,8 @@ We take a quick look at the geometry and note that the plot has cleaned up signi
 #| eval: false
 plot(st_geometry(roadsbkk))
 ```
+
+![](images/clipboard-2725326091.png){width="589"}
 
 ### 5.3.5 Checking the geometry of *roadsbkk*
 
@@ -682,9 +684,22 @@ ggplot(roadacc, aes(x = inc_year)) +
 
 ### 6.3.2 By month
 
-We also observe the data by month using cycle plots that would enable us to observe cyclical/seasonal patterns, if present.
+### 6.3.2.1 Overall
 
-### 6.3.2.1 By month across years
+```{r}
+#| code-fold: true
+ggplot(roadacc, aes(x = inc_month)) + 
+  geom_bar(fill = "slategrey") +
+  labs(title = "Distribution of Road Accidents by Month", x = "Month", y = "Count")+
+  scale_x_continuous(breaks=1:12, labels = c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"))+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1,size = 8))
+```
+
+**Based on the plot above, most road accidents occur in Jan, Apr, Oct and Dec.**
+
+We also observe the data by month across the years using cycle plots that would enable us to observe cyclical/seasonal patterns, if present.
+
+### 6.3.2.2 By month across years
 
 To plot the distribution of road accidents by months across the years, we create a *roadacc_month* file that groups the road accidents per month for each year.
 
@@ -732,13 +747,15 @@ ggplot(data = roadacc_month, aes(x = inc_year, y = count)) +
 
 Based on the plot, we observe the following:
 
+-   **Apr, Oct and Dec have the highest average number of road accidents across the years**
+
 -   **Occurrences of road accidents in Jan and Feb seem to generally be decreasing over the years**, with the number of road accidents in 2022 for both months falling below the average number of road accidents for the month across 2019 to 2022.
 
 -   **Occurrences of road accidents in Jul, Aug, Oct to Dec seem to generally be increasing over the years.** Based on this observation alone, the increase in road accidents could potentially be due to the rainy season between Jul to Oct and the presence of a higher population due to peak tourist seasons in Nov and Dec.
 
 -   **Occurrences of road accidents in Mar to Jun and Sep generally do not fluctuate much over the years.**
 
-### 6.3.2.2 By month by province
+### 6.3.2.3 By month by province
 
 ```{r}
 #| code-fold: true
@@ -1210,7 +1227,7 @@ ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length)
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-The top two presumed cause for road accidents are rear-end collision and rollover/fallen on straight road.
+The top two accident type for road accidents are rear-end collision and rollover/fallen on straight road.
 
 ## Breakdown by Province
 
@@ -1223,7 +1240,7 @@ ggplot(roadacc, aes(x = fct_reorder(accident_type, accident_type, .fun = length)
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-**Bangkok, Pathum Thani and Samut Prakan follow the same general observation seen under the overall chart that the top two presumed cause for road accidents are rear-end collision followed by rollover/fallen on straight road. For Nakhon Pathom, Nonthaburi and Samut Sakhon, the top presumed cause is rollover/fallen on straight road followed by rear-end collision.**
+**Bangkok, Pathum Thani and Samut Prakan follow the same general observation seen under the overall chart that the top two accident type for road accidents are rear-end collision followed by rollover/fallen on straight road. For Nakhon Pathom, Nonthaburi and Samut Sakhon, the top accident type is rollover/fallen on straight road followed by rear-end collision.**
 :::
 
 ### 6.10 Distribution of number of vehicles involved
