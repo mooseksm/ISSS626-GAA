@@ -380,3 +380,15 @@ tm_shape(HCSA)+
 
 -   hands-on exercise 5 shows the old way to do it using spdep while the in-class exercise shows the new way to do it using sfdep
 :::
+
+::: callout-note
+## Notes from Prof Kam on Take-home Ex02:
+
+-   Thailand has very large tourism sector
+
+-   key indicators of tourism economy - should identify more than one i.e. besides total revenue by province
+
+-   emerging hot and cold spot areas will be covered in Lesson 6
+
+-   from take-home ex01, we already have the province level data (from HDX)
+:::
