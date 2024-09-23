@@ -1,0 +1,25 @@
+---
+title: "In-class Exercise 5"
+author: "Kock Si Min"
+date: September 23, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# In-class Exercise 5 and Lecture 5 notes
+
+::: callout-note
+## Advice from Prof Kam on Take-home Ex01:
+
+-   there is a highway at the top of the 6 provinces - should have created a \~50m buffer around the 6 provinces then use the buffered area to clip the road lines in Bangkok Metropolitan Region
+
+-   should sieve out short road lengths from road lines data
+
+-   always plot data out, examine it in relation to the context to know whether data is properly prepared
+:::
