@@ -843,6 +843,7 @@ qtm(shan_sf_spatialcluster, "SP_CLUSTER")
 
 For easy comparison, it will be better to place both the hierarchical clustering and spatially constrained hierarchical clustering maps next to each other.
 
+::: callout-note
 ```{r}
 hclust.map <- qtm(shan_sf_cluster,
                   "CLUSTER") + 
@@ -855,6 +856,15 @@ shclust.map <- qtm(shan_sf_spatialcluster,
 tmap_arrange(hclust.map, shclust.map,
              asp=NA, ncol=2)
 ```
+:::
+
+::: callout-note
+## In-class 6 notes from Prof Kam:
+
+-   results from spatially constrained cluster is more homogenous, determined based on shortest path distance
+
+-   major limitation of this method is that might be spatially homogenous but might not be that homogenous in terms of attribute aka "hard classification" hence alternative to this is to use ClustGeo() aka "soft classification" method
+:::
 
 ## 6.9 Spatially Constrained Clustering: ClustGeo Method
 
@@ -919,6 +929,18 @@ cr <- choicealpha(proxmat, distmat, range.alpha = seq(0, 1, 0.1), K=6, graph = T
 ```
 
 With reference to the graphs above, alpha = 0.3 will be used as shown in the code chunk below.
+
+::: callout-note
+## In-class 6 notes from Prof Kam
+
+Interpreting the plots above:
+
+-   use the raw version of the plot above to decide on the cut-off for alpha. the bottom plot is the normalised version.
+
+-   for the raw version, towards the right, the red plot has stronger spatial compactness but lose attribute homogeneity. If want to focus on attribute compactness, look more towards the left. hence to objectively decide, look for the point where both plots cut each other i.e. compromise between spatial and attribute compactness
+
+-   k=6 will be obtained from the step above as there is no spatially constrained optimal number of clusters
+:::
 
 ```{r}
 clustG <- hclustgeo(proxmat, distmat, alpha = 0.3)
