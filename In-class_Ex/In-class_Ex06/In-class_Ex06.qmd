@@ -24,9 +24,8 @@ pacman::p_load(sf,tidyverse,sfdep,tmap,plotly,Kendall)
 
 -   Hunan province administrative boundary layer at county level. This is a geospatial data set in ESRI shapefile format.
 
-```{=html}
 <!-- -->
-```
+
 -   Hunan_2012.csv: This csv file contains selected Hunan’s local development indicators in 2012.
 
 In this section, we will bring a geospatial data and its associated attribute table into R environment. The geospatial data is in ESRI shapefile format and the attribute table is in csv fomat.
