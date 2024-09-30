@@ -1,0 +1,248 @@
+---
+title: "In-class Exercise 6"
+author: "Kock Si Min"
+date: September 30, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# In-class Exercise 6 - Emerging Hot Spot Analysis
+
+## 6.1 Installing and loading the R packages
+
+```{r}
+pacman::p_load(sf,tidyverse,sfdep,tmap,plotly,Kendall)
+```
+
+## 6.2 The data
+
+-   Hunan province administrative boundary layer at county level. This is a geospatial data set in ESRI shapefile format.
+
+```{=html}
+<!-- -->
+```
+-   Hunan_2012.csv: This csv file contains selected Hunan’s local development indicators in 2012.
+
+In this section, we will bring a geospatial data and its associated attribute table into R environment. The geospatial data is in ESRI shapefile format and the attribute table is in csv fomat.
+
+### 6.2.1 Import shapefile into R environment
+
+The code chunk below uses [`st_read()`](https://r-spatial.github.io/sf/reference/st_read.html) of **sf** package to import Hunan shapefile into R. The imported shapefile will be a **simple features** **object** of **sf**.
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial",
+                 layer = "Hunan")
+```
+
+We note that the simple features data has a polygon geometry and has 88 features and 7 fields. It is in WGS84 geographic coordinate system.
+
+### 6.2.2 Import csv file into R environment
+
+Next, we will import *Hunan_GDPPC.csv* into R using [`read_csv()`](https://readr.tidyverse.org/reference/read_delim.html) of readr package. The output is in R data frame class.
+
+```{r}
+GDPPC <- read_csv("data/aspatial/Hunan_GDPPC.csv")
+```
+
+### 6.2.3 Creating a time series cube
+
+We use [spacetime()](https://sfdep.josiahparry.com/articles/spacetime-s3.html) of sfdep to create a spatio-temporal cube:
+
+```{r}
+GDPPC_st <- spacetime(GDPPC,hunan,
+                      .loc_col = "County",
+                      .time_col = "Year")
+```
+
+-   the above code explicitly indicates which attribute is spatial (".loc_col") and which attribute is the time (".time_col")
+
+-   note that cannot use original time or date field as its in continuous form and might not be integer i.e. cannot use real number/number that have decimal places, hence prior to this step, might need to explicitly **convert date into integer** (via lubridate) or rmb to drop away the date to have continuous day, month, year indicator.
+
+-   **cannot use this method if boundary change** i.e. those phenomena with dynamic space such as flooding that cover a large area then recede to cover smaller area, what can be changed are attributes i.e. occurrences of accidents - as long as hexagon remain the same.
+
+::: callout-note
+Note this step for Take-home Exercise 2
+:::
+
+We use the following code chunk to verify if GDPPC_st is indeed a space-time cube object:
+
+```{r}
+is_spacetime_cube(GDPPC_st)
+```
+
+-   It is always good practice to check via the above step
+
+-   Via the "Environment" tab, we note that GDPPC_st has several layers according to different time periods vs the original GDPPC file. However, this difference is not obvious when you click to open up the GDPPC_st file.
+
+## 6.3 Computing Gi\*
+
+```{r}
+GDPPC_nb <- GDPPC_st %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(
+    st_contiguity(geometry)),
+    wt = st_inverse_distance(nb,
+                             geometry,
+                             scale = 1,
+                             alpha =1),
+    .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+```
+
+-   we use mutate to create new columns
+
+-   G\* statistics **need to use distance weights (either inverse or fixed)**
+
+-   **note that G\* includes itself hence note the function "include_self()" as first-level container**
+
+-   geometry in st_inverse_distance is the centroid
+
+-   to have more distance decay, increase the alpha value
+
+-   note not to sort the data after applying set_nbs and set_wts cause it will change the sequence
+
+We use the new columsn to manually calculate the local Gi\* for each location. We can do this by grouping by Year and using local_gstar_perm() of sfdep package. Thereafter, we use unnest to "flatten" - unnest gi_star column of newly created gi_stars data.frame:
+
+```{r}
+gi_stars <- GDPPC_nb %>%
+  group_by(Year) %>%
+  mutate(gi_star = local_gstar_perm(
+    GDPPC, nb, wt)) %>%
+  tidyr::unnest(gi_star)
+```
+
+## 6.4 Mann-Kendall Test
+
+Perform confirmatory analysis to test if observed pattern exhibit monotonic or non-monotonic trend
+
+```{r}
+cbg <- gi_stars %>% 
+  ungroup() %>% 
+  filter(County == "Changsha") %>%
+  dplyr::select(County, Year, gi_star)
+```
+
+```{r}
+ggplot(cbg,
+       aes(x=Year,
+           y=gi_star))+
+  geom_line()+
+  theme_light()
+```
+
+-   need 12 years of data?
+
+-   can also utilise ggplotly to plot an interactive version below:
+
+```{r}
+p <- ggplot(cbg,
+            aes(x=Year,
+                y=gi_star))+
+  geom_line()+
+  theme_light()
+
+ggplotly(p)
+```
+
+### 6.4.1 Printing Mann-Kendall Report
+
+```{r}
+cbg %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk)
+```
+
+-   sl is the p-value. with reference to the above results (sl = \~0.00742) which is less than 0.05, we will reject the hypothesis at 95% confidence level and infer that there's a slight upward trend (tau = \~0.485).
+
+### 6.4.2 Mann-Kendall test data.frame
+
+We can replicate this for each location using group_by() of dplyr package:
+
+```{r}
+ehsa <- gi_stars %>%
+  group_by(County) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk)
+
+head(ehsa)
+```
+
+-   note that not all County are statistically significant
+
+-   note that not all County are on the positive increasing trend, some are negative increasing trend
+
+### 6.4.3 Arrange to show significant hot/cold spots:
+
+```{r}
+emerging <- ehsa %>% 
+  arrange(sl, abs(tau)) %>% 
+  slice(1:5)
+
+emerging
+```
+
+### 6.4.4 Performing Emerging Hotspot Analysis
+
+```{r}
+set.seed(1234)
+ehsa <- emerging_hotspot_analysis(
+  x = GDPPC_st,
+  .var = "GDPPC",
+  k = 1,
+  nsim =99
+)
+
+ehsa
+```
+
+-   k=1 is yearly time interval
+
+## 6.5 Visualising the distribution of EHSA classes
+
+Quick overview:
+
+```{r}
+ggplot(ehsa,
+       aes(x=classification))+
+  geom_bar()
+```
+
+-   usually visualise as a frequency plot, bar chart format
+
+-   did not sieve out statistically significant ones (can add a filter to get only statistically significant ones)
+
+## 6.6 Visualising EHSA
+
+```{r}
+hunan_ehsa <- hunan %>%
+  left_join(ehsa,
+            by = join_by(County == location))
+```
+
+```{r}
+ehsa_sig <- hunan_ehsa %>%
+  filter(p_value < 0.05)
+
+tmap_mode('plot')
+tm_shape(hunan_ehsa)+
+  tm_polygons()+
+  tm_borders(alpha = 0.5)+
+  tm_shape(ehsa_sig)+
+  tm_fill("classification")+
+  tm_borders(alpha=0.4)
+```
+
+-   read the interpretation of EHSA classes for definition/explanation
+
+-   even though Mann-Kendall and EHSA tests both provide tau and p-values, they are different. have to run both tests separately. **Mann-Kendall test provide quick overview while the final classification is based on the EHSA test. EHSA run permutations i.e. nsim = 99 to confirm the observations, provides more confidence.**
