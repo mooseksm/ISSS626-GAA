@@ -795,7 +795,7 @@ ccs6 <- clust6$groups
 ccs6
 ```
 
-We can find out how many observations are in each cluster by means of the table command. Parenthetially, we can also find this as the dimension of each vector in the lists contained in edges.groups. For example, the first list has node with dimension 12, which is also the number of observations in the first cluster.
+We can find out how many observations are in each cluster by means of the table command. Parenthetially, we can also find this as the dimension of each vector in the lists contained in edges.groups. For example, the first list has node with dimension 22, which is also the number of observations in the first cluster.
 
 ```{r}
 table(ccs6)
