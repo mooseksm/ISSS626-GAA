@@ -208,6 +208,7 @@ ggplot(ict_derived,
 
 We plot the distribution of the other variables as well by first creating the individual histograms:
 
+::: callout-note
 ```{r}
 radio <- ggplot(ict_derived,
                 aes(x=`RADIO_PR`))+
@@ -245,6 +246,7 @@ internet <- ggplot(ict_derived,
                  color = "black",
                  fill = "lightblue")
 ```
+:::
 
 We then use [*ggarrange()*](https://rpkgs.datanovia.com/ggpubr/reference/ggarrange.html) function of [**ggpubr package**](https://rpkgs.datanovia.com/ggpubr/index.html)to group the histograms together:
 
@@ -253,6 +255,12 @@ ggarrange(radio,tv,llphone,mphone,computer,internet,
           ncol = 3,
           nrow = 2)
 ```
+
+::: callout-note
+## In-class 6 notes from Prof Kam:
+
+-   as seen from the distribution from the plots above, the differences between the ranges of the variables are not great hence can proceed without using standardised variables
+:::
 
 ### 6.5.2 EDA using chloropleth map
 
@@ -346,7 +354,7 @@ corrplot.mixed(cluster_vars.cor,
                tl.col = "black")
 ```
 
-The correlation plot shows that COMPUTER_PR and INTERNET_PR are highly correlated i.e. 0.87. This suggests that only one of them should be used in the cluster analysis.
+The correlation plot shows that COMPUTER_PR and INTERNET_PR are highly correlated i.e. more than 0.8, in this case 0.87. This suggests that only one of them should be used in the cluster analysis.
 
 ## 6.7 Hierarchy Cluster Analysis
 
@@ -572,6 +580,14 @@ With reference to the gap statistic graph above, the recommended number of clust
 
 ::: callout-note
 **Note:** In addition to these commonly used approaches, the [NbClust](https://cran.r-project.org/web/packages/NbClust/) package, published by Charrad et al., 2014, provides 30 indices for determining the relevant number of clusters and proposes to users the best clustering scheme from the different results obtained by varying all combinations of number of clusters, distance measures, and clustering methods.
+:::
+
+::: callout-note
+## In-class 6 notes from Prof Kam:
+
+-   dendogram without a cut-off is not useful
+
+-   there will be several local optimisation points i.e. if extend to view more number of clusters, will likely see local optimal points there too. hence need to consider logic/other factors i.e. if have 80 points, no point having 20 clusters.
 :::
 
 ### 6.7.10 Interpreting the dendograms
@@ -840,11 +856,11 @@ tmap_arrange(hclust.map, shclust.map,
              asp=NA, ncol=2)
 ```
 
-## 6.9 **Spatially Constrained Clustering: ClustGeo Method**
+## 6.9 Spatially Constrained Clustering: ClustGeo Method
 
 In this section, we will use functions provided by **ClustGeo** package to perform non-spatially constrained hierarchical cluster analysis and spatially constrained cluster analysis.
 
-### 6.9.1 **A short note about ClustGeo package**
+### 6.9.1 A short note about ClustGeo package
 
 [**ClustGeo**](https://cran.r-project.org/web/packages/ClustGeo/) package is an R package specially designed to support the need of performing spatially constrained cluster analysis. More specifically, it provides a Ward-like hierarchical clustering algorithm called `hclustgeo()` including spatial/geographical constraints.
 
@@ -852,7 +868,7 @@ In the nutshell, the algorithm uses two dissimilarity matrices D0 and D1 along w
 
 The idea is then to determine a value of alpha which increases the spatial contiguity without deteriorating too much the quality of the solution based on the variables of interest. This need is supported by a function called `choicealpha()`.
 
-### 6.9.2 **Ward-like hierarchical clustering: ClustGeo**
+### 6.9.2 Ward-like hierarchical clustering: ClustGeo
 
 ClustGeo package provides function called `hclustgeo()` to perform a typical Ward-like hierarchical clustering just like `hclust()` learned in previous section.
 
@@ -885,7 +901,7 @@ shan_sf_ngeo_cluster <- cbind(shan_sf, as.matrix(groups)) %>%
 qtm(shan_sf_ngeo_cluster, "CLUSTER")
 ```
 
-### 6.9.3 **Spatially Constrained Hierarchical Clustering**
+### 6.9.3 Spatially Constrained Hierarchical Clustering
 
 Before we can performed spatially constrained hierarchical clustering, a spatial distance matrix will be derived by using [`st_distance()`](https://r-spatial.github.io/sf/reference/geos_measures.html) of sf package.
 
@@ -929,7 +945,7 @@ qtm(shan_sf_Gcluster, "CLUSTER")
 
 ## 6.10 Visual interpretation of clusters
 
-### 6.10.1 **Visualising individual clustering variable**
+### 6.10.1 Visualising individual clustering variable
 
 Code chunk below is used to reveal the distribution of a clustering variable (i.e RADIO_PR) by cluster.
 
@@ -941,7 +957,7 @@ ggplot(data = shan_sf_ngeo_cluster,
 
 The boxplot reveals Cluster 3 displays the highest mean Radio Ownership Per Thousand Household. This is followed by Cluster 2, 1, 4, 6 and 5.
 
-### 6.10.2 **Multivariate Visualisation**
+### 6.10.2 Multivariate Visualisation
 
 Past studies shown that parallel coordinate plot can be used to reveal clustering variables by cluster very effectively. In the code chunk below, [`ggparcoord()`](https://ggobi.github.io/ggally/reference/ggparcoord.html) of [**GGally**](https://ggobi.github.io/ggally/index.html) package
 
@@ -988,3 +1004,13 @@ shan_sf_ngeo_cluster %>%
             mean_MPHONE_PR = mean(MPHONE_PR),
             mean_COMPUTER_PR = mean(COMPUTER_PR))
 ```
+
+::: callout-note
+## In-class 6 notes from Prof Kam:
+
+-   standardisation is important for hierarchical clustering because its distance-based and when units of measurement are different, you want to avoid the data analysis being skewed by data with larger units
+
+-   however in this case, while we had carried out standardisation in this exercise, we note that the distribution of the variables are not wide-ranging and hence can just use the unstandardised data for analysis
+
+-   variable standaridsation techniques: Z-score has no max while min-max is constrained between 0 and 1. another standardisation method decimal scaling helps to spread the data i.e. data from satellites, remote sensing technologies
+:::
