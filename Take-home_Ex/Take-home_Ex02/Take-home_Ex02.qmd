@@ -112,7 +112,7 @@ We form new variables *year* and *month* using the lubridate package:
 
 ```{r}
 tourism <- tourism %>%
-  mutate(year_month = format(floor_date(date,"month"),"%Y-%m"),
+  mutate(year_month = ymd(date),
          year = year(date),
          month = month(date,
                        label = TRUE,
@@ -216,7 +216,7 @@ ggplot(tourism,
 We note that there are 8 different types of variables:
 
 | S/N   | Variable           | Definition                                                                  |
-|-----------------|-----------------|--------------------------------------|
+|-------------|-------------|----------------------------------------------|
 | **1** | no_tourist_all     | The total number of domestic tourists who visited the province              |
 | **2** | no_tourist_thai    | The number of Thai tourists who visited the province                        |
 | **3** | no_tourist_foreign | The number of foreign tourists who visited the province                     |
@@ -379,15 +379,18 @@ ggplot(tourism_wider, aes(x = "", y = no_tourist_stay)) +
 
 ### 5.1.2.5.5 Removing data with negative "revenue_foreign" values
 
-We clean the data by removing rows with negative "revenue_foreign" values. We also remove the "date" variable to keep the data more tidy for further analysis.
+Based on the results above, we clean the *tourism* data by removing rows with negative "revenue_foreign" values. We also remove the "date" variable to keep the data more tidy for further analysis.
 
 ```{r}
-tourism_wider <- tourism_wider %>%
-  filter(revenue_foreign >= 0) %>%
+#tourism <- tourism_wider %>%
+  #filter(revenue_foreign >= 0) %>%
+  #select(-date)
+
+tourism <- tourism_wider %>%
   select(-date)
 ```
 
-After removing the data, we note that we have 3848 rows remaining.
+After removing the data, we note that we have 3850 rows remaining.
 
 ### 5.1.2.6 Saving as a new rds file
 
@@ -395,11 +398,122 @@ We save the cleaned data as a new rds file:
 
 ```{r}
 #| eval: false
-tourism_cleaned <- write_rds(tourism_wider,"data/rds/tourism_cleaned.rds")
+tourism_cleaned <- write_rds(tourism,"data/rds/tourism_cleaned.rds")
 ```
 
 ```{r}
 tourism_cleaned <- read_rds("data/rds/tourism_cleaned.rds")
+```
+
+```{r}
+#| eval: false
+#| echo: false
+# to remove when cleaning up
+grouped <- tourism_cleaned %>%
+  group_by(year_month, province_eng, region_eng) %>%
+  summarize(median_tot_revenue = median(revenue_all, na.rm = TRUE),
+            median_foreign_revenue = median(revenue_foreign, na.rm = TRUE),
+            median_thai_revenue = median(revenue_thai, na.rm = TRUE),
+            median_tot_tourist = median(no_tourist_all, na.rm = TRUE),
+            median_tot_foreign = median(no_tourist_foreign, na.rm = TRUE),
+            median_tot_thai = median(no_tourist_thai, na.rm = TRUE),
+            median_occup_rate = median(ratio_tourist_stay, na.rm = TRUE),
+            median_occup_no = median(no_tourist_stay, na.rm = TRUE),
+            .groups = 'drop')
+
+print(head(grouped))
+```
+
+### 5.1.3 Creating a data frame for spatial analysis 
+
+```{r}
+tourism_cleaned_spat <- tourism_cleaned %>%
+  group_by(province_eng, region_eng) %>%
+  summarize(median_tot_revenue = median(revenue_all, na.rm = TRUE),
+            median_foreign_revenue = median(revenue_foreign, na.rm = TRUE),
+            median_thai_revenue = median(revenue_thai, na.rm = TRUE),
+            median_tot_tourist = median(no_tourist_all, na.rm = TRUE),
+            median_tot_foreign = median(no_tourist_foreign, na.rm = TRUE),
+            median_tot_thai = median(no_tourist_thai, na.rm = TRUE),
+            median_occup_rate = median(ratio_tourist_stay, na.rm = TRUE),
+            median_occup_no = median(no_tourist_stay, na.rm = TRUE),
+            .groups = 'drop')
+```
+
+### 5.1.3.1 Saving as a new rds file
+
+We save the file as a new rds file:
+
+```{r}
+#| eval: false
+tourism_cleaned_spat <- write_rds(tourism_cleaned_spat,"data/rds/tourism_cleaned_spat.rds")
+```
+
+```{r}
+tourism_cleaned_spat <- read_rds("data/rds/tourism_cleaned_spat.rds")
+```
+
+### 5.1.4 Creating a data frame for temporal analysis
+
+We plot the total revenue by year_month:
+
+```{r}
+tourism_cleaned_summary <- tourism_cleaned %>%
+  mutate(year_month = as.character(year_month)) %>%
+  group_by(year_month) %>%
+  summarize(total_revenue = sum(revenue_all, na.rm = TRUE))
+
+ggplot(tourism_cleaned_summary, aes(x = year_month, y = total_revenue)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Total Revenue by Year-Month", x = "Year-Month", y = "Total Revenue") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Based on the distribution of total revenue across the year_month variable, it can be seen that temporally, we can split the data into 3 time periods, namely:
+
+-   pre-COVID: Between Jan 2019 to Mar 2020
+
+-   during COVID: Between Apr 2020 to Aug 2021
+
+-   post-COVID: Between Sep 2021 to Feb 2023
+
+```{r}
+#| eval: false 
+tourism_cleaned_temp <- tourism_cleaned %>%
+  mutate(time_period = case_when(
+    year_month >= "2019-01-01" & year_month <= "2020-03-01" ~ "Pre-COVID",
+    year_month >= "2020-04-01" & year_month <= "2021-08-01" ~ "During-COVID",
+    year_month >= "2021-09-01" & year_month <= "2023-02-01" ~ "Post-COVID",
+    TRUE ~ NA_character_))
+```
+
+```{r}
+#| eval: false 
+tourism_cleaned_temp <- tourism_cleaned_temp %>%
+  group_by(province_eng,time_period) %>%
+  summarize(median_tot_revenue = median(revenue_all, na.rm = TRUE),
+            median_foreign_revenue = median(revenue_foreign, na.rm = TRUE),
+            median_thai_revenue = median(revenue_thai, na.rm = TRUE),
+            median_tot_tourist = median(no_tourist_all, na.rm = TRUE),
+            median_tot_foreign = median(no_tourist_foreign, na.rm = TRUE),
+            median_tot_thai = median(no_tourist_thai, na.rm = TRUE),
+            median_occup_rate = median(ratio_tourist_stay, na.rm = TRUE),
+            median_occup_no = median(no_tourist_stay, na.rm = TRUE),
+            .groups = 'drop')
+```
+
+### 5.1.3.1 Saving as a new rds file
+
+We save the file as a new rds file:
+
+```{r}
+#| eval: false 
+tourism_cleaned_temp <- write_rds(tourism_cleaned_temp,"data/rds/tourism_cleaned_temp.rds")
+```
+
+```{r}
+tourism_cleaned_temp <- read_rds("data/rds/tourism_cleaned_temp.rds")
 ```
 
 ### 5.2 Thailand Subnational Administrative Boundaries
@@ -426,17 +540,6 @@ Of the fields available, only "ADM1_EN" and "geometry" are essential hence the f
 #| eval: false
 province <- province %>%
   select(ADM1_EN)
-```
-
-We save this as new rds file to avoid reloading the original datafile above:
-
-```{r}
-#| eval: false
-province <- write_rds(province,"data/rds/province.rds")
-```
-
-```{r}
-province <- read_rds("data/rds/province.rds")
 ```
 
 ### 5.2.3 Checking the name of the provinces
@@ -503,9 +606,10 @@ We note repeated entries for eight provinces which are spelt differently in the 
 
 ### 5.2.3.1 Adjusting the naming of provinces in *province* sf object
 
-We utilise the following code chunk to adjust the naming of the eight provinces to be aligned with the naming in the *tourism_cleaned* dataframe to faciliate relational join in subsequent analysis:
+We utilise the following code chunk to adjust the naming of the eight provinces to be aligned with the naming in the *tourism_cleaned* dataframe to faciliate relational join in subsequent analysis. We also rename "ADM1_EN" to "province_eng" to faciliate the creation of timeseries cube in subsequent analysis.
 
 ```{r}
+#| eval: false
 province <- province %>%
   mutate(ADM1_EN = case_when(
     ADM1_EN == "Buri Ram" ~ "Buriram",
@@ -516,17 +620,29 @@ province <- province %>%
     ADM1_EN == "Phangnga" ~ "Phang Nga",
     ADM1_EN == "Prachin Buri" ~ "Prachinburi",
     ADM1_EN == "Si Sa Ket" ~ "Sisaket",
-    TRUE ~ ADM1_EN
-  ))
+    TRUE ~ ADM1_EN)) %>%
+  rename(province_eng = ADM1_EN)
+```
+
+We save this as new rds file to avoid reloading the original datafile above:
+
+```{r}
+#| eval: false 
+province <- write_rds(province,"data/rds/province.rds")
+```
+
+```{r}
+province <- read_rds("data/rds/province.rds")
 ```
 
 ### 5.3 Performing relational join
 
+### 5.3.1 Relational join with *tourism_cleaned* data frame
+
 We then perform a left relational join to update the *province* sf object with the attribute fields of the *tourism_cleaned* data frame:
 
 ```{r}
-combined_prov_tourism <- left_join(province,tourism_cleaned,
-                                   by = c("ADM1_EN" = "province_eng"))
+combined_prov_tourism <- left_join(province,tourism_cleaned)
 ```
 
 ```{r}
@@ -535,17 +651,201 @@ glimpse(combined_prov_tourism)
 
 We note that the *combined_prov_tourism* data has the same number of rows, 3848 rows, as the original *tourism_cleaned* data frame indicating that the cleaning up of the different province spellings was done accurately.
 
-### 5.4 Creating a time series cube
+### 5.3.1.1 Saving as a new rds file
+
+We save the combined file as a new rds file and load it into the R environment for further analysis:
+
+```{r}
+#| eval: false
+combined_data <- write_rds(combined_prov_tourism,"data/rds/combined_prov_tourism.rds")
+```
+
+```{r}
+combined_data <- read_rds("data/rds/combined_prov_tourism.rds")
+```
+
+### 5.3.2 Relational join with *tourism_cleaned_spat* data frame
+
+We also perform a left relational join to update the *province* sf object with the attribute fields of the *tourism_cleaned_spat* data frame:
+
+```{r}
+combined_tourism_spat <- left_join(province,tourism_cleaned_spat)
+```
+
+```{r}
+glimpse(combined_tourism_spat)
+```
+
+### 5.3.2.1 Saving as a new rds file
+
+We save the combined file as a new rds file and load it into the R environment for further analysis:
+
+```{r}
+#| eval: false 
+combined_data_spat <- write_rds(combined_tourism_spat,"data/rds/combined_data_spat.rds")
+```
+
+```{r}
+combined_data_spat <- read_rds("data/rds/combined_data_spat.rds")
+```
+
+### 5.3.3 Relational join with *tourism_cleaned_temp* data frame
+
+We also perform a left relational join to update the *province* sf object with the attribute fields of the *tourism_cleaned_temp* data frame:
+
+```{r}
+combined_tourism_temp <- left_join(province,tourism_cleaned_temp)
+```
+
+```{r}
+glimpse(combined_tourism_temp)
+```
+
+### 5.3.2.1 Saving as a new rds file
+
+We save the combined file as a new rds file and load it into the R environment for further analysis:
+
+```{r}
+#| eval: false  
+combined_data_temp <- write_rds(combined_tourism_temp,"data/rds/combined_data_temp.rds")
+```
+
+```{r}
+combined_data_temp <- read_rds("data/rds/combined_data_temp.rds")
+```
+
+### 5.5 Creating a time series cube
 
 We use [spacetime()](https://sfdep.josiahparry.com/articles/spacetime-s3.html) of sfdep to create a spatio-temporal cube:
 
 ```{r}
+spt <- spacetime(
+  tourism_cleaned,
+  province,
+  .loc_col = "province_eng",
+  .time_col = "year_month"
+)
 ```
 
-## 6. Visualising Different Key Indicators of the Tourism Economy of Thailand
+### 5.4.1 Verifying space-time cube object
 
-### 6.1 Revenue
+We utilise the following code chunk to verify if *spt* is indeed a space-time cube object:
+
+```{r}
+is_spacetime_cube(spt)
+```
+
+### 5.4.2 Saving as a new rds file
+
+We save *spt* as a new rds file and load it into the R environment for further analysis:
+
+```{r}
+#| eval: false
+spt <- write_rds(spt,"data/rds/spt.rds")
+```
+
+```{r}
+spt <- read_rds("data/rds/spt.rds")
+```
+
+## 6. Key Indicators of the Tourism Economy of Thailand
+
+From the above data, we note that there are several key indicators of the tourism economy of Thailand, namely:
+
+-   Total revenue
+
+-   Revenue generated from foreign tourists
+
+-   Revenue generated from local/Thai tourists
+
+-   Total number of tourists
+
+-   Number of foreign tourists
+
+-   Number of local/Thai tourists
+
+-   Occupancy rate of hotels
+
+# Cannot use contiguity spatial weights - have to use distance-based
+
+## 7. Computing Contiguity Spatial Weights
+
+In this section, we will use [*poly2nb()*](https://r-spatial.github.io/spdep/reference/poly2nb.html) of **sfdep** package to compute contiguity weight matrices for the study area. This function builds a neighbours list based on regions with contiguous boundaries.
+
+### 7.1 Deriving Queen's contiguity weights
+
+```{r}
+invalid_geometries <- combined_data_spat %>%
+  filter(!st_is_valid(geometry))
+
+# Check for empty geometries
+empty_geometries <- combined_data_spat %>%
+  filter(st_is_empty(geometry))
+
+# Print the counts
+cat("Number of invalid geometries:", nrow(invalid_geometries), "\n")
+cat("Number of empty geometries:", nrow(empty_geometries), "\n")
+```
+
+```{r}
+#| eval: false
+wm_q <- combined_data_spat %>%
+  mutate(nb = st_contiguity(geometry),
+         wt = st_weights(nb,
+                         style = "W"),
+         .before = 1)
+```
+
+### 7.2 Computing Global Moran's I
+
+### 7.3 Visualising contiguity weights
+
+A connectivity graph takes a point and displays a line to each neighbouring point. As we are working with multipolygons, we will need to get points to make connectivity graphs. As such, we will get the latitude and longitude of polygon centroids. To do this, we will use a mapping function. The mapping function applies a given function to each element of a vector and returns a vector of the same length. Our input vector will be the geometry column of us.bound. Our function will be st_centroid. We will be using map_dbl variation of map from the purrr package.
+
+To get our longitude values we map the st_centroid function over the geometry column of us.bound and access the longitude value through double bracket notation \[\[\]\] and 1. This allows us to get only the longitude, which is the first value in each centroid.
+
+```{r}
+longitude <- map_dbl(province$geometry,~st_centroid(.x)[[1]])
+```
+
+We do the same for latitude but by accessing the second value per each centroid with \[\[2\]\].
+
+```{r}
+latitude <- map_dbl(province$geometry,~st_centroid(.x)[[2]])
+```
+
+We then use cbind to put longitude and latitude into the same object:
+
+```{r}
+coords <- cbind(longitude,latitude)
+```
+
+We check the first few observations to ensure that things are formatted correctly:
+
+```{r}
+head(coords)
+```
+
+### 6.1 Determining whether key indicators are independent of space
+
+### 6.2 Determining whether key indicators are independent of space and time
 
 ### 6.1.1 Total Revenue
 
-### 6.1.2
+```{r}
+
+```
+
+### 6.1.2 Revenue generated by foreign tourists
+
+### 6.1.3 Revenue generated by Thai tourists
+
+### 6.2 Tourist Numbers
+
+### 6.1.1 Total number of tourists
+
+### 6.1.2 Number of foreign tourists
+
+### 6.1.3 Number of Thai tourists
+
+### 6.3 Occupancy Rate
