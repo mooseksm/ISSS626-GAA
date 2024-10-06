@@ -64,6 +64,7 @@ pacman::p_load(sf,spatstat,raster,tmap,tidyverse)
 **maptools** is [retired](https://cran.r-project.org/src/contrib/Archive/maptools/) and binary is removed from CRAN, however it can be downloaded from [Posit Public Package Manager](https://posit.co/products/cloud/public-package-manager/) (this site is useful for Shiny) snapshots by using the code chunk below. Alternatively, can utilise the CRAN retired website and key in the latest version.
 
 ```{r}
+#| eval: false
 install.packages("maptools",
                  repos = "https://packagemanager.posit.co/cran/2023-10-13")
 ```
@@ -269,7 +270,7 @@ The code chunk below implements the jittering approach:
 ```{r}
 childcare_ppp_jit <- rjitter(childcare_ppp, 
                              retry=TRUE, 
-                             nsim=49, 
+                             nsim=1, 
                              drop=TRUE)
 ```
 
@@ -584,6 +585,13 @@ childcare_pg_ppp = childcare_ppp_jit[pg_owin]
 childcare_tm_ppp = childcare_ppp_jit[tm_owin]
 childcare_ck_ppp = childcare_ppp_jit[ck_owin]
 childcare_jw_ppp = childcare_ppp_jit[jw_owin]
+```
+
+```{r}
+class(childcare_pg_ppp)
+class(childcare_tm_ppp)
+class(childcare_ck_ppp)
+class(childcare_jw_ppp)
 ```
 
 Next, *rescale.ppp()* function is used to transform the unit of measurement from metre to kilometre:

@@ -193,6 +193,14 @@ rswm_q
 -   If *zero policy* is set to TRUE, weights vectors of zero length are inserted for regions without neighbour in the neighbours list. These will in turn generate lag values of zero, equivalent to the sum of products of the zero row t(rep(0, length=length(neighbours))) %\*% x, for arbitrary numerical vector x of length length(neighbours). The spatially lagged value of x for the zero-neighbour region will then be zero, which may (or may not) be a sensible choice.
 :::
 
+::: callout-note
+**Moran's I** and **Geary's C** are two common measures used in **spatial statistics** to assess the degree of **spatial autocorrelation**—that is, how spatially similar or dissimilar neighboring regions are to one another based on a given variable. Both are used to analyze whether similar values cluster together in space or if there is a random or dispersed pattern.
+
+-   Moran's I is a **global measure** of spatial autocorrelation. It compares the similarity of values across neighboring regions and indicates whether similar or dissimilar values are spatially clustered.
+
+-   Geary’s C focuses more on **local differences** between pairs of neighboring regions. It tends to be more sensitive to local variations than Moran’s I.
+:::
+
 ## 5.5 Global Measures of Spatial Autocorrelation: Moran's I statistic testing
 
 In this section, we will perform Moran’s I statistics testing using [`moran.test()`](https://r-spatial.github.io/spdep/reference/moran.test.html) of **spdep.**
@@ -335,6 +343,14 @@ Plotting the output might not allow us to provide complete interpretation. This 
 print(MI_corr)
 ```
 
+::: callout-note
+**Interpretation:**
+
+-   **Lag 1** shows **significant positive spatial autocorrelation**, meaning nearby regions tend to have similar GDPPC values.
+
+-   As the lags increase, spatial autocorrelation diminishes and eventually becomes slightly negative (indicating dissimilarity between regions further apart), but with wider error bars indicating less significance.
+:::
+
 ### 5.7.2 Compute Geary's C correlogram and plot
 
 In the code chunk below, `sp.correlogram()` of **spdep** package is used to compute a 6-lag spatial correlogram of GDPPC. The global spatial autocorrelation used in Geary’s C (note method = "C" in code below). The **plot()** of base Graph is then used to plot the output.
@@ -353,6 +369,16 @@ Similar to the previous step, we will print out the analysis report by using the
 ```{r}
 print(GC_corr)
 ```
+
+::: callout-note
+**Interpretation:**
+
+-   The Geary's C plot supports the conclusion that there is **initial positive spatial autocorrelation** at short distances (e.g., Lag 1).
+
+-   However, as you move to greater distances (Lags 2 through 4), it suggests the spatial relationships become weaker, approaching random distribution.
+
+-   Finally, at Lags 5 and 6, there’s evidence of **negative spatial autocorrelation**.
+:::
 
 ::: callout-note
 ## Own notes on why wm_q is used in correlogram rather than rswm_q
