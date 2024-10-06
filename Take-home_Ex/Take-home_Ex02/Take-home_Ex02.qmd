@@ -1,0 +1,551 @@
+---
+title: "Take-home Exercise 2"
+author: "Kock Si Min"
+date: October 2, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# Take-home Exercise 2: Discovering impacts of COVID-19 on Thailand tourism economy at the province level using spatial and spatio-temporal statistics
+
+## 1. Setting the Scene
+
+Tourism is one of Thailand’s largest industries, accounting for \~20% of the gross domestic product (GDP). In 2019, Thailand earned US\$90 billion from domestic and international tourism, but the COVID-19 pandemic caused revenues to crash to US\$24 billion in 2020.
+
+The figure below shows the total revenue receipt from tourism sector between Jan 2019 to Feb 2023, and indicates that the revenue from tourism industry has been gradually recovering since Sep 2021.
+
+![](images/clipboard-378385426.png){width="460"}
+
+However, it is important to note that the tourism economy of Thailand is not evenly distributed. The figure below reveals that the tourism economy of Thailand in 2019 was mainly focused on five provinces, namely Bangkok, Phuket, Chon Buri, Krabi and Chiang Mai.
+
+## 2. Objectives
+
+The objectives of this take-home exercise will be to discover:
+
+-   if the key indicators of tourism economy of Thailand are independent from space and space and time.
+
+-   If the tourism economy is indeed spatial and spatio-temporal dependent, and if so, where the clusters, outliers and emerging hot spot/cold spot areas are.
+
+## 3. The Task
+
+The specific tasks of this take-home exercise are as follows:
+
+-   Using appropriate function of **sf** and **tidyverse**, prepare the following geospatial data layer:
+
+    -   a study area layer in sf polygon features. It must be at [province level](https://en.wikipedia.org/wiki/Provinces_of_Thailand) (including Bangkok) of Thailand.
+
+    -   a tourism economy indicators layer within the study area in sf polygon features.
+
+    -   a derived tourism economy indicator layer in [**spacetime s3 class of sfdep**](https://sfdep.josiahparry.com/articles/spacetime-s3). Keep the time series at **month and year levels**.
+
+-   Using the extracted data, perform global spatial autocorrelation analysis using [sfdep methods](https://is415-gaa-tskam.netlify.app/in-class_ex/in-class_ex05/in-class_ex05-glsa).
+
+-   Using the extracted data, perform local spatial autocorrelation analysis using [sfdep methods](https://r4gdsa.netlify.app/chap10.html).
+
+-   Using the extracted data, perform emerging hotspot analysis using [sfdep methods](https://is415-gaa-tskam.netlify.app/in-class_ex/in-class_ex05/in-class_ex05-ehsa).
+
+-   Describe the spatial patterns revealed by the analysis above.
+
+## 4. Installing and Loading the necessary R packages
+
+We use the following code chunk to install and load the necessary R packages for our analysis:
+
+```{r}
+pacman::p_load(sf, sfdep, tmap, tidyverse, knitr, plotly, Kendall, VIM, naniar, DT)
+```
+
+## 5. The Data
+
+Two data sets shall be used:
+
+-   [Thailand Domestic Tourism Statistics](https://www.kaggle.com/datasets/thaweewatboy/thailand-domestic-tourism-statistics) at Kaggle - **version 2** of the data set will be used.
+
+-   [Thailand - Subnational Administrative Boundaries](https://data.humdata.org/dataset/cod-ab-tha?) at HDX - the province boundary data set will be used.
+
+### 5.1 Thailand Domestic Tourism Statistics
+
+### 5.1.1 Importing the csv file
+
+The code chunk below uses [`read_csv()`](https://readr.tidyverse.org/reference/read_delim.html) of readr package to load the Thailand Domestic Tourism Statistics:
+
+```{r}
+tourism <- read_csv("data/rawdata/thailand_domestic_tourism_2019_2023_ver2.csv")
+```
+
+The *thai_tourism* data has 30,800 rows and 7 variables, namely *date, province_thai, province_eng, region_thai, region_eng, variable* and *value.*
+
+### 5.1.2 Cleaning the data
+
+### 5.1.2.1 Dropping unwanted variables
+
+We will drop the columns *province_thai* and *region_thai* as these variables are in the Thai language which we do not understand and hence will not be helpful for our analysis:
+
+```{r}
+tourism <- tourism[,!names(tourism) %in% c("province_thai","region_thai")]
+```
+
+### 5.1.2.2 Determine the presence of missing data
+
+We determine the presence of missing values using the *vis_miss()* function of the [naniar](https://cran.r-project.org/web/packages/naniar/vignettes/getting-started-w-naniar.html) package:
+
+```{r}
+vis_miss(tourism)
+```
+
+From the output above, we note that there are no missing data.
+
+### 5.1.2.3 Creating new year, month and day variables
+
+From the code chunk below, we note that the *date* variable in *tourism* data frame is in the Date vector format:
+
+```{r}
+class(tourism$date)
+```
+
+We form new variables *year* and *month* using the lubridate package:
+
+```{r}
+tourism <- tourism %>%
+  mutate(year_month = format(floor_date(date,"month"),"%Y-%m"),
+         year = year(date),
+         month = month(date,
+                       label = TRUE,
+                       abbr = TRUE),
+.before = 2)
+```
+
+### 5.1.2.4 Determine the distribution of provinces and corresponding regions
+
+We first study the distribution of regions in the data:
+
+```{r}
+ggplot(tourism, 
+       aes(x = fct_reorder(region_eng, region_eng, .fun = length))) + 
+  geom_bar() +
+  labs(title = "Distribution of domestic tourism statistics across regions", x = "Regions", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+From the output above, we note that there 5 different types of regions represented, notably the western region is not represented in the data.
+
+We take a more detailed look by determining the unique provinces represented in the data and their corresponding regions. This step aims to check for two things:
+
+-   whether there are any duplicate data entries i.e. entries that are meant to represent the same province but have spelling errors.
+
+-   whether the regions for the provinces are accurately indicated
+
+```{r}
+tourism_unique <- tourism %>%
+  select(province_eng,region_eng) %>%
+  distinct() %>%
+  arrange(region_eng,province_eng)
+
+tourism_unique
+```
+
+From the output above, we note that all 77 Thailand provinces are represented in the data, and that there are no spelling errors/misrepresented provinces.
+
+However, with reference to the [source on provinces in Thailand](https://en.wikipedia.org/wiki/Provinces_of_Thailand), we note a few mistakes in the regions indicated for the provinces.
+
+-   Kanchanaburi, Phetchaburi, Prachuap Khiri Khan and Ratchaburi are stated as being in the central region but actually reside in the west region
+
+-   Nakhon Nayok is stated as being in the east region but actually resides in the central region
+
+-   The *east_northeast* region can actually be renamed as *northeast* region for clarity and consistency with how detailed the other provinces are labelled
+
+-   Kamphaeng Phet, Nakhon Sawan, Phetchabun, Phichit, Phitsanulok, Sukhothai and Uthai Thani are stated as being in the north region but actually reside in central region
+
+-   Tak is stated as being in the north region but actually resides in the west region
+
+-   Sisaket is stated as being in the south region but actually resides in the northeast region
+
+### 5.1.2.4.1 Correcting the erroneous regions of provinces
+
+We use the code chunk below to rename the "east_northeast" region to just "northeast" and correct the erroneous regions of the provinces mentioned above:
+
+```{r}
+tourism <- tourism %>%
+  mutate(region_eng = case_when(
+    region_eng == "east_northeast" ~ "northeast",
+    province_eng %in% c("Kanchanaburi", "Phetchaburi", "Prachuap Khiri Khan", "Ratchaburi", "Tak") ~ "west",
+    province_eng %in% c("Nakhon Nayok","Kamphaeng Phet","Nakhon Sawan","Phetchabun","Phichit","Phitsanulok","Sukhothai","Uthai Thani") ~ "central",
+    province_eng == "Sisaket" ~ "northeast",
+    TRUE ~ region_eng
+  ))
+```
+
+We check by generating the data table of provinces and their corresponding regions:
+
+```{r}
+tourism_unique <- tourism %>%
+  select(province_eng,region_eng) %>%
+  distinct() %>%
+  arrange(region_eng,province_eng)
+
+datatable(tourism_unique)
+```
+
+Re-plotting the distribution of domestic tourism statistics across the regions:
+
+```{r}
+ggplot(tourism, 
+       aes(x = fct_reorder(region_eng, region_eng, .fun = length))) + 
+  geom_bar(fill = "skyblue") +
+  labs(title = "Distribution of domestic tourism statistics across regions", x = "Regions", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+We note that most of the domestic tourism statistics come from the central region, followed by northeast, south, north, east and finally the west region.
+
+### 5.1.2.5 Determine the distribution of variables and corresponding values
+
+```{r}
+ggplot(tourism, 
+       aes(x = fct_reorder(variable, variable, .fun = length))) + 
+  geom_bar(fill = "skyblue") +
+  labs(title = "Distribution of Variable", x = "Variable", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+We note that there are 8 different types of variables:
+
+| S/N   | Variable           | Definition                                                                  |
+|-----------------|-----------------|--------------------------------------|
+| **1** | no_tourist_all     | The total number of domestic tourists who visited the province              |
+| **2** | no_tourist_thai    | The number of Thai tourists who visited the province                        |
+| **3** | no_tourist_foreign | The number of foreign tourists who visited the province                     |
+| **4** | no_tourist_stay    | The total number of occupied hotel rooms in the province                    |
+| **5** | ratio_tourist_stay | The percentage of occupied travel accommodation in the province             |
+| **6** | revenue_all        | The revenue generated by the tourism industry in the province, in Thai Baht |
+| **7** | revenue_foreign    | The revenue generated by foreign tourists in the province, in Thai Baht     |
+| **8** | revenue_thai       | The revenue generated by Thai tourists in the province, in Thai Baht        |
+
+### 5.1.2.5.1 pivot_wider() to expand variables as individual columns
+
+We utilise the *pivot_wider()* function to separate the different variable types as individual columns:
+
+```{r}
+tourism_wider <- tourism %>%
+  pivot_wider(names_from = variable, values_from = value)
+```
+
+### 5.1.2.5.2 Checking the revenue figures
+
+Based on the definition of the different variable types, we note that "revenue_all" should equal to the sum of "revenue_foreign" and "revenue_thai". We check through the data using the code chunk below:
+
+```{r}
+revenue_numbers <- tourism_wider %>%
+  group_by(province_eng,year_month) %>%
+  summarise(
+    sum_revenue = sum(revenue_foreign, revenue_thai, na.rm = TRUE),
+  revenue_all = sum(revenue_all,na.rm = TRUE),
+            .groups = "drop") %>%
+  mutate(is_rev_equal = sum_revenue == revenue_all)
+
+revenue_numbers
+```
+
+We note from the output below that the data entries for revenue match up:
+
+```{r}
+revenue_numbers %>%
+  filter(!is_rev_equal)
+```
+
+### 5.1.2.5.3 Checking the tourist numbers
+
+Similarly, based on the definition of the different variable types, we note that "no_tourist_all" should equal to the sum of "no_tourist_foreign" and "no_tourist_thai". We check through the data using the code chunk below:
+
+```{r}
+tourism_numbers <- tourism_wider %>%
+  group_by(province_eng,year_month) %>%
+  summarise(
+    sum_tourists = sum(no_tourist_foreign, no_tourist_thai, na.rm = TRUE),
+  tourists_all = sum(no_tourist_all,na.rm = TRUE),
+            .groups = "drop") %>%
+  mutate(is_touristno_equal = sum_tourists == tourists_all)
+
+tourism_numbers
+```
+
+We note from the output below that the data entries for tourist numbers match up:
+
+```{r}
+tourism_numbers %>%
+  filter(!is_touristno_equal)
+```
+
+### 5.1.2.5.4 Checking the distribution of values of each variable
+
+-   Revenue
+
+```{r}
+selected_revenue <- tourism %>%
+  filter(variable %in% c("revenue_all", "revenue_thai", "revenue_foreign"))
+
+# Calculate summary statistics
+summary_stats <- selected_revenue %>%
+  group_by(variable) %>%
+  summarise(
+    Min = min(value),
+    Q1 = quantile(value, 0.25),
+    Median = median(value),
+    Q3 = quantile(value, 0.75),
+    Max = max(value)
+  )
+
+ggplot(selected_revenue, aes(x = variable, y = value, fill = variable)) +
+  geom_boxplot() +
+  geom_text(data=summary_stats, aes(x = variable, 
+                               y = Max + 1000, 
+                               label = paste("Min:", Min,
+                                             "\nQ1:", Q1, 
+                                             "\nMedian:", Median, 
+                                             "\nQ3:", Q3, 
+                                             "\nMax:", Max)),
+            position = position_dodge(width = 0.75), 
+            vjust = 0, hjust = 1, size = 2, color = "black") +
+  labs(title = "Boxplots of Different Revenue Types", x = "Revenue Type", y = "Revenue")+
+  scale_y_continuous(limits = c(0,12e+10))
+```
+
+From the boxplots above, we note that the minimum value for "revenue_foreign" is -\$4250, this indicate that there could have been errors in data entry.
+
+-   Tourist numbers
+
+```{r}
+selected_tourists <- tourism %>%
+  filter(variable %in% c("no_tourist_all","no_tourist_thai", "no_tourist_foreign"))
+
+# Calculate summary statistics
+summary_stats <- selected_tourists %>%
+  group_by(variable) %>%
+  summarise(
+    Min = min(value),
+    Q1 = quantile(value, 0.25),
+    Median = median(value),
+    Q3 = quantile(value, 0.75),
+    Max = max(value)
+  )
+
+ggplot(selected_tourists, aes(x = variable, y = value, fill = variable)) +
+  geom_boxplot() +
+  geom_text(data=summary_stats, aes(x = variable, 
+                               y = Max + 100000, 
+                               label = paste("Min:", Min,
+                                             "\nQ1:", Q1, 
+                                             "\nMedian:", Median, 
+                                             "\nQ3:", Q3, 
+                                             "\nMax:", Max)),
+            position = position_dodge(width = 0.75), 
+            vjust = 0, hjust = 1, size = 2, color = "black") +
+  labs(title = "Boxplots of Different Tourist Numbers", x = "Tourist Type", y = "Number of Tourists")+
+  scale_y_continuous(limits = c(0,8e+6))
+```
+
+-   Occupancy
+
+```{r}
+# Calculate summary statistics
+summary_stats <- tourism_wider %>%
+  summarise(
+    Min = min(no_tourist_stay),
+    Q1 = quantile(no_tourist_stay, 0.25),
+    Median = median(no_tourist_stay),
+    Q3 = quantile(no_tourist_stay, 0.75),
+    Max = max(no_tourist_stay)
+  )
+
+ggplot(tourism_wider, aes(x = "", y = no_tourist_stay)) +
+  geom_boxplot(fill = "lightblue") +
+  geom_text(data = summary_stats, aes(x = "", y = Max + 100000,
+                                      label = paste("Min:", Min,
+                                                     "\nQ1:", Q1,
+                                                     "\nMedian:", Median,
+                                                     "\nQ3:", Q3,
+                                                     "\nMax:", Max)),
+            vjust = 0, size = 2, color = "black") +
+  labs(title = "Distribution of Number of Hotel Rooms Occupied",
+       y = "Number of Occupied Hotel Rooms") +
+  scale_y_continuous(limits = c(0,4e+6))+
+  theme(axis.title.x = element_blank())
+```
+
+### 5.1.2.5.5 Removing data with negative "revenue_foreign" values
+
+We clean the data by removing rows with negative "revenue_foreign" values. We also remove the "date" variable to keep the data more tidy for further analysis.
+
+```{r}
+tourism_wider <- tourism_wider %>%
+  filter(revenue_foreign >= 0) %>%
+  select(-date)
+```
+
+After removing the data, we note that we have 3848 rows remaining.
+
+### 5.1.2.6 Saving as a new rds file
+
+We save the cleaned data as a new rds file:
+
+```{r}
+#| eval: false
+tourism_cleaned <- write_rds(tourism_wider,"data/rds/tourism_cleaned.rds")
+```
+
+```{r}
+tourism_cleaned <- read_rds("data/rds/tourism_cleaned.rds")
+```
+
+### 5.2 Thailand Subnational Administrative Boundaries
+
+### 5.2.1 Importing the shapefile
+
+The code chunk below uses `st_read()` of **sf** package to import the Thailand Subnational Administrative Boundaries shapefile into R. There are a few different files representing different levels of administrative boundaries - level 0 (country), level 1 (province), level 2 (district) and level 3 (sub-district, tambon). As we are only interested in province level administrative boundaries, we will just load the file corresponding to level 1.
+
+The imported shapefile will be a **simple features** **object** of **sf**.
+
+```{r}
+#| eval: false
+province <- st_read(dsn = "data/rawdata",
+                    layer = "tha_admbnda_adm1_rtsd_20220121")
+```
+
+We note that the simple features data has a multipolygon geometry and has 77 features and 16 fields. It is in WGS84 geographic coordinate system.
+
+### 5.2.2 Removing the unwanted variables
+
+Of the fields available, only "ADM1_EN" and "geometry" are essential hence the following code chunk keeps only these two variables in the simple features object:
+
+```{r}
+#| eval: false
+province <- province %>%
+  select(ADM1_EN)
+```
+
+We save this as new rds file to avoid reloading the original datafile above:
+
+```{r}
+#| eval: false
+province <- write_rds(province,"data/rds/province.rds")
+```
+
+```{r}
+province <- read_rds("data/rds/province.rds")
+```
+
+### 5.2.3 Checking the name of the provinces
+
+As we will be joining the *province* simple features object and the attribute data from *tourism_cleaned* using the province names (ADM1_EN in *province* simple features object and province_eng in *tourism_cleaned* dataframe), it is important to check through the naming of the provinces to ensure that they all match up.
+
+We extract the unique province names from both *tourism_cleaned* and *province:*
+
+```{r}
+#| eval: false
+unique_tour_prov <- tourism_cleaned %>%
+  distinct(province_eng)
+```
+
+```{r}
+#| eval: false
+unique_shp_prov <- province %>%
+  distinct(ADM1_EN)
+```
+
+We then combine via a full join and read through the list of province names for discrepancies:
+
+```{r}
+#| eval: false
+combined_prov <- full_join(unique_shp_prov,unique_tour_prov,
+                           by = c("ADM1_EN"="province_eng"))
+```
+
+```{r}
+#| eval: false
+#| echo: false
+combined_prov <- write_rds(combined_prov,"data/rds/combined_prov.rds")
+```
+
+```{r}
+#| echo: false
+combined_prov <- read_rds("data/rds/combined_prov.rds")
+```
+
+```{r}
+combined_prov <- combined_prov %>%
+  arrange(ADM1_EN)
+
+combined_prov
+```
+
+We note repeated entries for eight provinces which are spelt differently in the original *province* sf object vs *tourism_cleaned* dataframe:
+
+-   Buri Ram vs Buriram
+
+-   Chai Nat vs Chainat
+
+-   Chon Buri vs Chonburi
+
+-   Lop Buri vs Lopburi
+
+-   Nong Bua Lam Phu vs Nong Bua Lamphu
+
+-   Phangnga vs Phang Nga
+
+-   Prachin Buri vs Prachinburi
+
+-   Si Sa Ket vs Sisaket
+
+### 5.2.3.1 Adjusting the naming of provinces in *province* sf object
+
+We utilise the following code chunk to adjust the naming of the eight provinces to be aligned with the naming in the *tourism_cleaned* dataframe to faciliate relational join in subsequent analysis:
+
+```{r}
+province <- province %>%
+  mutate(ADM1_EN = case_when(
+    ADM1_EN == "Buri Ram" ~ "Buriram",
+    ADM1_EN == "Chai Nat" ~ "Chainat",
+    ADM1_EN == "Chon Buri" ~ "Chonburi",
+    ADM1_EN == "Lop Buri" ~ "Lopburi",
+    ADM1_EN == "Nong Bua Lam Phu" ~ "Nong Bua Lamphu",
+    ADM1_EN == "Phangnga" ~ "Phang Nga",
+    ADM1_EN == "Prachin Buri" ~ "Prachinburi",
+    ADM1_EN == "Si Sa Ket" ~ "Sisaket",
+    TRUE ~ ADM1_EN
+  ))
+```
+
+### 5.3 Performing relational join
+
+We then perform a left relational join to update the *province* sf object with the attribute fields of the *tourism_cleaned* data frame:
+
+```{r}
+combined_prov_tourism <- left_join(province,tourism_cleaned,
+                                   by = c("ADM1_EN" = "province_eng"))
+```
+
+```{r}
+glimpse(combined_prov_tourism)
+```
+
+We note that the *combined_prov_tourism* data has the same number of rows, 3848 rows, as the original *tourism_cleaned* data frame indicating that the cleaning up of the different province spellings was done accurately.
+
+### 5.4 Creating a time series cube
+
+We use [spacetime()](https://sfdep.josiahparry.com/articles/spacetime-s3.html) of sfdep to create a spatio-temporal cube:
+
+```{r}
+```
+
+## 6. Visualising Different Key Indicators of the Tourism Economy of Thailand
+
+### 6.1 Revenue
+
+### 6.1.1 Total Revenue
+
+### 6.1.2

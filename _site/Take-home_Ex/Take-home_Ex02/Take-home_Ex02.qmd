@@ -1,0 +1,13 @@
+---
+title: "Take-home Exercise 2"
+author: "Kock Si Min"
+date: October 2, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
