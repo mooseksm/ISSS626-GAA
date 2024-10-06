@@ -192,6 +192,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../In-class_Ex/In-class_Ex05/In-class_Ex05.html">
  <span class="dropdown-text">In-class Exercise 5</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../In-class_Ex/In-class_Ex06/In-class_Ex06.html">
+ <span class="dropdown-text">In-class Exercise 6</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -309,7 +313,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 18, 2024</p>
+      <p class="date-modified">October 3, 2024</p>
     </div>
   </div>
     
@@ -528,6 +532,23 @@ What can we learn from the code chunk above?
 <li><p>S is the variance-stabilizing coding scheme proposed by Tiefelsdorf et al.&nbsp;1999, p.&nbsp;167-168 (sums over all links to n).</p></li>
 </ul></li>
 <li><p>If <em>zero policy</em> is set to TRUE, weights vectors of zero length are inserted for regions without neighbour in the neighbours list. These will in turn generate lag values of zero, equivalent to the sum of products of the zero row t(rep(0, length=length(neighbours))) %*% x, for arbitrary numerical vector x of length length(neighbours). The spatially lagged value of x for the zero-neighbour region will then be zero, which may (or may not) be a sensible choice.</p></li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Moran’s I</strong> and <strong>Geary’s C</strong> are two common measures used in <strong>spatial statistics</strong> to assess the degree of <strong>spatial autocorrelation</strong>—that is, how spatially similar or dissimilar neighboring regions are to one another based on a given variable. Both are used to analyze whether similar values cluster together in space or if there is a random or dispersed pattern.</p>
+<ul>
+<li><p>Moran’s I is a <strong>global measure</strong> of spatial autocorrelation. It compares the similarity of values across neighboring regions and indicates whether similar or dissimilar values are spatially clustered.</p></li>
+<li><p>Geary’s C focuses more on <strong>local differences</strong> between pairs of neighboring regions. It tends to be more sensitive to local variations than Moran’s I.</p></li>
 </ul>
 </div>
 </div>
@@ -764,6 +785,23 @@ method: Moran's I
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li><p><strong>Lag 1</strong> shows <strong>significant positive spatial autocorrelation</strong>, meaning nearby regions tend to have similar GDPPC values.</p></li>
+<li><p>As the lags increase, spatial autocorrelation diminishes and eventually becomes slightly negative (indicating dissimilarity between regions further apart), but with wider error bars indicating less significance.</p></li>
+</ul>
+</div>
+</div>
 </section>
 <section id="compute-gearys-c-correlogram-and-plot" class="level3">
 <h3 class="anchored" data-anchor-id="compute-gearys-c-correlogram-and-plot">5.7.2 Compute Geary’s C correlogram and plot</h3>
@@ -798,6 +836,24 @@ method: Geary's C
 6 (88) 1.0773386   1.0000000 0.0058042           1.0151       0.3100407    
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li><p>The Geary’s C plot supports the conclusion that there is <strong>initial positive spatial autocorrelation</strong> at short distances (e.g., Lag 1).</p></li>
+<li><p>However, as you move to greater distances (Lags 2 through 4), it suggests the spatial relationships become weaker, approaching random distribution.</p></li>
+<li><p>Finally, at Lags 5 and 6, there’s evidence of <strong>negative spatial autocorrelation</strong>.</p></li>
+</ul>
 </div>
 </div>
 <div class="callout callout-style-default callout-note callout-titled">

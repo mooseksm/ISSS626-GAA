@@ -192,6 +192,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../In-class_Ex/In-class_Ex05/In-class_Ex05.html">
  <span class="dropdown-text">In-class Exercise 5</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../In-class_Ex/In-class_Ex06/In-class_Ex06.html">
+ <span class="dropdown-text">In-class Exercise 6</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -263,9 +267,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#application-of-spatial-weight-matrix" id="toc-application-of-spatial-weight-matrix" class="nav-link" data-scroll-target="#application-of-spatial-weight-matrix">4.10 Application of Spatial Weight Matrix</a>
   <ul class="collapse">
   <li><a href="#spatial-lag-with-row-standardized-weights" id="toc-spatial-lag-with-row-standardized-weights" class="nav-link" data-scroll-target="#spatial-lag-with-row-standardized-weights">4.10.1 Spatial lag with row-standardized weights</a></li>
-  <li><a href="#spatial-lag-as-a-sum-of-neighbouring-values" id="toc-spatial-lag-as-a-sum-of-neighbouring-values" class="nav-link" data-scroll-target="#spatial-lag-as-a-sum-of-neighbouring-values">8.10.2 Spatial lag as a sum of neighbouring values</a></li>
-  <li><a href="#spatial-window-average" id="toc-spatial-window-average" class="nav-link" data-scroll-target="#spatial-window-average">8.10.3 Spatial window average</a></li>
-  <li><a href="#spatial-window-sum" id="toc-spatial-window-sum" class="nav-link" data-scroll-target="#spatial-window-sum">8.10.4 Spatial window sum</a></li>
+  <li><a href="#spatial-lag-as-a-sum-of-neighbouring-values" id="toc-spatial-lag-as-a-sum-of-neighbouring-values" class="nav-link" data-scroll-target="#spatial-lag-as-a-sum-of-neighbouring-values">4.10.2 Spatial lag as a sum of neighbouring values</a></li>
+  <li><a href="#spatial-window-average" id="toc-spatial-window-average" class="nav-link" data-scroll-target="#spatial-window-average">4.10.3 Spatial window average</a></li>
+  <li><a href="#spatial-window-sum" id="toc-spatial-window-sum" class="nav-link" data-scroll-target="#spatial-window-sum">4.10.4 Spatial window sum</a></li>
   </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">4.11 References</a></li>
   </ul></li>
@@ -305,7 +309,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 15, 2024</p>
+      <p class="date-modified">October 6, 2024</p>
     </div>
   </div>
     
@@ -909,7 +913,12 @@ Average number of links: 3.681818 </code></pre>
 <pre><code>[1] 1</code></pre>
 </div>
 </div>
-<p>The <em>n.comb.nb()</em> function is used to analyze the connectivity components of the spatial weights object. The output of 1 indicates that the entire spatial network consists of a single connected component i.e.&nbsp;is a path between any two regions in the spatial network, meaning that all regions are interconnected directly or indirectly</p>
+<p>The <em>n.comb.nb()</em> function is used to analyze the connectivity components of the spatial weights object. The output of 1 indicates that the entire spatial network consists of a single connected component i.e.&nbsp;is a path between any two regions in the spatial network, meaning that all regions are interconnected directly or indirectly.</p>
+<p>Further details below:</p>
+<ul>
+<li><p>If <strong><code>n_comp$nc</code></strong> returns a value of <code>1</code>, it means that all regions in <code>wm_d62</code> form a <strong>single connected component</strong>—i.e., every region is reachable from every other region through neighboring connections.</p></li>
+<li><p>If <strong><code>n_comp$nc</code></strong> returns a value greater than <code>1</code>, it means there are multiple <strong>disconnected groups</strong> of regions, where regions in one group cannot be reached from regions in another group through the neighbor links.</p></li>
+</ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(n_comp<span class="sc">$</span>comp.id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1392,6 +1401,32 @@ W 88 7744 88 37.86334 365.9147</code></pre>
 </div>
 </div>
 <p>The zero.policy=TRUE option allows for lists of non-neighbors. Note that this should be used with caution as the user may not be aware of missing neighbors in their dataset however, a zero.policy=FALSE would return an error.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<strong>S0, S1 and S2 are used to compute measures of spatial autocorrelation like Moran’s I.</strong>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p><strong>S0 = 88</strong></p>
+<ul>
+<li><strong>S0</strong> is the sum of the weights. In the case of <strong>row-standardized weights</strong>, this equals the number of regions (88), because the sum of the weights for each region is 1.</li>
+</ul></li>
+<li><p><strong>S1 = 37.86334</strong></p>
+<ul>
+<li><strong>S1</strong> is a measure of the <strong>sum of the squared weights</strong>. It is used in the calculation of spatial autocorrelation statistics like Moran’s I to adjust for differences in the number of neighbors each region has.</li>
+</ul></li>
+<li><p><strong>S2 = 365.9147</strong></p>
+<ul>
+<li><strong>S2</strong> is another constant used in spatial autocorrelation calculations. It involves the sum of squared differences in the weights between regions and their neighbors, giving insight into the variation of the weighting structure across the spatial units.</li>
+</ul></li>
+</ul>
+</div>
+</div>
 <p>To see the weight of the first polygon’s eight neighbors type:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>rswm_q<span class="sc">$</span>weights[<span class="dv">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1431,6 +1466,29 @@ B 88 7744 8.786867 0.3776535 3.8137</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
 0.008218 0.015088 0.018739 0.019614 0.022823 0.040338 </code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<strong>Code Breakdown</strong>:
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li><p><strong><code>nb2listw(wm_q, glist=ids, style="B", zero.policy=TRUE)</code></strong>:</p>
+<ul>
+<li><p><strong><code>nb2listw()</code></strong>: This function from the <strong>spdep</strong> package in R converts a <strong>neighbor list object</strong> (<code>wm_q</code>) into a <strong>spatial weights matrix</strong> (also known as a weights list object). The weights describe the spatial relationships between regions, where each region is assigned weights corresponding to its neighbors.</p></li>
+<li><p><strong><code>wm_q</code></strong>: This is the neighbor list object, which defines the spatial neighbors for each region. It specifies which regions are neighbors to each other (e.g., through contiguity, distance, or k-nearest neighbors).</p></li>
+<li><p><strong><code>glist=ids</code></strong>: This specifies the <strong>weights</strong> to be applied to the neighbors in <code>wm_q</code>. The <code>ids</code> list contains <strong>inverse distance weights</strong> for each region’s neighbors. Inverse distance weights mean that the strength of the spatial relationship between two regions is inversely proportional to the distance between them (i.e., closer regions have higher weights, and farther regions have lower weights).</p></li>
+<li><p><strong><code>style="B"</code></strong>: The <code>"B"</code> style stands for <strong>binary weights</strong>. However, in this case, it means that the weights will not be normalized or row-standardized. Each weight will be based on the raw values provided in the <code>glist</code> (inverse distance values). The weight matrix will reflect the exact values in <code>glist=ids</code>.</p></li>
+<li><p><strong><code>zero.policy=TRUE</code></strong>: This option ensures that regions with <strong>no neighbors</strong> (isolated regions) are handled properly. If <code>zero.policy=TRUE</code>, isolated regions will be assigned a weight of 0 instead of causing an error.</p></li>
+</ul></li>
+<li><p><strong><code>rswm_ids</code></strong>: This stores the resulting <strong>spatial weights matrix</strong> (weights list object) created by <code>nb2listw()</code>.</p></li>
+</ol>
 </div>
 </div>
 </section>
@@ -1519,7 +1577,7 @@ Geodetic CRS:  WGS 84
 </div>
 </section>
 <section id="spatial-lag-as-a-sum-of-neighbouring-values" class="level3">
-<h3 class="anchored" data-anchor-id="spatial-lag-as-a-sum-of-neighbouring-values">8.10.2 Spatial lag as a sum of neighbouring values</h3>
+<h3 class="anchored" data-anchor-id="spatial-lag-as-a-sum-of-neighbouring-values">4.10.2 Spatial lag as a sum of neighbouring values</h3>
 <p>We can calculate spatial lag as a sum of neighboring values by assigning binary weights. This requires us to go back to our neighbors list, then apply a function that will assign binary weights, then we use glist = in the nb2listw function to explicitly assign these weights.</p>
 <p>We start by applying a function that will assign a value of 1 per neighbor. This is done with lapply which applies a function across each value in the neighbors structure.</p>
 <div class="cell">
@@ -1607,7 +1665,7 @@ B 88 7744 448 896 10224</code></pre>
 </div>
 </section>
 <section id="spatial-window-average" class="level3">
-<h3 class="anchored" data-anchor-id="spatial-window-average">8.10.3 Spatial window average</h3>
+<h3 class="anchored" data-anchor-id="spatial-window-average">4.10.3 Spatial window average</h3>
 <p>The spatial window average uses row-standardized weights and includes the diagonal element. To do this in R, we need to go back to the neighbors structure and add the diagonal element before assigning weights.</p>
 <p>To add the diagonal element to the neighbour list, we just need to use <em>include.self()</em> from <strong>spdep</strong>:</p>
 <div class="cell">
@@ -2248,7 +2306,7 @@ W 88 7744 88 30.90265 357.5308</code></pre>
 </div>
 </section>
 <section id="spatial-window-sum" class="level3">
-<h3 class="anchored" data-anchor-id="spatial-window-sum">8.10.4 Spatial window sum</h3>
+<h3 class="anchored" data-anchor-id="spatial-window-sum">4.10.4 Spatial window sum</h3>
 <p>The spatial window sum is the counter part of the window average, but without using row-standardized weights.</p>
 <p>To add the diagonal element to the neighbour list, we just need to use <em>include.self()</em> from <strong>spdep</strong>:</p>
 <div class="cell">
