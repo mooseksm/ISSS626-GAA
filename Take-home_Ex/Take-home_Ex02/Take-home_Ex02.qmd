@@ -216,7 +216,7 @@ ggplot(tourism,
 We note that there are 8 different types of variables:
 
 | S/N   | Variable           | Definition                                                                  |
-|---------------|---------------|------------------------------------------|
+|----------------|----------------|---------------------------------------|
 | **1** | no_tourist_all     | The total number of domestic tourists who visited the province              |
 | **2** | no_tourist_thai    | The number of Thai tourists who visited the province                        |
 | **3** | no_tourist_foreign | The number of foreign tourists who visited the province                     |
@@ -760,6 +760,8 @@ From the above data, we note that there are several possible key indicators of t
 
 ### 6.1 Visualising Indicators of Tourism Economy
 
+We briefly visualise the distribution of these indicators:
+
 ::: panel-tabset
 ## Total Revenue
 
@@ -767,12 +769,15 @@ From the above data, we note that there are several possible key indicators of t
 tmap_mode("plot")
 tm_shape(combined_data_spat)+
   tm_fill("median_tot_revenue",
-          n = 5,
-          style = "quantile")+
+          style = "quantile",
+          title = "Median Total Revenue")+
   tm_borders(alpha = 0.5)+
-  tm_layout(main.title = "Distribution of Median Total Revenue (Quantile classification)",main.title.size = 0.5,
-            legend.text.size = 1,
-            legend.outside.size = 1)+
+  tm_layout(main.title = "Distribution of Median Total Revenue (Quantile classification)",main.title.position = "center",
+            main.title.size = 0.5,
+            legend.height = 0.45,
+            legend.width = 0.35,
+            legend.text.size = 0.5,
+            legend.outside.size = 0.5)+
   tm_text("province_eng",size = 0.3)
 ```
 
@@ -782,12 +787,15 @@ tm_shape(combined_data_spat)+
 tmap_mode("plot")
 tm_shape(combined_data_spat)+
   tm_fill("median_tot_foreign",
-          n = 5,
-          style = "quantile")+
+          style = "quantile",
+          title = "Median Number of Foreign Tourists")+
   tm_borders(alpha = 0.5)+
-  tm_layout(main.title = "Distribution of Median Total Foreign Tourists (Quantile classification)",main.title.size = 0.5,
-            legend.text.size = 1,
-            legend.outside.size = 1)+
+  tm_layout(main.title = "Distribution of Median Number of Foreign Tourists (Quantile classification)",main.title.position = "center",
+            main.title.size = 0.5,
+            legend.height = 0.45,
+            legend.width = 0.35,
+            legend.text.size = 0.5,
+            legend.outside.size = 0.5)+
   tm_text("province_eng",size = 0.3)
 ```
 
@@ -797,19 +805,28 @@ tm_shape(combined_data_spat)+
 tmap_mode("plot")
 tm_shape(combined_data_spat)+
   tm_fill("median_occup_rate",
-          n = 5,
-          style = "quantile")+
+          style = "quantile",
+          title = "Median Rate of Overnights Tourists")+
   tm_borders(alpha = 0.5)+
-  tm_layout(main.title = "Distribution of Median Rate of Overnights Tourists (Quantile classification)",main.title.size = 0.5,
-            legend.text.size = 1,
-            legend.outside.size = 1)+
+  tm_layout(main.title = "Distribution of Median Rate of Overnights Tourists (Quantile classification)",main.title.position = "center",
+            main.title.size = 0.5,
+            legend.height = 0.45,
+            legend.width = 0.35,
+            legend.text.size = 0.5,
+            legend.outside.size = 0.5)+
   tm_text("province_eng",size = 0.3)
 ```
 :::
 
-## 7. Generating centroids
+## 7. Determining independence from space
 
-A connectivity graph takes a point and displays a line to each neighbouring point. As we are working with multipolygons, we will need to get points to make connectivity graphs. As such, we will need to create centroids for each province.
+### 7.1 Computing Distance-based Spatial Weights
+
+There are two main ways of computing spatial weights - contiguity spatial weights or distance-based spatial weights. Based on the plot of the provinces of Thailand, we note that it would not be appropriate to utilise contiguity spatial weights as there would be provinces with too little neighbours. We will hence utilise distance-based spatial weights.
+
+### 7.1.1 Generating centroids
+
+A connectivity graph takes a point and displays a line to each neighbouring point. As we are working with multipolygons, we will need to get points to make connectivity graphs. As such, we will need to calculate centroids for each province.
 
 ```{r}
 #| eval: false
@@ -818,7 +835,7 @@ centroids <- combined_data_spat %>%
   select(province_eng, geometry)
 ```
 
-### 7.1 Saving as a new rds file
+### 7.1.2 Saving as a new rds file
 
 We save *centroids* as a new rds file and load it into the R environment for further analysis:
 
@@ -831,7 +848,7 @@ centroids <- write_rds(centroids,"data/rds/centroids.rds")
 centroids <- read_rds("data/rds/centroids.rds")
 ```
 
-### 7.2 Visualising the centroids
+### 7.1.3 Visualising the centroids
 
 We visualise where these centroids are:
 
@@ -846,11 +863,132 @@ tm_shape(province) +
   tm_layout(main.title = "Centroids of Provinces", main.title.size = 0.5) 
 ```
 
-We note that none of the centroids generated are in the water and are all located within the regions of provinces.
+We note that none of the centroids generated are in the water and are all located within the regions of provinces. This indicates that the centroids are appropriate for use and do not need to be shifted.
 
-## 8. Computing Distance-based Spatial Weights
+### 7.1.4 Converting centroids to coordinates
 
-### 7.2 Computing Global Moran's I
+We convert the centroids to coordinates using the following code chunk to facilitate further analysis:
+
+```{r}
+coords <- st_coordinates(centroids)
+```
+
+### 7.1.5 Computing adaptive distance weight matrix
+
+Given that the polygons differ in size, we will utilise adaptive distance weight matrix.
+
+```{r}
+knn6 <- st_knn(coords,k=6)
+knn6
+```
+
+We display the content of the matrix using the code chunk below:
+
+```{r}
+str(knn6)
+```
+
+Based on the output from above, we note that each province has six neighbours.
+
+```{r}
+weights <- st_weights(knn6)
+```
+
+### 7.1.5.1 Plotting distance-based neighbours
+
+```{r}
+plot(combined_data_spat$geometry,border="lightgrey")
+plot(knn6,coords,pch = 19, cex = 0.6, add = TRUE, col = "red")
+```
+
+### 7.2 Global Measures of Spatial Autocorrelation: Moran's I
+
+Moran's I describe how features differ from the values in the study area as a whole.
+
+H0 null hypothesis: There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their similarity
+
+H1 alternative hypothesis: There is spatial autocorrelation in the indicator of interest.
+
+We set the confidence interval to be at 95%.
+
+::: panel-tabset
+## Total Revenue
+
+```{r}
+set.seed(1234)
+moran_result <- global_moran_perm(combined_data_spat$median_tot_revenue,
+                                  knn6,
+                                  weights,
+                                  nsim = 1999)
+moran_result
+```
+
+We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 999 seems to be sufficient.
+
+```{r}
+hist(moran_result$res,
+     freq = TRUE,
+     breaks = 20,
+     xlab = "Simulated Moran's I")
+
+abline(v=0,
+       col="red")
+```
+
+Based on the results above, we note that the p-value is 0.615, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
+
+Further, the Moran’s I value is close to zero and negative, which indicates that total revenue seem to occur randomly across provinces.
+
+## Number of foreign tourists
+
+```{r}
+set.seed(1234)
+moran_result <- global_moran_perm(combined_data_spat$median_tot_foreign,
+                                  knn6,
+                                  weights,
+                                  nsim = 1999)
+moran_result
+```
+
+```{r}
+hist(moran_result$res,
+     freq = TRUE,
+     breaks = 20,
+     xlab = "Simulated Moran's I")
+
+abline(v=0,
+       col="red")
+```
+
+Based on the results above, we note that the p-value is 0.22, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
+
+Further, the Moran’s I value is positive but close to zero, which indicates that total revenue seem to occur randomly across provinces.
+
+## Rate of tourists who stay overnight
+
+```{r}
+set.seed(1234)
+moran_result <- global_moran_perm(combined_data_spat$median_occup_rate,
+                                  knn6,
+                                  weights,
+                                  nsim = 1999)
+moran_result
+```
+
+```{r}
+hist(moran_result$res,
+     freq = TRUE,
+     breaks = 20,
+     xlab = "Simulated Moran's I")
+
+abline(v=0,
+       col="red")
+```
+
+Based on the results above, we note that the p-value is 0.022, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
+
+Further, the Moran’s I value is positive (0.14629) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
+:::
 
 ### 7.2.1 Determining whether key indicators are independent of space
 
