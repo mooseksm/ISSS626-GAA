@@ -265,7 +265,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#global-measures-of-spatial-autocorrelation-morans-i-statistic-testing" id="toc-global-measures-of-spatial-autocorrelation-morans-i-statistic-testing" class="nav-link" data-scroll-target="#global-measures-of-spatial-autocorrelation-morans-i-statistic-testing">5.5 Global Measures of Spatial Autocorrelation: Moran’s I statistic testing</a>
   <ul class="collapse">
-  <li><a href="#marons-i-test" id="toc-marons-i-test" class="nav-link" data-scroll-target="#marons-i-test">5.5.1 Maron’s I test</a></li>
+  <li><a href="#morans-i-test" id="toc-morans-i-test" class="nav-link" data-scroll-target="#morans-i-test">5.5.1 Moran’s I test</a></li>
   <li><a href="#computing-monte-carlo-morans-i" id="toc-computing-monte-carlo-morans-i" class="nav-link" data-scroll-target="#computing-monte-carlo-morans-i">5.5.2 Computing Monte Carlo Moran’s I</a></li>
   <li><a href="#visualising-monte-carlo-morans-i" id="toc-visualising-monte-carlo-morans-i" class="nav-link" data-scroll-target="#visualising-monte-carlo-morans-i">5.5.3 Visualising Monte Carlo Moran’s I</a></li>
   </ul></li>
@@ -317,7 +317,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">October 3, 2024</p>
+      <p class="date-modified">October 8, 2024</p>
     </div>
   </div>
     
@@ -561,8 +561,8 @@ Note
 <section id="global-measures-of-spatial-autocorrelation-morans-i-statistic-testing" class="level2">
 <h2 class="anchored" data-anchor-id="global-measures-of-spatial-autocorrelation-morans-i-statistic-testing">5.5 Global Measures of Spatial Autocorrelation: Moran’s I statistic testing</h2>
 <p>In this section, we will perform Moran’s I statistics testing using&nbsp;<a href="https://r-spatial.github.io/spdep/reference/moran.test.html"><code>moran.test()</code></a>&nbsp;of&nbsp;<strong>spdep.</strong></p>
-<section id="marons-i-test" class="level3">
-<h3 class="anchored" data-anchor-id="marons-i-test">5.5.1 Maron’s I test</h3>
+<section id="morans-i-test" class="level3">
+<h3 class="anchored" data-anchor-id="morans-i-test">5.5.1 Moran’s I test</h3>
 <p>The code chunk below performs Moran’s I statistical testing using&nbsp;<a href="https://r-spatial.github.io/spdep/reference/moran.test.html"><code>moran.test()</code></a>&nbsp;of&nbsp;<strong>spdep</strong>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">moran.test</span>(hunan<span class="sc">$</span>GDPPC,</span>

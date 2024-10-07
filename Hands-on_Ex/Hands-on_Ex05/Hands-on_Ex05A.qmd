@@ -205,7 +205,7 @@ rswm_q
 
 In this section, we will perform Moran’s I statistics testing using [`moran.test()`](https://r-spatial.github.io/spdep/reference/moran.test.html) of **spdep.**
 
-### 5.5.1 Maron's I test
+### 5.5.1 Moran's I test
 
 The code chunk below performs Moran’s I statistical testing using [`moran.test()`](https://r-spatial.github.io/spdep/reference/moran.test.html) of **spdep**.
 
