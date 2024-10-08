@@ -216,7 +216,7 @@ ggplot(tourism,
 We note that there are 8 different types of variables:
 
 | S/N   | Variable           | Definition                                                                  |
-|----------------|------------------------------|---------------------------------------|
+|-----------------|------------------------|-------------------------------|
 | **1** | no_tourist_all     | The total number of domestic tourists who visited the province              |
 | **2** | no_tourist_thai    | The number of Thai tourists who visited the province                        |
 | **3** | no_tourist_foreign | The number of foreign tourists who visited the province                     |
@@ -895,7 +895,9 @@ plot(combined_data_spat$geometry,border="lightgrey")
 plot(knn6,coords,pch = 19, cex = 0.6, add = TRUE, col = "red")
 ```
 
-### 7.2 Global Measures of Spatial Autocorrelation: Moran's I
+### 7.2 Global Measures of Spatial Autocorrelation
+
+### 7.2.1 Moran's I
 
 Moran's I describe how features differ from the values in the study area as a whole.
 
@@ -984,7 +986,7 @@ Based on the results above, we note that the p-value is 0.022, smaller than the 
 Further, the Moran’s I value is positive (0.14629) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
 :::
 
-### 7.3 Global Measures of Spatial Autocorrelation: Geary's c
+### 7.2.2 Geary's c
 
 Similar to Moran's I, Geary's c is also a measure of spatial autocorrelation however it focuses more on the differences between immediate neigbours.
 
@@ -1070,7 +1072,257 @@ abline(v=1,
 
 Based on the results above, we note that the p-value is 0.008, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Geary's c value is slightly less than 1 (0.82128) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values. This is a similar finding to the Moran's I result above.
+Further, the Geary's c value is slightly less than 1 (0.82128) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values. We can hence infer that the spatial distribution of this indicator show signs of clustering. This is a similar finding to the Moran's I result above.
+:::
+
+### 7.3 Local Measures of Spatial Autocorrelation
+
+We also carry out local measures of spatial autocorrelation. In contrast with global measures of spatial autocorrelation which assesses the overall study area, local measures help to evaluate the spatial distribution of indicators of specific locations with respect to their neighbours and allows the detection of clusters (high-high or low-low) or outliers (high-low or low-high).
+
+### 7.3.1 Total Revenue
+
+::: panel-tabset
+## Local Moran's I
+
+H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
+
+H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
+
+We set the confidence interval to be at 95%.
+
+```{r}
+set.seed(1234) 
+lisa <- combined_data_spat %>%
+  mutate(local_moran = local_moran(combined_data_spat$median_tot_revenue,
+                                 knn6,
+                                 weights,     
+                                 nsim = 1999),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+
+We visualise local Moran's I and corresponding p-value using the code chunk below:
+
+```{r}
+tmap_mode("plot")
+map1 <- tm_shape(lisa)+
+  tm_fill("ii",
+          title = "Local Moran Statistic")+
+  tm_text("province_eng",size = 0.3)+
+  tm_borders(alpha = 0.5)+
+  tm_view(set.zoom.limits = c(6,8))+
+  tm_layout(
+    main.title = "local Moran's I for Total Revenue",
+    main.title.size = 0.5
+  )
+
+map2 <- tm_shape(lisa)+
+  tm_fill("p_ii_sim",
+          breaks = c(0,0.001,0.01,0.05,1),
+          labels = c("0.001","0.01","0.05","Not sig"),
+                     title = "p-values (based on simulation)")+
+  tm_text("province_eng",size = 0.3)+
+  tm_borders(alpha = 0.5)+
+  tm_view(set.zoom.limits = c(6,8))+
+  tm_layout(
+    main.title = "p-value of local Moran's I for Total Revenue",
+    main.title.size = 0.5
+  )
+
+tmap_arrange(map1, map2, ncol=2)
+```
+
+Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for total revenue which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
+
+Of these provinces, Nakhon Sawan and provinces on the northeast side of Thailand have local moran's I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of total revenue.
+
+In contrast, the Chachoengsao province has a local moran's I value that is close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation in this province and there is spatial dispersion as the province has a total revenue value dissimilar to its neighbours.
+
+## LISA
+
+We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+
+```{r}
+lisa_sig <- lisa  %>%
+  filter(p_ii_sim < 0.05)
+tmap_mode("plot")
+tm_shape(lisa) +
+  tm_polygons() +
+  tm_borders(alpha = 0.5) +
+tm_shape(lisa_sig) +
+  tm_fill("mean") + 
+  tm_borders(alpha = 0.4)
+```
+
+Similar to our interpretation of the local moran's I and p-value plot above, we note that Nakhon Sawan and provinces on the northeast side of Thailand are categorised as Low-Low clusters while Chachoengsao is a Low-High outlier.
+:::
+
+### 7.3.2 Number of foreign tourists
+
+::: panel-tabset
+## Local Moran's I
+
+H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
+
+H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
+
+We set the confidence interval to be at 95%.
+
+```{r}
+set.seed(1234) 
+lisa <- combined_data_spat %>%
+  mutate(local_moran = local_moran(combined_data_spat$median_tot_foreign,
+                                 knn6,
+                                 weights,     
+                                 nsim = 1999),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+
+We visualise local Moran's I and corresponding p-value using the code chunk below:
+
+```{r}
+tmap_mode("plot")
+map1 <- tm_shape(lisa)+
+  tm_fill("ii",
+          title = "Local Moran Statistic")+
+  tm_text("province_eng",size = 0.3)+
+  tm_borders(alpha = 0.5)+
+  tm_view(set.zoom.limits = c(6,8))+
+  tm_layout(
+    main.title = "local Moran's I for Number of Foreign Tourists",
+    main.title.size = 0.5
+  )
+
+map2 <- tm_shape(lisa)+
+  tm_fill("p_ii_sim",
+          breaks = c(0,0.001,0.01,0.05,1),
+          labels = c("0.001","0.01","0.05","Not sig"),
+                     title = "p-values (based on simulation)")+
+  tm_text("province_eng",size = 0.3)+
+  tm_borders(alpha = 0.5)+
+  tm_view(set.zoom.limits = c(6,8))+
+  tm_layout(
+    main.title = "p-value of local Moran's I for Number of Foreign Tourists",
+    main.title.size = 0.5
+  )
+
+tmap_arrange(map1, map2, ncol=2)
+```
+
+Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for number of foreign tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. Conversely, we note that Chonburi displays the strongest positive spatial autocorrelation for number of foreign tourists which indicates clustering. However, we note from the corresponding plot of p-values that the p-values for these results are not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation at these two provinces could have occurred randomly.
+
+We note that provinces Kanchanaburi, Nakhon Sawan, Chainat, Surin, Sisaket, Amnat Charoen, Mukdahan and Samut Prakan have local moran's I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of number of foreign tourists.
+
+In contrast, the Chachoengsao province has a local moran's I value that are close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation, specifically spatial dispersion as Chachoengsao has a dissimilar number of foreign tourists as compared to its neighbours.
+
+## LISA
+
+```{r}
+lisa_sig <- lisa  %>%
+  filter(p_ii_sim < 0.05)
+tmap_mode("plot")
+tm_shape(lisa) +
+  tm_polygons() +
+  tm_borders(alpha = 0.5) +
+tm_shape(lisa_sig) +
+  tm_fill("mean") + 
+  tm_borders(alpha = 0.4)
+```
+
+Similar to our interpretation of the local moran's I and p-value plot above, we note that there is spatial clustering observed in the following provinces:
+
+-   Kanchanaburi, Nakhon Sawan, Chainat, Surin, Sisaket, Amnat Charoen and Mukdahan are categorised as Low-Low clusters
+
+-   Samut Prakan is categorised as a High-High cluster
+
+Conversely, there is spatial disperson for Chachoengsao which has been categorised as a Low-High outlier.
+:::
+
+### 7.3.3 Rate of overnight tourists 
+
+::: panel-tabset
+## Local Moran's I
+
+H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
+
+H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
+
+We set the confidence interval to be at 95%.
+
+```{r}
+set.seed(1234) 
+lisa <- combined_data_spat %>%
+  mutate(local_moran = local_moran(combined_data_spat$median_occup_rate,
+                                 knn6,
+                                 weights,     
+                                 nsim = 1999),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+
+We visualise local Moran's I and corresponding p-value using the code chunk below:
+
+```{r}
+tmap_mode("plot")
+map1 <- tm_shape(lisa)+
+  tm_fill("ii",
+          title = "Local Moran Statistic")+
+  tm_text("province_eng",size = 0.3)+
+  tm_borders(alpha = 0.5)+
+  tm_view(set.zoom.limits = c(6,8))+
+  tm_layout(
+    main.title = "local Moran's I for Rate of Overnight Tourists",
+    main.title.size = 0.5
+  )
+
+map2 <- tm_shape(lisa)+
+  tm_fill("p_ii_sim",
+          breaks = c(0,0.001,0.01,0.05,1),
+          labels = c("0.001","0.01","0.05","Not sig"),
+                     title = "p-values (based on simulation)")+
+  tm_text("province_eng",size = 0.3)+
+  tm_borders(alpha = 0.5)+
+  tm_view(set.zoom.limits = c(6,8))+
+  tm_layout(
+    main.title = "p-value of local Moran's I for Rate of Overnight Tourists",
+    main.title.size = 0.5
+  )
+
+tmap_arrange(map1, map2, ncol=2)
+```
+
+Based on the results above, we note that the rate of overnight tourist indicator has a more diverse range of local moran's I values as compared to the other two indicators of total revenue and number of foreign tourists.
+
+We note the following:
+
+-   Phayao, Chiang Rai, Nonthaburi, Ranong, Surat Thani, Bangkok, Phang Nga and Samut Prakan have positive local moran's I values with corresponding significant p-values
+
+-   Mae Hong Son, Nakhon Si Thammarat, Uttaradit and Phra Nakhon Si Ayutthaya have negative local moran's I values with corresponding signficant p-values
+
+There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces - for the former group, there is spatial clustering of similar values of rate of overnight tourists while for the latter, there is spatial dispersion as provinces have dissimilar values of rate of overnight tourists.
+
+## LISA
+
+```{r}
+lisa_sig <- lisa  %>%
+  filter(p_ii_sim < 0.05)
+tmap_mode("plot")
+tm_shape(lisa) +
+  tm_polygons() +
+  tm_borders(alpha = 0.5) +
+tm_shape(lisa_sig) +
+  tm_fill("mean") + 
+  tm_borders(alpha = 0.4)
+```
+
+Similar to our interpretation of the local moran's I and p-value plot above, we note that there is spatial clustering observed in the following provinces:
+
+-   Nonthaburi, Ranong, Surat Thani, Bangkok, Phang Nga and Samut Praka are categorised as Low-Low clusters
+
+-   Phayao and Chiang Rai are categorised as High-High clusters
+
+Conversely, there is spatial disperson for Mae Hong Son and Uttaradit which have been categorised as Low-High outliers, and for Nakhon Si Thammarat and Phra Nakhon Si Ayutthaya which have been categorised as High-Low outliers.
 :::
 
 ## 8. Determining independence from space and time

@@ -290,8 +290,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#converting-centroids-to-coordinates" id="toc-converting-centroids-to-coordinates" class="nav-link" data-scroll-target="#converting-centroids-to-coordinates">7.1.4 Converting centroids to coordinates</a></li>
   <li><a href="#computing-adaptive-distance-weight-matrix" id="toc-computing-adaptive-distance-weight-matrix" class="nav-link" data-scroll-target="#computing-adaptive-distance-weight-matrix">7.1.5 Computing adaptive distance weight matrix</a></li>
   <li><a href="#plotting-distance-based-neighbours" id="toc-plotting-distance-based-neighbours" class="nav-link" data-scroll-target="#plotting-distance-based-neighbours">7.1.6 Plotting distance-based neighbours</a></li>
-  <li><a href="#global-measures-of-spatial-autocorrelation-morans-i" id="toc-global-measures-of-spatial-autocorrelation-morans-i" class="nav-link" data-scroll-target="#global-measures-of-spatial-autocorrelation-morans-i">7.2 Global Measures of Spatial Autocorrelation: Moran’s I</a></li>
-  <li><a href="#global-measures-of-spatial-autocorrelation-gearys-c" id="toc-global-measures-of-spatial-autocorrelation-gearys-c" class="nav-link" data-scroll-target="#global-measures-of-spatial-autocorrelation-gearys-c">7.3 Global Measures of Spatial Autocorrelation: Geary’s c</a></li>
+  <li><a href="#global-measures-of-spatial-autocorrelation" id="toc-global-measures-of-spatial-autocorrelation" class="nav-link" data-scroll-target="#global-measures-of-spatial-autocorrelation">7.2 Global Measures of Spatial Autocorrelation</a></li>
+  <li><a href="#morans-i" id="toc-morans-i" class="nav-link" data-scroll-target="#morans-i">7.2.1 Moran’s I</a></li>
+  <li><a href="#gearys-c" id="toc-gearys-c" class="nav-link" data-scroll-target="#gearys-c">7.2.2 Geary’s c</a></li>
+  <li><a href="#local-measures-of-spatial-autocorrelation" id="toc-local-measures-of-spatial-autocorrelation" class="nav-link" data-scroll-target="#local-measures-of-spatial-autocorrelation">7.3 Local Measures of Spatial Autocorrelation</a></li>
+  <li><a href="#total-revenue-3" id="toc-total-revenue-3" class="nav-link" data-scroll-target="#total-revenue-3">7.3.1 Total Revenue</a></li>
+  <li><a href="#number-of-foreign-tourists-3" id="toc-number-of-foreign-tourists-3" class="nav-link" data-scroll-target="#number-of-foreign-tourists-3">7.3.2 Number of foreign tourists</a></li>
+  <li><a href="#rate-of-overnight-tourists" id="toc-rate-of-overnight-tourists" class="nav-link" data-scroll-target="#rate-of-overnight-tourists">7.3.3 Rate of overnight tourists</a></li>
   </ul></li>
   <li><a href="#determining-independence-from-space-and-time" id="toc-determining-independence-from-space-and-time" class="nav-link" data-scroll-target="#determining-independence-from-space-and-time">8. Determining independence from space and time</a></li>
   </ul></li>
@@ -331,7 +336,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">October 8, 2024</p>
+      <p class="date-modified">October 9, 2024</p>
     </div>
   </div>
     
@@ -524,8 +529,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">datatable</span>(tourism_unique)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-c0d6f0798ea9c145251e" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-c0d6f0798ea9c145251e">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77"],["Ang Thong","Bangkok","Chainat","Kamphaeng Phet","Lopburi","Nakhon Nayok","Nakhon Pathom","Nakhon Sawan","Nonthaburi","Pathum Thani","Phetchabun","Phichit","Phitsanulok","Phra Nakhon Si Ayutthaya","Samut Prakan","Samut Sakhon","Samut Songkhram","Saraburi","Sing Buri","Sukhothai","Suphan Buri","Uthai Thani","Chachoengsao","Chanthaburi","Chonburi","Prachinburi","Rayong","Sa Kaeo","Trat","Chiang Mai","Chiang Rai","Lampang","Lamphun","Mae Hong Son","Nan","Phayao","Phrae","Uttaradit","Amnat Charoen","Bueng Kan","Buriram","Chaiyaphum","Kalasin","Khon Kaen","Loei","Maha Sarakham","Mukdahan","Nakhon Phanom","Nakhon Ratchasima","Nong Bua Lamphu","Nong Khai","Roi Et","Sakon Nakhon","Sisaket","Surin","Ubon Ratchathani","Udon Thani","Yasothon","Chumphon","Krabi","Nakhon Si Thammarat","Narathiwat","Pattani","Phang Nga","Phatthalung","Phuket","Ranong","Satun","Songkhla","Surat Thani","Trang","Yala","Kanchanaburi","Phetchaburi","Prachuap Khiri Khan","Ratchaburi","Tak"],["central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","east","east","east","east","east","east","east","north","north","north","north","north","north","north","north","north","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","south","south","south","south","south","south","south","south","south","south","south","south","south","south","west","west","west","west","west"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>province_eng<\/th>\n      <th>region_eng<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"province_eng","targets":1},{"name":"region_eng","targets":2}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-08bb27749ce50eb8163e" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-08bb27749ce50eb8163e">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77"],["Ang Thong","Bangkok","Chainat","Kamphaeng Phet","Lopburi","Nakhon Nayok","Nakhon Pathom","Nakhon Sawan","Nonthaburi","Pathum Thani","Phetchabun","Phichit","Phitsanulok","Phra Nakhon Si Ayutthaya","Samut Prakan","Samut Sakhon","Samut Songkhram","Saraburi","Sing Buri","Sukhothai","Suphan Buri","Uthai Thani","Chachoengsao","Chanthaburi","Chonburi","Prachinburi","Rayong","Sa Kaeo","Trat","Chiang Mai","Chiang Rai","Lampang","Lamphun","Mae Hong Son","Nan","Phayao","Phrae","Uttaradit","Amnat Charoen","Bueng Kan","Buriram","Chaiyaphum","Kalasin","Khon Kaen","Loei","Maha Sarakham","Mukdahan","Nakhon Phanom","Nakhon Ratchasima","Nong Bua Lamphu","Nong Khai","Roi Et","Sakon Nakhon","Sisaket","Surin","Ubon Ratchathani","Udon Thani","Yasothon","Chumphon","Krabi","Nakhon Si Thammarat","Narathiwat","Pattani","Phang Nga","Phatthalung","Phuket","Ranong","Satun","Songkhla","Surat Thani","Trang","Yala","Kanchanaburi","Phetchaburi","Prachuap Khiri Khan","Ratchaburi","Tak"],["central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","central","east","east","east","east","east","east","east","north","north","north","north","north","north","north","north","north","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","northeast","south","south","south","south","south","south","south","south","south","south","south","south","south","south","west","west","west","west","west"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>province_eng<\/th>\n      <th>region_eng<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"province_eng","targets":1},{"name":"region_eng","targets":2}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <p>Re-plotting the distribution of domestic tourism statistics across the regions:</p>
@@ -564,9 +569,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>We note that there are 8 different types of variables:</p>
 <table class="table">
 <colgroup>
-<col style="width: 18%">
-<col style="width: 35%">
-<col style="width: 45%">
+<col style="width: 23%">
+<col style="width: 33%">
+<col style="width: 43%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1511,8 +1516,11 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 </section>
-<section id="global-measures-of-spatial-autocorrelation-morans-i" class="level3">
-<h3 class="anchored" data-anchor-id="global-measures-of-spatial-autocorrelation-morans-i">7.2 Global Measures of Spatial Autocorrelation: Moran’s I</h3>
+<section id="global-measures-of-spatial-autocorrelation" class="level3">
+<h3 class="anchored" data-anchor-id="global-measures-of-spatial-autocorrelation">7.2 Global Measures of Spatial Autocorrelation</h3>
+</section>
+<section id="morans-i" class="level3">
+<h3 class="anchored" data-anchor-id="morans-i">7.2.1 Moran’s I</h3>
 <p>Moran’s I describe how features differ from the values in the study area as a whole.</p>
 <p>H0 null hypothesis: There is no spatial autocorrelation in the indicator of tourism i.e.&nbsp;observed values are spatially randomly distributed and spatial location of the values have no influence on their similarity</p>
 <p>H1 alternative hypothesis: There is spatial autocorrelation in the indicator of interest.</p>
@@ -1641,8 +1649,8 @@ alternative hypothesis: two.sided</code></pre>
 </div>
 </div>
 </section>
-<section id="global-measures-of-spatial-autocorrelation-gearys-c" class="level3">
-<h3 class="anchored" data-anchor-id="global-measures-of-spatial-autocorrelation-gearys-c">7.3 Global Measures of Spatial Autocorrelation: Geary’s c</h3>
+<section id="gearys-c" class="level3">
+<h3 class="anchored" data-anchor-id="gearys-c">7.2.2 Geary’s c</h3>
 <p>Similar to Moran’s I, Geary’s c is also a measure of spatial autocorrelation however it focuses more on the differences between immediate neigbours.</p>
 <p>H0 null hypothesis: There is no spatial autocorrelation in the indicator of tourism i.e.&nbsp;observed values are spatially randomly distributed and spatial location of the values have no influence on their dissimilarity</p>
 <p>H1 alternative hypothesis: There is spatial autocorrelation in the indicator of interest.</p>
@@ -1766,7 +1774,275 @@ alternative hypothesis: greater</code></pre>
 </div>
 </div>
 <p>Based on the results above, we note that the p-value is 0.008, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.</p>
-<p>Further, the Geary’s c value is slightly less than 1 (0.82128) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values. This is a similar finding to the Moran’s I result above.</p>
+<p>Further, the Geary’s c value is slightly less than 1 (0.82128) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values. We can hence infer that the spatial distribution of this indicator show signs of clustering. This is a similar finding to the Moran’s I result above.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="local-measures-of-spatial-autocorrelation" class="level3">
+<h3 class="anchored" data-anchor-id="local-measures-of-spatial-autocorrelation">7.3 Local Measures of Spatial Autocorrelation</h3>
+<p>We also carry out local measures of spatial autocorrelation. In contrast with global measures of spatial autocorrelation which assesses the overall study area, local measures help to evaluate the spatial distribution of indicators of specific locations with respect to their neighbours and allows the detection of clusters (high-high or low-low) or outliers (high-low or low-high).</p>
+</section>
+<section id="total-revenue-3" class="level3">
+<h3 class="anchored" data-anchor-id="total-revenue-3">7.3.1 Total Revenue</h3>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true">Local Moran’s I</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false">LISA</a></li></ul>
+<div class="tab-content">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<p>H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e.&nbsp;observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.</p>
+<p>H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.</p>
+<p>We set the confidence interval to be at 95%.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>) </span>
+<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>lisa <span class="ot">&lt;-</span> combined_data_spat <span class="sc">%&gt;%</span></span>
+<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(combined_data_spat<span class="sc">$</span>median_tot_revenue,</span>
+<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a>                                 knn6,</span>
+<span id="cb100-5"><a href="#cb100-5" aria-hidden="true" tabindex="-1"></a>                                 weights,     </span>
+<span id="cb100-6"><a href="#cb100-6" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">nsim =</span> <span class="dv">1999</span>),</span>
+<span id="cb100-7"><a href="#cb100-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb100-8"><a href="#cb100-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We visualise local Moran’s I and corresponding p-value using the code chunk below:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb101"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>map1 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa)<span class="sc">+</span></span>
+<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"ii"</span>,</span>
+<span id="cb101-4"><a href="#cb101-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Local Moran Statistic"</span>)<span class="sc">+</span></span>
+<span id="cb101-5"><a href="#cb101-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"province_eng"</span>,<span class="at">size =</span> <span class="fl">0.3</span>)<span class="sc">+</span></span>
+<span id="cb101-6"><a href="#cb101-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb101-7"><a href="#cb101-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_view</span>(<span class="at">set.zoom.limits =</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">8</span>))<span class="sc">+</span></span>
+<span id="cb101-8"><a href="#cb101-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb101-9"><a href="#cb101-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"local Moran's I for Total Revenue"</span>,</span>
+<span id="cb101-10"><a href="#cb101-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="fl">0.5</span></span>
+<span id="cb101-11"><a href="#cb101-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb101-12"><a href="#cb101-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-13"><a href="#cb101-13" aria-hidden="true" tabindex="-1"></a>map2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa)<span class="sc">+</span></span>
+<span id="cb101-14"><a href="#cb101-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"p_ii_sim"</span>,</span>
+<span id="cb101-15"><a href="#cb101-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="fl">0.001</span>,<span class="fl">0.01</span>,<span class="fl">0.05</span>,<span class="dv">1</span>),</span>
+<span id="cb101-16"><a href="#cb101-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>,<span class="st">"0.01"</span>,<span class="st">"0.05"</span>,<span class="st">"Not sig"</span>),</span>
+<span id="cb101-17"><a href="#cb101-17" aria-hidden="true" tabindex="-1"></a>                     <span class="at">title =</span> <span class="st">"p-values (based on simulation)"</span>)<span class="sc">+</span></span>
+<span id="cb101-18"><a href="#cb101-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"province_eng"</span>,<span class="at">size =</span> <span class="fl">0.3</span>)<span class="sc">+</span></span>
+<span id="cb101-19"><a href="#cb101-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb101-20"><a href="#cb101-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_view</span>(<span class="at">set.zoom.limits =</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">8</span>))<span class="sc">+</span></span>
+<span id="cb101-21"><a href="#cb101-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb101-22"><a href="#cb101-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"p-value of local Moran's I for Total Revenue"</span>,</span>
+<span id="cb101-23"><a href="#cb101-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="fl">0.5</span></span>
+<span id="cb101-24"><a href="#cb101-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb101-25"><a href="#cb101-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-26"><a href="#cb101-26" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(map1, map2, <span class="at">ncol=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_files/figure-html/unnamed-chunk-85-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for total revenue which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.</p>
+<p>Of these provinces, Nakhon Sawan and provinces on the northeast side of Thailand have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of total revenue.</p>
+<p>In contrast, the Chachoengsao province has a local moran’s I value that is close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation in this province and there is spatial dispersion as the province has a total revenue value dissimilar to its neighbours.</p>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<p>We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - <em>mean</em>,&nbsp;<em>median</em>&nbsp;and&nbsp;<em>pysal</em>. In general, classification in&nbsp;<em>mean</em>&nbsp;will be used, as shown in the code chunk below.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a>lisa_sig <span class="ot">&lt;-</span> lisa  <span class="sc">%&gt;%</span></span>
+<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_ii_sim <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb102-4"><a href="#cb102-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa) <span class="sc">+</span></span>
+<span id="cb102-5"><a href="#cb102-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
+<span id="cb102-6"><a href="#cb102-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb102-7"><a href="#cb102-7" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa_sig) <span class="sc">+</span></span>
+<span id="cb102-8"><a href="#cb102-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"mean"</span>) <span class="sc">+</span> </span>
+<span id="cb102-9"><a href="#cb102-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_files/figure-html/unnamed-chunk-86-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Similar to our interpretation of the local moran’s I and p-value plot above, we note that Nakhon Sawan and provinces on the northeast side of Thailand are categorised as Low-Low clusters while Chachoengsao is a Low-High outlier.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="number-of-foreign-tourists-3" class="level3">
+<h3 class="anchored" data-anchor-id="number-of-foreign-tourists-3">7.3.2 Number of foreign tourists</h3>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true">Local Moran’s I</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false">LISA</a></li></ul>
+<div class="tab-content">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
+<p>H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e.&nbsp;observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.</p>
+<p>H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.</p>
+<p>We set the confidence interval to be at 95%.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb103"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>) </span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>lisa <span class="ot">&lt;-</span> combined_data_spat <span class="sc">%&gt;%</span></span>
+<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(combined_data_spat<span class="sc">$</span>median_tot_foreign,</span>
+<span id="cb103-4"><a href="#cb103-4" aria-hidden="true" tabindex="-1"></a>                                 knn6,</span>
+<span id="cb103-5"><a href="#cb103-5" aria-hidden="true" tabindex="-1"></a>                                 weights,     </span>
+<span id="cb103-6"><a href="#cb103-6" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">nsim =</span> <span class="dv">1999</span>),</span>
+<span id="cb103-7"><a href="#cb103-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb103-8"><a href="#cb103-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We visualise local Moran’s I and corresponding p-value using the code chunk below:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a>map1 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa)<span class="sc">+</span></span>
+<span id="cb104-3"><a href="#cb104-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"ii"</span>,</span>
+<span id="cb104-4"><a href="#cb104-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Local Moran Statistic"</span>)<span class="sc">+</span></span>
+<span id="cb104-5"><a href="#cb104-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"province_eng"</span>,<span class="at">size =</span> <span class="fl">0.3</span>)<span class="sc">+</span></span>
+<span id="cb104-6"><a href="#cb104-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb104-7"><a href="#cb104-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_view</span>(<span class="at">set.zoom.limits =</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">8</span>))<span class="sc">+</span></span>
+<span id="cb104-8"><a href="#cb104-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb104-9"><a href="#cb104-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"local Moran's I for Number of Foreign Tourists"</span>,</span>
+<span id="cb104-10"><a href="#cb104-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="fl">0.5</span></span>
+<span id="cb104-11"><a href="#cb104-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb104-12"><a href="#cb104-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb104-13"><a href="#cb104-13" aria-hidden="true" tabindex="-1"></a>map2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa)<span class="sc">+</span></span>
+<span id="cb104-14"><a href="#cb104-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"p_ii_sim"</span>,</span>
+<span id="cb104-15"><a href="#cb104-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="fl">0.001</span>,<span class="fl">0.01</span>,<span class="fl">0.05</span>,<span class="dv">1</span>),</span>
+<span id="cb104-16"><a href="#cb104-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>,<span class="st">"0.01"</span>,<span class="st">"0.05"</span>,<span class="st">"Not sig"</span>),</span>
+<span id="cb104-17"><a href="#cb104-17" aria-hidden="true" tabindex="-1"></a>                     <span class="at">title =</span> <span class="st">"p-values (based on simulation)"</span>)<span class="sc">+</span></span>
+<span id="cb104-18"><a href="#cb104-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"province_eng"</span>,<span class="at">size =</span> <span class="fl">0.3</span>)<span class="sc">+</span></span>
+<span id="cb104-19"><a href="#cb104-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb104-20"><a href="#cb104-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_view</span>(<span class="at">set.zoom.limits =</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">8</span>))<span class="sc">+</span></span>
+<span id="cb104-21"><a href="#cb104-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb104-22"><a href="#cb104-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"p-value of local Moran's I for Number of Foreign Tourists"</span>,</span>
+<span id="cb104-23"><a href="#cb104-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="fl">0.5</span></span>
+<span id="cb104-24"><a href="#cb104-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb104-25"><a href="#cb104-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb104-26"><a href="#cb104-26" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(map1, map2, <span class="at">ncol=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_files/figure-html/unnamed-chunk-88-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for number of foreign tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. Conversely, we note that Chonburi displays the strongest positive spatial autocorrelation for number of foreign tourists which indicates clustering. However, we note from the corresponding plot of p-values that the p-values for these results are not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation at these two provinces could have occurred randomly.</p>
+<p>We note that provinces Kanchanaburi, Nakhon Sawan, Chainat, Surin, Sisaket, Amnat Charoen, Mukdahan and Samut Prakan have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of number of foreign tourists.</p>
+<p>In contrast, the Chachoengsao province has a local moran’s I value that are close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation, specifically spatial dispersion as Chachoengsao has a dissimilar number of foreign tourists as compared to its neighbours.</p>
+</div>
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb105"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a>lisa_sig <span class="ot">&lt;-</span> lisa  <span class="sc">%&gt;%</span></span>
+<span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_ii_sim <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb105-4"><a href="#cb105-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa) <span class="sc">+</span></span>
+<span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
+<span id="cb105-6"><a href="#cb105-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb105-7"><a href="#cb105-7" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa_sig) <span class="sc">+</span></span>
+<span id="cb105-8"><a href="#cb105-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"mean"</span>) <span class="sc">+</span> </span>
+<span id="cb105-9"><a href="#cb105-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_files/figure-html/unnamed-chunk-89-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Similar to our interpretation of the local moran’s I and p-value plot above, we note that there is spatial clustering observed in the following provinces:</p>
+<ul>
+<li><p>Kanchanaburi, Nakhon Sawan, Chainat, Surin, Sisaket, Amnat Charoen and Mukdahan are categorised as Low-Low clusters</p></li>
+<li><p>Samut Prakan is categorised as a High-High cluster</p></li>
+</ul>
+<p>Conversely, there is spatial disperson for Chachoengsao which has been categorised as a Low-High outlier.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="rate-of-overnight-tourists" class="level3">
+<h3 class="anchored" data-anchor-id="rate-of-overnight-tourists">7.3.3 Rate of overnight tourists</h3>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true">Local Moran’s I</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false">LISA</a></li></ul>
+<div class="tab-content">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<p>H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e.&nbsp;observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.</p>
+<p>H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.</p>
+<p>We set the confidence interval to be at 95%.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>) </span>
+<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>lisa <span class="ot">&lt;-</span> combined_data_spat <span class="sc">%&gt;%</span></span>
+<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(combined_data_spat<span class="sc">$</span>median_occup_rate,</span>
+<span id="cb106-4"><a href="#cb106-4" aria-hidden="true" tabindex="-1"></a>                                 knn6,</span>
+<span id="cb106-5"><a href="#cb106-5" aria-hidden="true" tabindex="-1"></a>                                 weights,     </span>
+<span id="cb106-6"><a href="#cb106-6" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">nsim =</span> <span class="dv">1999</span>),</span>
+<span id="cb106-7"><a href="#cb106-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb106-8"><a href="#cb106-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We visualise local Moran’s I and corresponding p-value using the code chunk below:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb107"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a>map1 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa)<span class="sc">+</span></span>
+<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"ii"</span>,</span>
+<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Local Moran Statistic"</span>)<span class="sc">+</span></span>
+<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"province_eng"</span>,<span class="at">size =</span> <span class="fl">0.3</span>)<span class="sc">+</span></span>
+<span id="cb107-6"><a href="#cb107-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb107-7"><a href="#cb107-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_view</span>(<span class="at">set.zoom.limits =</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">8</span>))<span class="sc">+</span></span>
+<span id="cb107-8"><a href="#cb107-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb107-9"><a href="#cb107-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"local Moran's I for Rate of Overnight Tourists"</span>,</span>
+<span id="cb107-10"><a href="#cb107-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="fl">0.5</span></span>
+<span id="cb107-11"><a href="#cb107-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb107-12"><a href="#cb107-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb107-13"><a href="#cb107-13" aria-hidden="true" tabindex="-1"></a>map2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa)<span class="sc">+</span></span>
+<span id="cb107-14"><a href="#cb107-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"p_ii_sim"</span>,</span>
+<span id="cb107-15"><a href="#cb107-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="fl">0.001</span>,<span class="fl">0.01</span>,<span class="fl">0.05</span>,<span class="dv">1</span>),</span>
+<span id="cb107-16"><a href="#cb107-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>,<span class="st">"0.01"</span>,<span class="st">"0.05"</span>,<span class="st">"Not sig"</span>),</span>
+<span id="cb107-17"><a href="#cb107-17" aria-hidden="true" tabindex="-1"></a>                     <span class="at">title =</span> <span class="st">"p-values (based on simulation)"</span>)<span class="sc">+</span></span>
+<span id="cb107-18"><a href="#cb107-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"province_eng"</span>,<span class="at">size =</span> <span class="fl">0.3</span>)<span class="sc">+</span></span>
+<span id="cb107-19"><a href="#cb107-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb107-20"><a href="#cb107-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_view</span>(<span class="at">set.zoom.limits =</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">8</span>))<span class="sc">+</span></span>
+<span id="cb107-21"><a href="#cb107-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(</span>
+<span id="cb107-22"><a href="#cb107-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title =</span> <span class="st">"p-value of local Moran's I for Rate of Overnight Tourists"</span>,</span>
+<span id="cb107-23"><a href="#cb107-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">main.title.size =</span> <span class="fl">0.5</span></span>
+<span id="cb107-24"><a href="#cb107-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb107-25"><a href="#cb107-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb107-26"><a href="#cb107-26" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(map1, map2, <span class="at">ncol=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_files/figure-html/unnamed-chunk-91-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the results above, we note that the rate of overnight tourist indicator has a more diverse range of local moran’s I values as compared to the other two indicators of total revenue and number of foreign tourists.</p>
+<p>We note the following:</p>
+<ul>
+<li><p>Phayao, Chiang Rai, Nonthaburi, Ranong, Surat Thani, Bangkok, Phang Nga and Samut Prakan have positive local moran’s I values with corresponding significant p-values</p></li>
+<li><p>Mae Hong Son, Nakhon Si Thammarat, Uttaradit and Phra Nakhon Si Ayutthaya have negative local moran’s I values with corresponding signficant p-values</p></li>
+</ul>
+<p>There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces - for the former group, there is spatial clustering of similar values of rate of overnight tourists while for the latter, there is spatial dispersion as provinces have dissimilar values of rate of overnight tourists.</p>
+</div>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb108"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a>lisa_sig <span class="ot">&lt;-</span> lisa  <span class="sc">%&gt;%</span></span>
+<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_ii_sim <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb108-4"><a href="#cb108-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa) <span class="sc">+</span></span>
+<span id="cb108-5"><a href="#cb108-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
+<span id="cb108-6"><a href="#cb108-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb108-7"><a href="#cb108-7" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa_sig) <span class="sc">+</span></span>
+<span id="cb108-8"><a href="#cb108-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_fill</span>(<span class="st">"mean"</span>) <span class="sc">+</span> </span>
+<span id="cb108-9"><a href="#cb108-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_files/figure-html/unnamed-chunk-92-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Similar to our interpretation of the local moran’s I and p-value plot above, we note that there is spatial clustering observed in the following provinces:</p>
+<ul>
+<li><p>Nonthaburi, Ranong, Surat Thani, Bangkok, Phang Nga and Samut Praka are categorised as Low-Low clusters</p></li>
+<li><p>Phayao and Chiang Rai are categorised as High-High clusters</p></li>
+</ul>
+<p>Conversely, there is spatial disperson for Mae Hong Son and Uttaradit which have been categorised as Low-High outliers, and for Nakhon Si Thammarat and Phra Nakhon Si Ayutthaya which have been categorised as High-Low outliers.</p>
 </div>
 </div>
 </div>
