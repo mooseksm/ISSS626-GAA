@@ -216,7 +216,7 @@ ggplot(tourism,
 We note that there are 8 different types of variables:
 
 | S/N   | Variable           | Definition                                                                  |
-|-----------------|------------------------|-------------------------------|
+|-------------|-------------|----------------------------------------------|
 | **1** | no_tourist_all     | The total number of domestic tourists who visited the province              |
 | **2** | no_tourist_thai    | The number of Thai tourists who visited the province                        |
 | **3** | no_tourist_foreign | The number of foreign tourists who visited the province                     |
@@ -710,11 +710,18 @@ combined_data_temp <- read_rds("data/rds/combined_data_temp.rds")
 
 ### 5.4 Creating a time series cube
 
-We use [spacetime()](https://sfdep.josiahparry.com/articles/spacetime-s3.html) of sfdep to create a spatio-temporal cube:
+We will use [spacetime()](https://sfdep.josiahparry.com/articles/spacetime-s3.html) of sfdep to create a spatio-temporal cube. However before that we will convert the date field into integer format.
+
+```{r}
+spt <- tourism_cleaned %>%
+  mutate(year_month = as.integer(gsub("-","",year_month)))
+```
+
+The following code chunk is then used to create a spatio-temporal cube:
 
 ```{r}
 spt <- spacetime(
-  tourism_cleaned,
+  spt,
   province,
   .loc_col = "province_eng",
   .time_col = "year_month"
@@ -958,7 +965,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.22, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive but close to zero, which indicates that total revenue seem to occur randomly across provinces.
+Further, the Moran’s I value is positive but close to zero, which indicates that number of foreign tourists seem to occur randomly across provinces.
 
 ## Rate of tourists who stay overnight
 
@@ -1239,7 +1246,7 @@ Similar to our interpretation of the local moran's I and p-value plot above, we 
 Conversely, there is spatial disperson for Chachoengsao which has been categorised as a Low-High outlier.
 :::
 
-### 7.3.3 Rate of overnight tourists 
+### 7.3.3 Rate of overnight tourists
 
 ::: panel-tabset
 ## Local Moran's I
@@ -1326,3 +1333,297 @@ Conversely, there is spatial disperson for Mae Hong Son and Uttaradit which have
 :::
 
 ## 8. Determining independence from space and time
+
+## 9. Determining emerging hot spot/cold spot areas
+
+###  9.1 Computing Gi\*
+
+```{r}
+spt_nb <- spt %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(
+    st_contiguity(geometry)),
+    wt = st_inverse_distance(nb,
+                             geometry,
+                             scale = 1,
+                             alpha = 1),
+    .before = 1) %>%
+  set_nbs("nb") %>%
+  set_wts("wt")
+```
+
+We then use the new "nb" and "wt" columns created to calculate the local Gi\* for each location. We do this by grouping by "year_month" and using [local_gstar_perm()](https://sfdep.josiahparry.com/reference/local_gstar) of sfdep package, and thereafter using unnest() to unnest the gi_star column of the newly created *gi_stars* data frame:
+
+::: panel-tabset
+## Total revenue
+
+```{r}
+gi_stars_totrev <- spt_nb %>%
+  group_by(year_month) %>%
+  mutate(gi_star = local_gstar_perm(
+    revenue_all,
+    nb,
+    wt)) %>%
+  tidyr::unnest(gi_star)
+```
+
+## Number of foreign tourists
+
+```{r}
+gi_stars_foreign <- spt_nb %>%
+  group_by(year_month) %>%
+  mutate(gi_star = local_gstar_perm(
+    no_tourist_foreign,
+    nb,
+    wt)) %>%
+  tidyr::unnest(gi_star)
+```
+
+## Rate of overnight tourists
+
+```{r}
+gi_stars_overnight <- spt_nb %>%
+  group_by(year_month) %>%
+  mutate(gi_star = local_gstar_perm(
+    ratio_tourist_stay,
+    nb,
+    wt)) %>%
+  tidyr::unnest(gi_star)
+```
+:::
+
+### 9.2 Mann-Kendall Test
+
+We then run the Mann-Kendall Test for each location for each indicator:
+
+::: panel-tabset
+## Total revenue
+
+```{r}
+ehsa_totrev <- gi_stars_totrev %>%
+  group_by(province_eng) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk)
+
+head(ehsa_totrev)
+```
+
+We note that not all provinces are statistically significant and that there are a mix of provinces with positive and negative increasing trends.
+
+We arrange the data to show significant hot/cold spots:
+
+```{r}
+emerging_totrev <- ehsa_totrev %>%
+  arrange(sl,abs(tau)) %>%
+  slice(1:5)
+
+emerging_totrev
+```
+
+## Number of foreign tourists
+
+```{r}
+ehsa_foreign <- gi_stars_foreign %>%
+  group_by(province_eng) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk)
+
+head(ehsa_foreign)
+```
+
+We note that not all provinces are statistically significant and that there are a mix of provinces with positive and negative increasing trends.
+
+We arrange the data to show significant hot/cold spots:
+
+```{r}
+emerging_foreign <- ehsa_foreign %>%
+  arrange(sl,abs(tau)) %>%
+  slice(1:5)
+
+emerging_foreign
+```
+
+## Rate of overnight tourists
+
+```{r}
+ehsa_overnight <- gi_stars_overnight %>%
+  group_by(province_eng) %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>%
+  tidyr::unnest_wider(mk)
+
+head(ehsa_overnight)
+```
+
+We note that not all provinces are statistically significant and that there are a mix of provinces with positive and negative increasing trends.
+
+We arrange the data to show significant hot/cold spots:
+
+```{r}
+emerging_overnight <- ehsa_overnight %>%
+  arrange(sl,abs(tau)) %>%
+  slice(1:5)
+
+emerging_overnight
+```
+:::
+
+### 9.3 Performing emerging hotspot analysis
+
+::: panel-tabset
+## Total revenue
+
+```{r}
+set.seed(1234)
+ehsa_totrev <- emerging_hotspot_analysis(
+  x = spt,
+  .var = "revenue_all",
+  k=1,
+  nsim = 99
+)
+
+ehsa_totrev
+```
+
+### Visualising the distribution of EHSA classes:
+
+```{r}
+ggplot(ehsa_totrev,
+       aes(x=classification))+
+  geom_bar()
+```
+
+### Visualising EHSA:
+
+```{r}
+prov_ehsa_totrev <- province %>%
+  left_join(ehsa_totrev,
+            by = join_by(province_eng == location))
+```
+
+```{r}
+ehsa_totrev_sig <- prov_ehsa_totrev %>%
+  filter(p_value < 0.05)
+
+tmap_mode("plot")
+tm_shape(prov_ehsa_totrev)+
+  tm_polygons()+
+  tm_borders(alpha = 0.5)+
+  tm_shape(ehsa_totrev_sig)+
+  tm_fill("classification")+
+  tm_borders(alpha = 0.4)+
+  tm_text("province_eng",size = 0.5)+
+  tm_layout(
+    main.title = "Emerging hot/cold spots for Total Revenue",
+    main.title.size = 0.8,
+    legend.outside = TRUE
+  )
+```
+
+## Number of foreign tourists
+
+```{r}
+set.seed(1234)
+ehsa_foreign <- emerging_hotspot_analysis(
+  x = spt,
+  .var = "no_tourist_foreign",
+  k=1,
+  nsim = 99
+)
+
+ehsa_foreign
+```
+
+### Visualising the distribution of EHSA classes:
+
+```{r}
+ggplot(ehsa_foreign,
+       aes(x=classification))+
+  geom_bar()
+```
+
+### Visualising EHSA:
+
+```{r}
+prov_ehsa_foreign <- province %>%
+  left_join(ehsa_foreign,
+            by = join_by(province_eng == location))
+```
+
+```{r}
+ehsa_foreign_sig <- prov_ehsa_foreign %>%
+  filter(p_value < 0.05)
+
+tmap_mode("plot")
+tm_shape(prov_ehsa_foreign)+
+  tm_polygons()+
+  tm_borders(alpha = 0.5)+
+  tm_shape(ehsa_foreign_sig)+
+  tm_fill("classification")+
+  tm_borders(alpha = 0.4)+
+  tm_text("province_eng",size = 0.5)+
+  tm_layout(
+    main.title = "Emerging hot/cold spots for Number of Tourists",
+    main.title.size = 0.8,
+    legend.outside = TRUE
+  )
+```
+
+## Rate of overnight tourists
+
+```{r}
+set.seed(1234)
+ehsa_overnight <- emerging_hotspot_analysis(
+  x = spt,
+  .var = "ratio_tourist_stay",
+  k=1,
+  nsim = 99
+)
+
+ehsa_overnight
+```
+
+### Visualising the distribution of EHSA classes:
+
+```{r}
+ggplot(ehsa_overnight,
+       aes(x=classification))+
+  geom_bar()
+```
+
+### Visualising EHSA:
+
+```{r}
+prov_ehsa_overnight <- province %>%
+  left_join(ehsa_overnight,
+            by = join_by(province_eng == location))
+```
+
+```{r}
+ehsa_overnight_sig <- prov_ehsa_overnight %>%
+  filter(p_value < 0.05)
+
+tmap_mode("plot")
+tm_shape(prov_ehsa_overnight)+
+  tm_polygons()+
+  tm_borders(alpha = 0.5)+
+  tm_shape(ehsa_overnight_sig)+
+  tm_fill("classification")+
+  tm_borders(alpha = 0.4)+
+  tm_text("province_eng",size = 0.5)+
+  tm_layout(
+    main.title = "Emerging hot/cold spots for Rate of Overnight Tourists",
+    main.title.size = 0.8,
+    legend.outside = TRUE
+  )
+```
+:::
+
+## 10. Conclusion
+
+\<WIP\>
