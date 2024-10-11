@@ -20,9 +20,11 @@ Tourism is one of Thailand’s largest industries, accounting for \~20% of the g
 
 The figure below shows the total revenue receipt from tourism sector between Jan 2019 to Feb 2023, and indicates that the revenue from tourism industry has been gradually recovering since Sep 2021.
 
-![](images/clipboard-378385426.png){width="460"}
+![](images/clipboard-378385426.png){width="401"}
 
 However, it is important to note that the tourism economy of Thailand is not evenly distributed. The figure below reveals that the tourism economy of Thailand in 2019 was mainly focused on five provinces, namely Bangkok, Phuket, Chon Buri, Krabi and Chiang Mai.
+
+![](images/clipboard-986836251.png){width="437"}
 
 ## 2. Objectives
 
@@ -30,7 +32,7 @@ The objectives of this take-home exercise will be to discover:
 
 -   if the key indicators of tourism economy of Thailand are independent from space and space and time.
 
--   If the tourism economy is indeed spatial and spatio-temporal dependent, and if so, where the clusters, outliers and emerging hot spot/cold spot areas are.
+-   If the tourism economy is indeed spatial and spatio-temporal dependent, to detect where the clusters, outliers and emerging hot spot/cold spot areas are.
 
 ## 3. The Task
 
@@ -42,7 +44,7 @@ The specific tasks of this take-home exercise are as follows:
 
     -   a tourism economy indicators layer within the study area in sf polygon features.
 
-    -   a derived tourism economy indicator layer in [**spacetime s3 class of sfdep**](https://sfdep.josiahparry.com/articles/spacetime-s3). Keep the time series at **month and year levels**.
+    -   a derived tourism economy indicator layer in [**spacetime s3 class of sfdep**](https://sfdep.josiahparry.com/articles/spacetime-s3), keeoing the time series at **month and year levels**.
 
 -   Using the extracted data, perform global spatial autocorrelation analysis using [sfdep methods](https://is415-gaa-tskam.netlify.app/in-class_ex/in-class_ex05/in-class_ex05-glsa).
 
@@ -216,7 +218,7 @@ ggplot(tourism,
 We note that there are 8 different types of variables:
 
 | S/N   | Variable           | Definition                                                                  |
-|-------------|-------------|----------------------------------------------|
+|---------------|---------------|------------------------------------------|
 | **1** | no_tourist_all     | The total number of domestic tourists who visited the province              |
 | **2** | no_tourist_thai    | The number of Thai tourists who visited the province                        |
 | **3** | no_tourist_foreign | The number of foreign tourists who visited the province                     |
@@ -2304,10 +2306,7 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that:
--   provinces Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Nakhon Phanom and Surin are categorised as Low-Low clusters
--   Chachoengsao and Samut Songkhram are categorised as High-High clusters
--   Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces are Low-High outliers.
+Similar to our interpretation of the local moran’s I and p-value plots, we note that: - provinces Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Nakhon Phanom and Surin are categorised as Low-Low clusters - Chachoengsao and Samut Songkhram are categorised as High-High clusters - Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces are Low-High outliers.
 :::
 
 ### 8.3.2 Number of foreign tourists
@@ -2387,10 +2386,7 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that:
--   provinces Nakhon Sawan, Surin, Mukdahan, Chainat, Maha Sarakham, Khon Kaen, Roi Et and Nakhon Phanom are categorised as Low-Low clusters
--   Samut Prakan is a High-High cluster
--   Chachoengsao is a Low-High outlier
+Similar to our interpretation of the local moran’s I and p-value plots, we note that: - provinces Nakhon Sawan, Surin, Mukdahan, Chainat, Maha Sarakham, Khon Kaen, Roi Et and Nakhon Phanom are categorised as Low-Low clusters - Samut Prakan is a High-High cluster - Chachoengsao is a Low-High outlier
 :::
 
 ### 8.3.2.2 During COVID
@@ -2546,10 +2542,7 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that:
--   provinces Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Nakhon Phanom and Surin are categorised as Low-Low clusters
--   Chachoengsao and Samut Songkhram are categorised as High-High clusters
--   Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces are Low-High outliers.
+Similar to our interpretation of the local moran’s I and p-value plots, we note that: - provinces Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Nakhon Phanom and Surin are categorised as Low-Low clusters - Chachoengsao and Samut Songkhram are categorised as High-High clusters - Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces are Low-High outliers.
 :::
 
 ### 8.3.3 Rate of overnight tourists
@@ -2609,7 +2602,7 @@ tmap_arrange(map1, map2, ncol=2)
 
 Tak, Samut Prakan, Chiang Mai, Ratchaburi, Chachoengsao and Nakhon Si Thammarat have local moran’s I values that are close to 1 but negative and corresponding significant p-values.There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation, more specifically spatial dispersion, in these provinces which have rates of overnight tourists that are dissimilar to their neighbours. Of the provinces, Chiang Mai displays the strongest negative spatial autocorrelation for rate of overnight tourists.
 
-In contrast, the Kalasin, Nan, Surin and Samut Songkhram provinces  have local moran's I values that are close to 1 and positive, with corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of rate of overnight tourists.
+In contrast, the Kalasin, Nan, Surin and Samut Songkhram provinces have local moran's I values that are close to 1 and positive, with corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of rate of overnight tourists.
 
 ## LISA
 
@@ -2627,11 +2620,7 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that:
--   Tak and Chiang Mai are High-Low outliers
--   Samut Prakan, Ratchaburi, Chachoengsao and Nakhon Si Thammarat are Low-High outliers
--   Kalasin, Nan and Surin are Low-Low clusters 
--   Samut Songkhram is a High-High cluster
+Similar to our interpretation of the local moran’s I and p-value plots, we note that: - Tak and Chiang Mai are High-Low outliers - Samut Prakan, Ratchaburi, Chachoengsao and Nakhon Si Thammarat are Low-High outliers - Kalasin, Nan and Surin are Low-Low clusters - Samut Songkhram is a High-High cluster
 :::
 
 ### 8.3.3.2 During COVID
@@ -2709,11 +2698,7 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that:
--   Sisaket, Surin, Buriram, Yasothon, Amnat Charoen and Sa Kaeo are High-High clusters
--   Samut Prakan, Bangkok, Nonthaburi, Nakhon Pathom, Samut Sakhon, Ranong, and Phra Nakhon Si Ayutthaya are Low-Low clusters
--   Maha Sarakham is a Low-High outlier
--   Nakhon Si Thammarat is a High-Low outlier
+Similar to our interpretation of the local moran’s I and p-value plots, we note that: - Sisaket, Surin, Buriram, Yasothon, Amnat Charoen and Sa Kaeo are High-High clusters - Samut Prakan, Bangkok, Nonthaburi, Nakhon Pathom, Samut Sakhon, Ranong, and Phra Nakhon Si Ayutthaya are Low-Low clusters - Maha Sarakham is a Low-High outlier - Nakhon Si Thammarat is a High-Low outlier
 :::
 
 ### 8.3.3.3 Post-COVID
@@ -2791,10 +2776,7 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that:
--   Chiang Rai, Phayao, Chiang Mai and Nan are High-High clusters
--   Nonthaburi and Bangkok are Low-Low clusters
--   Mae Hong Son is a Low-High outlier
+Similar to our interpretation of the local moran’s I and p-value plots, we note that: - Chiang Rai, Phayao, Chiang Mai and Nan are High-High clusters - Nonthaburi and Bangkok are Low-Low clusters - Mae Hong Son is a Low-High outlier
 :::
 
 ## 9. Determining emerging hot spot/cold spot areas
