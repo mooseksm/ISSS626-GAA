@@ -56,6 +56,18 @@ The specific tasks of this take-home exercise are as follows:
 
 ## 4. Installing and Loading the necessary R packages
 
+Key packages that will be required for analysis are:
+
+-   [**sf**](https://r-spatial.github.io/sf/) for importing, managing, and processing vector-based geospatial data
+
+-   [**sfdep**](https://sfdep.josiahparry.com/) to compute spatial weights, global and local spatial autocorrelation statistics. It builds on the spdep package, and creates an sf and tidyverse friendly interface.
+
+-   [**tmap**](https://cran.r-project.org/web/packages/tmap/) which provides functions for plotting cartographic quality static point patterns maps or interactive maps by using [leaflet](https://leafletjs.com/) API.
+
+-   [**tidyverse**](https://www.tidyverse.org/) for performing data science tasks such as importing, wrangling and visualising data.
+
+-   [**Kendall**](https://www.rdocumentation.org/packages/Kendall/versions/2.2.1/topics/Kendall) to compute the Mann-Kendall trend test
+
 We use the following code chunk to install and load the necessary R packages for our analysis:
 
 ```{r}
@@ -70,11 +82,13 @@ Two data sets shall be used:
 
 -   [Thailand - Subnational Administrative Boundaries](https://data.humdata.org/dataset/cod-ab-tha?) at HDX - the province boundary data set will be used.
 
-### 5.1 Thailand Domestic Tourism Statistics
+The following sections will include data importing, cleaning and wrangling.
+
+## 5.1 Thailand Domestic Tourism Statistics
 
 ### 5.1.1 Importing the csv file
 
-The code chunk below uses [`read_csv()`](https://readr.tidyverse.org/reference/read_delim.html) of readr package to load the Thailand Domestic Tourism Statistics:
+The code chunk below uses [`read_csv()`](https://readr.tidyverse.org/reference/read_delim.html) of readr package to load the Thailand Domestic Tourism Statistics:
 
 ```{r}
 tourism <- read_csv("data/rawdata/thailand_domestic_tourism_2019_2023_ver2.csv")
@@ -86,7 +100,7 @@ The *thai_tourism* data has 30,800 rows and 7 variables, namely *date, province_
 
 #### 5.1.2.1 Dropping unwanted variables
 
-We will drop the columns *province_thai* and *region_thai* as these variables are in the Thai language which we do not understand and hence will not be helpful for our analysis:
+We will drop the columns *province_thai* and *region_thai* as these variables are replicates of *province_eng* and *region_eng* in the Thai language which we do not understand and hence will not be helpful for our analysis:
 
 ```{r}
 tourism <- tourism[,!names(tourism) %in% c("province_thai","region_thai")]
@@ -94,7 +108,7 @@ tourism <- tourism[,!names(tourism) %in% c("province_thai","region_thai")]
 
 #### 5.1.2.2 Determine the presence of missing data
 
-We determine the presence of missing values using the *vis_miss()* function of the [naniar](https://cran.r-project.org/web/packages/naniar/vignettes/getting-started-w-naniar.html) package:
+We determine the presence of missing values using the [vis_miss()](https://www.rdocumentation.org/packages/visdat/versions/0.6.0/topics/vis_miss) function of the [naniar](https://cran.r-project.org/web/packages/naniar/vignettes/getting-started-w-naniar.html) package:
 
 ```{r}
 vis_miss(tourism)
@@ -127,6 +141,7 @@ tourism <- tourism %>%
 We first study the distribution of regions in the data:
 
 ```{r}
+#| code-fold: true
 ggplot(tourism, 
        aes(x = fct_reorder(region_eng, region_eng, .fun = length))) + 
   geom_bar() +
@@ -134,7 +149,7 @@ ggplot(tourism,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-From the output above, we note that there 5 different types of regions represented, notably the western region is not represented in the data.
+From the output above, we note that there 5 different regions represented. Notably, the western region is not represented in the data.
 
 We take a more detailed look by determining the unique provinces represented in the data and their corresponding regions. This step aims to check for two things:
 
@@ -155,15 +170,15 @@ From the output above, we note that all 77 Thailand provinces are represented in
 
 However, with reference to the [source on provinces in Thailand](https://en.wikipedia.org/wiki/Provinces_of_Thailand), we note a few mistakes in the regions indicated for the provinces.
 
+-   The *east_northeast* region can actually be renamed as *northeast* region for clarity and consistency with how detailed the other provinces are labelled
+
 -   Kanchanaburi, Phetchaburi, Prachuap Khiri Khan and Ratchaburi are stated as being in the central region but actually reside in the west region
+
+-   Tak is stated as being in the north region but actually resides in the west region
 
 -   Nakhon Nayok is stated as being in the east region but actually resides in the central region
 
--   The *east_northeast* region can actually be renamed as *northeast* region for clarity and consistency with how detailed the other provinces are labelled
-
 -   Kamphaeng Phet, Nakhon Sawan, Phetchabun, Phichit, Phitsanulok, Sukhothai and Uthai Thani are stated as being in the north region but actually reside in central region
-
--   Tak is stated as being in the north region but actually resides in the west region
 
 -   Sisaket is stated as being in the south region but actually resides in the northeast region
 
@@ -185,6 +200,7 @@ tourism <- tourism %>%
 We check by generating the data table of provinces and their corresponding regions:
 
 ```{r}
+#| code-fold: true
 tourism_unique <- tourism %>%
   select(province_eng,region_eng) %>%
   distinct() %>%
@@ -196,6 +212,7 @@ datatable(tourism_unique)
 Re-plotting the distribution of domestic tourism statistics across the regions:
 
 ```{r}
+#| code-fold: true
 ggplot(tourism, 
        aes(x = fct_reorder(region_eng, region_eng, .fun = length))) + 
   geom_bar(fill = "skyblue") +
@@ -207,7 +224,10 @@ We note that most of the domestic tourism statistics come from the central regio
 
 #### 5.1.2.5 Determine the distribution of variables and corresponding values
 
+We also study the distribution of variables under the column *variable* in the *tourism* data frame.
+
 ```{r}
+#| code-fold: true
 ggplot(tourism, 
        aes(x = fct_reorder(variable, variable, .fun = length))) + 
   geom_bar(fill = "skyblue") +
@@ -215,18 +235,27 @@ ggplot(tourism,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-We note that there are 8 different types of variables:
+We note that there are 8 different types of variables. Details of the variables and their definitions are provided in the table below:
 
-| S/N   | Variable           | Definition                                                                  |
-|---------------|---------------|------------------------------------------|
-| **1** | no_tourist_all     | The total number of domestic tourists who visited the province              |
-| **2** | no_tourist_thai    | The number of Thai tourists who visited the province                        |
-| **3** | no_tourist_foreign | The number of foreign tourists who visited the province                     |
-| **4** | no_tourist_stay    | The total number of tourists who stay overnight                             |
-| **5** | ratio_tourist_stay | Ratio of tourists that stay overnight                                       |
-| **6** | revenue_all        | The revenue generated by the tourism industry in the province, in Thai Baht |
-| **7** | revenue_foreign    | The revenue generated by foreign tourists in the province, in Thai Baht     |
-| **8** | revenue_thai       | The revenue generated by Thai tourists in the province, in Thai Baht        |
++-------------+--------------------+-------------------------------------------------------------------------+
+| S/N         | Variable           | Definition                                                              |
++=============+====================+=========================================================================+
+| **1**       | no_tourist_all     | Total number of domestic tourists who visited the province              |
++-------------+--------------------+-------------------------------------------------------------------------+
+| **2**       | no_tourist_thai    | Number of Thai tourists who visited the province                        |
++-------------+--------------------+-------------------------------------------------------------------------+
+| **3**       | no_tourist_foreign | Number of foreign tourists who visited the province                     |
++-------------+--------------------+-------------------------------------------------------------------------+
+| **4**       | no_tourist_stay    | Total number of tourists who stay overnight                             |
++-------------+--------------------+-------------------------------------------------------------------------+
+| **5**       | ratio_tourist_stay | Ratio of tourists that stay overnight                                   |
++-------------+--------------------+-------------------------------------------------------------------------+
+| **6**       | revenue_all        | Revenue generated by the tourism industry in the province, in Thai Baht |
++-------------+--------------------+-------------------------------------------------------------------------+
+| **7**       | revenue_foreign    | Revenue generated by foreign tourists in the province, in Thai Baht     |
++-------------+--------------------+-------------------------------------------------------------------------+
+| **8**       | revenue_thai       | Revenue generated by Thai tourists in the province, in Thai Baht        |
++-------------+--------------------+-------------------------------------------------------------------------+
 
 #### 5.1.2.5.1 pivot_wider() to expand variables as individual columns
 
@@ -239,9 +268,10 @@ tourism_wider <- tourism %>%
 
 #### 5.1.2.5.2 Checking the revenue figures
 
-Based on the definition of the different variable types, we note that "revenue_all" should equal to the sum of "revenue_foreign" and "revenue_thai". We check through the data using the code chunk below:
+Based on the definition of the different variable types, we note that "revenue_all" should equal to the sum of "revenue_foreign" and "revenue_thai". We check through the data for erroneous data entries using the code chunk below:
 
 ```{r}
+#| code-fold: true
 revenue_numbers <- tourism_wider %>%
   group_by(province_eng,year_month) %>%
   summarise(
@@ -262,9 +292,10 @@ revenue_numbers %>%
 
 #### 5.1.2.5.3 Checking the tourist numbers
 
-Similarly, based on the definition of the different variable types, we note that "no_tourist_all" should equal to the sum of "no_tourist_foreign" and "no_tourist_thai". We check through the data using the code chunk below:
+Similarly, based on the definition of the different variable types, we note that "no_tourist_all" should equal to the sum of "no_tourist_foreign" and "no_tourist_thai". We check through the data for erroneous entries by using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tourism_numbers <- tourism_wider %>%
   group_by(province_eng,year_month) %>%
   summarise(
@@ -285,9 +316,13 @@ tourism_numbers %>%
 
 #### 5.1.2.5.4 Checking the distribution of values of each variable
 
--   Revenue
+We then study the distribution of values of each variable.
+
+::: panel-tabset
+## Revenue
 
 ```{r}
+#| code-fold: true
 selected_revenue <- tourism %>%
   filter(variable %in% c("revenue_all", "revenue_thai", "revenue_foreign"))
 
@@ -317,11 +352,12 @@ ggplot(selected_revenue, aes(x = variable, y = value, fill = variable)) +
   scale_y_continuous(limits = c(0,12e+10))
 ```
 
-From the boxplots above, we note that the minimum value for "revenue_foreign" is -\$4250, while this could have occurred due to errors in data entry, we note that it could also be due to negative tourism impacts i.e. refunds and cancellations as the negative foreign revenues occurred in Jul and Aug 2021 in Nakhon Pathom, coinciding with the time period when [Thailand announced a new 14-day COVID-19 restriction in Bangkok and surrounding provinces including Nakhon Pathom](https://www.tatnews.org/2021/07/thailand-announces-new-14-day-covid-19-restrictions-in-bangkok-and-5-surrounding-provinces/). As such, these entries were not removed from the data.
+From the boxplots above, we note that the minimum value for "revenue_foreign" is -\$4250. This could have either occurred due to errors in data entry or due to negative tourism impacts i.e. refunds and cancellations as a more detailed study showed that the negative foreign revenues occurred in Jul and Aug 2021 in Nakhon Pathom, coinciding with the time period when [Thailand announced a new 14-day COVID-19 restriction in Bangkok and surrounding provinces including Nakhon Pathom](https://www.tatnews.org/2021/07/thailand-announces-new-14-day-covid-19-restrictions-in-bangkok-and-5-surrounding-provinces/). As such, these entries were not removed from the data.
 
--   Tourist numbers
+## Tourist Numbers
 
 ```{r}
+#| code-fold: true
 selected_tourists <- tourism %>%
   filter(variable %in% c("no_tourist_all","no_tourist_thai", "no_tourist_foreign"))
 
@@ -351,9 +387,12 @@ ggplot(selected_tourists, aes(x = variable, y = value, fill = variable)) +
   scale_y_continuous(limits = c(0,8e+6))
 ```
 
--   Occupancy
+We note that there does not seem to be erroneous data for tourist numbers.
+
+## Overnight Stay
 
 ```{r}
+#| code-fold: true
 # Calculate summary statistics
 summary_stats <- tourism_wider %>%
   summarise(
@@ -373,11 +412,14 @@ ggplot(tourism_wider, aes(x = "", y = no_tourist_stay)) +
                                                      "\nQ3:", Q3,
                                                      "\nMax:", Max)),
             vjust = 0, size = 2, color = "black") +
-  labs(title = "Distribution of Number of Hotel Rooms Occupied",
+  labs(title = "Distribution of Number of Overnight Tourist Stays",
        y = "Number of Occupied Hotel Rooms") +
   scale_y_continuous(limits = c(0,4e+6))+
   theme(axis.title.x = element_blank())
 ```
+
+We note that there does not seem to be erroneous data for number of overnight tourist stays.
+:::
 
 #### 5.1.2.5.5 Removing *date* variable
 
@@ -390,7 +432,7 @@ tourism <- tourism_wider %>%
 
 #### 5.1.2.6 Saving as a new rds file
 
-We save the cleaned data as a new rds file:
+We save the cleaned data as a new rds file *tourism_cleaned:*
 
 ```{r}
 #| eval: false
@@ -401,28 +443,16 @@ tourism_cleaned <- write_rds(tourism,"data/rds/tourism_cleaned.rds")
 tourism_cleaned <- read_rds("data/rds/tourism_cleaned.rds")
 ```
 
+### 5.1.3 Creating new data frames for further analysis
+
+As this exercise will study the independence of tourism indicators from space as well as space and time, we will create different data frames for both analysis
+
+#### 5.1.3.1 Data frame for spatial analysis
+
+We create the data frame for spatial analysis by grouping the *tourism_cleaned* data by province and region and generating the median for each of the eight variables.
+
 ```{r}
 #| eval: false
-#| echo: false
-# to remove when cleaning up
-grouped <- tourism_cleaned %>%
-  group_by(year_month, province_eng, region_eng) %>%
-  summarize(median_tot_revenue = median(revenue_all, na.rm = TRUE),
-            median_foreign_revenue = median(revenue_foreign, na.rm = TRUE),
-            median_thai_revenue = median(revenue_thai, na.rm = TRUE),
-            median_tot_tourist = median(no_tourist_all, na.rm = TRUE),
-            median_tot_foreign = median(no_tourist_foreign, na.rm = TRUE),
-            median_tot_thai = median(no_tourist_thai, na.rm = TRUE),
-            median_occup_rate = median(ratio_tourist_stay, na.rm = TRUE),
-            median_occup_no = median(no_tourist_stay, na.rm = TRUE),
-            .groups = 'drop')
-
-print(head(grouped))
-```
-
-### 5.1.3 Creating a data frame for spatial analysis
-
-```{r}
 tourism_cleaned_spat <- tourism_cleaned %>%
   group_by(province_eng, region_eng) %>%
   summarize(median_tot_revenue = median(revenue_all, na.rm = TRUE),
@@ -436,9 +466,9 @@ tourism_cleaned_spat <- tourism_cleaned %>%
             .groups = 'drop')
 ```
 
-#### 5.1.3.1 Saving as a new rds file
+#### 5.1.3.1.1 Saving as a new rds file
 
-We save the file as a new rds file:
+We save the file as a new rds file *tourism_cleaned_spat:*
 
 ```{r}
 #| eval: false
@@ -449,11 +479,12 @@ tourism_cleaned_spat <- write_rds(tourism_cleaned_spat,"data/rds/tourism_cleaned
 tourism_cleaned_spat <- read_rds("data/rds/tourism_cleaned_spat.rds")
 ```
 
-### 5.1.4 Creating a data frame for spatio-temporal analysis
+#### 5.1.3.2 Data frames for spatio-temporal analysis
 
-We plot the total revenue by year_month:
+Before creating the data frames for spatio-temporal analysis, we first plot the *total revenue* by *year_month* to study the trend of revenue over time:
 
 ```{r}
+#| code-fold: true
 tourism_cleaned_summary <- tourism_cleaned %>%
   mutate(year_month = as.character(year_month)) %>%
   group_by(year_month) %>%
@@ -463,16 +494,18 @@ ggplot(tourism_cleaned_summary, aes(x = year_month, y = total_revenue)) +
   geom_bar(stat = "identity", fill = "skyblue") +
   labs(title = "Total Revenue by Year-Month", x = "Year-Month", y = "Total Revenue") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 Based on the distribution of total revenue across the year_month variable, it can be seen that temporally, we can split the data into 3 time periods, namely:
 
--   pre-COVID: Between Jan 2019 to Mar 2020
+-   **pre-COVID:** Between Jan 2019 to Mar 2020
 
--   during COVID: Between Apr 2020 to Aug 2021
+-   **during COVID:** Between Apr 2020 to Aug 2021
 
--   post-COVID: Between Sep 2021 to Feb 2023
+-   **post-COVID:** Between Sep 2021 to Feb 2023
+
+We hence create a new variable *time_period* by categorising the data in the *tourism_cleaned* data frame based on the three time periods above:
 
 ```{r}
 #| eval: false 
@@ -483,6 +516,8 @@ tourism_cleaned_temp <- tourism_cleaned %>%
     year_month >= "2021-09-01" & year_month <= "2023-02-01" ~ "Post-COVID",
     TRUE ~ NA_character_))
 ```
+
+We then group the data by province and time period and generate the median for each of the eight variables:
 
 ```{r}
 #| eval: false 
@@ -499,7 +534,7 @@ tourism_cleaned_temp <- tourism_cleaned_temp %>%
             .groups = 'drop')
 ```
 
-#### 5.1.4.1 Saving as a new rds file
+#### 5.1.3.2.1 Saving as new rds files
 
 We then split the data frame into three separate data frames based on the time period:
 
@@ -528,11 +563,11 @@ duringcovid <- read_rds("data/rds/duringcovid.rds")
 postcovid <- read_rds("data/rds/postcovid.rds")
 ```
 
-### 5.2 Thailand Subnational Administrative Boundaries
+## 5.2 Thailand Subnational Administrative Boundaries
 
 ### 5.2.1 Importing the shapefile
 
-The code chunk below uses `st_read()` of **sf** package to import the Thailand Subnational Administrative Boundaries shapefile into R. There are a few different files representing different levels of administrative boundaries - level 0 (country), level 1 (province), level 2 (district) and level 3 (sub-district, tambon). As we are only interested in province level administrative boundaries, we will just load the file corresponding to level 1.
+The code chunk below uses [`st_read()`](https://www.rdocumentation.org/packages/sf/versions/1.0-17/topics/st_read) of **sf** package to import the Thailand Subnational Administrative Boundaries shapefile into R. There are a few different files representing different levels of administrative boundaries - level 0 (country), level 1 (province), level 2 (district) and level 3 (sub-district, tambon). As we are only interested in province level administrative boundaries, we will just load the file corresponding to level 1.
 
 The imported shapefile will be a **simple features** **object** of **sf**.
 
@@ -556,9 +591,9 @@ province <- province %>%
 
 ### 5.2.3 Checking the name of the provinces
 
-As we will be joining the *province* simple features object and the attribute data from *tourism_cleaned* using the province names (ADM1_EN in *province* simple features object and province_eng in *tourism_cleaned* dataframe), it is important to check through the naming of the provinces to ensure that they all match up.
+As we will be joining the *province* simple features object and the attribute data from *tourism_cleaned* and related data frames using the province names ("ADM1_EN" in *province* simple features object and "province_eng" in *tourism_cleaned* dataframe), it is important to check through the naming of the provinces to ensure that they all match up.
 
-We extract the unique province names from both *tourism_cleaned* and *province:*
+We hence extract the unique province names from both *tourism_cleaned* and *province:*
 
 ```{r}
 #| eval: false
@@ -647,7 +682,7 @@ province <- write_rds(province,"data/rds/province.rds")
 province <- read_rds("data/rds/province.rds")
 ```
 
-### 5.3 Performing relational join
+## 5.3 Performing relational join
 
 ### 5.3.1 Relational join with *tourism_cleaned* data frame
 
@@ -661,7 +696,7 @@ combined_prov_tourism <- left_join(province,tourism_cleaned)
 glimpse(combined_prov_tourism)
 ```
 
-We note that the *combined_prov_tourism* data has the same number of rows, 3848 rows, as the original *tourism_cleaned* data frame indicating that the cleaning up of the different province spellings was done accurately.
+We note that the *combined_prov_tourism* data has the same number of rows, 3850 rows, as the original *tourism_cleaned* data frame indicating that the cleaning up of the different province spellings was done accurately.
 
 #### 5.3.1.1 Saving as a new rds file
 
@@ -678,7 +713,7 @@ combined_data <- read_rds("data/rds/combined_prov_tourism.rds")
 
 ### 5.3.2 Relational join with *tourism_cleaned_spat* data frame
 
-We also perform a left relational join to update the *province* sf object with the attribute fields of the *tourism_cleaned_spat* data frame:
+We also perform a left relational join to update the *province* sf object with the attribute fields of the *tourism_cleaned_spat* data frame for spatial analysis:
 
 ```{r}
 combined_tourism_spat <- left_join(province,tourism_cleaned_spat)
@@ -687,6 +722,8 @@ combined_tourism_spat <- left_join(province,tourism_cleaned_spat)
 ```{r}
 glimpse(combined_tourism_spat)
 ```
+
+We note that the data frame has 77 rows of data - each one representing each Thai province.
 
 #### 5.3.2.1 Saving as a new rds file
 
@@ -701,9 +738,9 @@ combined_data_spat <- write_rds(combined_tourism_spat,"data/rds/combined_data_sp
 combined_data_spat <- read_rds("data/rds/combined_data_spat.rds")
 ```
 
-### 5.3.3 Relational join with *precovid, duringcovid* and *postcovid* data frame
+### 5.3.3 Relational join with *precovid, duringcovid* and *postcovid* data frames
 
-We also perform a left relational join to update the *province* sf object with the attribute fields of the *precovid, duringcovid* and *postcovid* data frames:
+We also perform a left relational join to update the *province* sf object with the attribute fields of the *precovid, duringcovid* and *postcovid* data frames for spatio-temporal analysis:
 
 ```{r}
 combined_tourism_precovid <- left_join(province,precovid)
@@ -713,7 +750,7 @@ combined_tourism_postcovid <- left_join(province,postcovid)
 
 #### 5.3.3.1 Saving as a new rds file
 
-We save the combined file as a new rds file and load it into the R environment for further analysis:
+We save the combined files as new rds files and load it into the R environment for further analysis:
 
 ```{r}
 #| eval: false  
@@ -728,14 +765,18 @@ combined_tourism_durcovid <- read_rds("data/rds/combined_tourism_durcovid.rds")
 combined_tourism_postcovid <- read_rds("data/rds/combined_tourism_postcovid.rds")
 ```
 
-### 5.4 Creating a time series cube
+## 5.4 Creating a time series cube
 
-We will use [spacetime()](https://sfdep.josiahparry.com/articles/spacetime-s3.html) of sfdep to create a spatio-temporal cube. However before that we will convert the date field into integer format.
+In order to carry out emerging hot/cold spot analysis, we will need to create a time series cube. We do so by using [spacetime()](https://sfdep.josiahparry.com/articles/spacetime-s3.html) of sfdep to create a spatio-temporal cube. However before that we will convert the date field into integer format.
 
 ```{r}
 spt <- tourism_cleaned %>%
   mutate(year_month = as.integer(gsub("-","",year_month)))
 ```
+
+::: callout-note
+Note that the original date or time field cannot be used as it is in continuous form and might not be an integer. Note that real numbers cannot be used in ".time_col" under the spacetime function.
+:::
 
 The following code chunk is then used to create a spatio-temporal cube:
 
@@ -755,6 +796,8 @@ We utilise the following code chunk to verify if *spt* is indeed a space-time cu
 ```{r}
 is_spacetime_cube(spt)
 ```
+
+We note from the output that we have successfully created a space-time cube object.
 
 ### 5.4.2 Saving as a new rds file
 
@@ -777,7 +820,7 @@ From the above data, we note that there are several possible key indicators of t
 
 \(ii\) **Number of foreign tourists:** Based on [literature](https://www.adb.org/sites/default/files/linked-documents/54177-001-sd-12.pdf), Thailand recorded a total THB1.9 trillion receipts from foreign tourists (65% of the sector’s receipts) or 11.5% of its GDP in 2019. The daily foreign tourist spending was around \$192 per person, more than double of domestic tourists spending. The number of foreign tourists will hence be a strong indicator of how well the Thai tourism economy is performing i.e. the greater number of tourists, coupled with their higher propensity to spend, would be indicative of a booming tourism economy.
 
-\(iii\) **Rate of tourists who stay overnight:** A higher rate of tourists who stay overnight can be indicative of how well the tourism economy is performing as tourists who stay for longer periods in Thailand are likely to incur more expenditure i.e. via spending on accommodation, more activities.
+\(iii\) **Rate of overnight tourists:** A higher rate of tourists who stay overnight can be indicative of how well the tourism economy is performing as tourists who stay for longer periods in Thailand are likely to incur more expenditure i.e. via spending on accommodation, more activities.
 
 ### 6.1 Visualising Indicators of Tourism Economy
 
@@ -787,6 +830,7 @@ We briefly visualise the distribution of these indicators:
 ## Total Revenue
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
 tm_shape(combined_data_spat)+
   tm_fill("median_tot_revenue",
@@ -805,6 +849,7 @@ tm_shape(combined_data_spat)+
 ## Number of Foreign Tourists
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
 tm_shape(combined_data_spat)+
   tm_fill("median_tot_foreign",
@@ -823,6 +868,7 @@ tm_shape(combined_data_spat)+
 ## Rate of tourists who stay overnight
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
 tm_shape(combined_data_spat)+
   tm_fill("median_occup_rate",
@@ -847,7 +893,7 @@ There are two main ways of computing spatial weights - contiguity spatial weight
 
 ### 7.1.1 Generating centroids
 
-A connectivity graph takes a point and displays a line to each neighbouring point. As we are working with multipolygons, we will need to get points to make connectivity graphs. As such, we will need to calculate centroids for each province.
+A connectivity graph takes a point and displays a line to each neighbouring point. As we are working with multipolygons, we will need to get points to make connectivity graphs. As such, we will need to calculate centroids for each province and do so using the code chunk below:
 
 ```{r}
 #| eval: false
@@ -874,6 +920,7 @@ centroids <- read_rds("data/rds/centroids.rds")
 We visualise where these centroids are:
 
 ```{r}
+#| code-fold: true
 tmap_mode('plot')
 tm_shape(province) +
   tm_fill()+
@@ -896,7 +943,7 @@ coords <- st_coordinates(centroids)
 
 ### 7.1.5 Computing adaptive distance weight matrix
 
-Given that the polygons differ in size, we will utilise adaptive distance weight matrix.
+Given that the polygons differ in size, we will construct spatial weights of the study area using adaptive distance weight matrix. The spatial weights are used to define the neighbourhood relationships between the geographical units (i.e. provinces) in the study area. We make use of the [*st_knn()*](https://sfdep.josiahparry.com/reference/st_knn) function of the sfdep package to identify the k nearest neighbours for each point geometry which in this case represents a province. k is set at 6 i.e. to determine 6 nearest neighbours for each point geometry:
 
 ```{r}
 knn6 <- st_knn(coords,k=6)
@@ -909,13 +956,15 @@ We display the content of the matrix using the code chunk below:
 str(knn6)
 ```
 
-Based on the output from above, we note that each province has six neighbours.
+Based on the output from above, we note that each province has six neighbours. We then extract the weights of each province's neighbours using [*st_weights()*](https://sfdep.josiahparry.com/reference/st_weights) function of sfdep:
 
 ```{r}
 weights <- st_weights(knn6)
 ```
 
 ### 7.1.6 Plotting distance-based neighbours
+
+We visualise the distribution of the point geometries and their connections with their distance-based neighbours using the code chunk below:
 
 ```{r}
 plot(combined_data_spat$geometry,border="lightgrey")
@@ -926,18 +975,21 @@ plot(knn6,coords,pch = 19, cex = 0.6, add = TRUE, col = "red")
 
 ### 7.2.1 Moran's I
 
-Moran's I describe how features differ from the values in the study area as a whole.
+Moran's I is a global spatial autocorrelation analysis that yields only one statistic to summarise how the tourism indicator values differ across the whole study area. We will utilise the [*global_moran_perm()*](https://rdrr.io/cran/sfdep/man/global_moran_perm.html)function of the sfdep package as it allows a number of simulations of the Moran's I analysis to be run.
 
-H0 null hypothesis: There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their similarity
+Our hypotheses for this analysis is as follows:
 
-H1 alternative hypothesis: There is spatial autocorrelation in the indicator of interest.
+-   [**H0 null hypothesis:**]{.underline} There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their similarity
 
-We set the confidence interval to be at 95%.
+-   [**H1 alternative hypothesis:**]{.underline} There is spatial autocorrelation in the indicator of interest.
+
+We set the confidence interval to be at 95%. Note that the p-values studied for this analysis are under the label "p_ii_sim" as it is the representative p-value for all simulations.
 
 ::: panel-tabset
 ## Total Revenue
 
 ```{r}
+#| code-fold: true
 set.seed(1234)
 moran_result <- global_moran_perm(combined_data_spat$median_tot_revenue,
                                   knn6,
@@ -949,6 +1001,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -960,11 +1013,12 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.615, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is close to zero and negative, which indicates that total revenue seem to occur randomly across provinces.
+Further, the Moran’s I value is close to zero which indicates that total revenue seem to occur randomly across provinces.
 
 ## Number of foreign tourists
 
 ```{r}
+#| code-fold: true
 set.seed(1234)
 moran_result <- global_moran_perm(combined_data_spat$median_tot_foreign,
                                   knn6,
@@ -973,7 +1027,10 @@ moran_result <- global_moran_perm(combined_data_spat$median_tot_foreign,
 moran_result
 ```
 
+Similarly, we also plot a histogram to determine if the number of simulations is sufficient to produce a representative finding. As the distribution of moran's I values across the different simulations represent close to a normal distribution, nsim = 1999 used is deemed to be sufficient.
+
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -985,11 +1042,12 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.22, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive but close to zero, which indicates that number of foreign tourists seem to occur randomly across provinces.
+Further, the Moran’s I value is close to zero which indicates that number of foreign tourists seem to occur randomly across provinces.
 
 ## Rate of tourists who stay overnight
 
 ```{r}
+#| code-fold: true
 set.seed(1234)
 moran_result <- global_moran_perm(combined_data_spat$median_occup_rate,
                                   knn6,
@@ -998,7 +1056,10 @@ moran_result <- global_moran_perm(combined_data_spat$median_occup_rate,
 moran_result
 ```
 
+Similarly, a histogram is plotted and as a close to normal distribution is observed, it is determined that nsim = 1999 provides a representative finding of the moran's I statistic.
+
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1010,23 +1071,24 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.022, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive (0.14629) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
+Further, the Moran’s I value is positive (0.14629) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar rates of overnight tourists.
 :::
 
 ### 7.2.2 Geary's c
 
-Similar to Moran's I, Geary's c is also a measure of spatial autocorrelation however it focuses more on the differences between immediate neigbours.
+Similar to Moran's I, Geary's c is also a measure of spatial autocorrelation however it focuses more on the differences between immediate neigbours. We utilise [*global_c_perm()*](https://sfdep.josiahparry.com/reference/global_c_perm) function of sfdep package as it allows a number of simulations to be run for the Geary's c analysis. The hypotheses for this analysis is as follows:
 
-H0 null hypothesis: There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their dissimilarity
+-   [**H0 null hypothesis:**]{.underline} There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their dissimilarity
 
-H1 alternative hypothesis: There is spatial autocorrelation in the indicator of interest.
+-   [**H1 alternative hypothesis:**]{.underline} There is spatial autocorrelation in the indicator of interest.
 
-We set the confidence interval to be at 95%.
+We set the confidence interval to be 95%. Note that the p-values studied for this analysis are under the label "p_ii_sim" as it is the representative p-value for all simulations.
 
 ::: panel-tabset
 ## Total revenue
 
 ```{r}
+#| code-fold: true
 set.seed(1234)
 geary_result <- global_c_perm(combined_data_spat$median_tot_revenue,
                                   knn6,
@@ -1038,6 +1100,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1054,6 +1117,7 @@ Like the result from Moran's I, the Geary's c result also indicates that total r
 ## Number of foreign tourists
 
 ```{r}
+#| code-fold: true
 set.seed(1234)
 geary_result <- global_c_perm(combined_data_spat$median_tot_foreign,
                                   knn6,
@@ -1062,7 +1126,10 @@ geary_result <- global_c_perm(combined_data_spat$median_tot_foreign,
 geary_result
 ```
 
+The histogram below is close to a normal distribution hence indicating that nsim = 1999 would provide a representative statistic finding.
+
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1076,9 +1143,10 @@ Based on the results above, we note that the p-value is 0.9575, higher than the 
 
 Like the result from Moran's I, the Geary's c result also indicates that number of foreign tourists seem to occur randomly across provinces.
 
-## Rate of tourists who stay overnight
+## Rate of overnight touristss
 
 ```{r}
+#| code-fold: true
 set.seed(1234)
 geary_result <- global_c_perm(combined_data_spat$median_occup_rate,
                                   knn6,
@@ -1087,7 +1155,10 @@ geary_result <- global_c_perm(combined_data_spat$median_occup_rate,
 geary_result
 ```
 
+Based on the histogram below, nsim = 1999 would provide a representative finding as the histogram shows a close to normal distribution.
+
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1099,23 +1170,23 @@ abline(v=1,
 
 Based on the results above, we note that the p-value is 0.008, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Geary's c value is slightly less than 1 (0.82128) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values. We can hence infer that the spatial distribution of this indicator show signs of clustering. This is a similar finding to the Moran's I result above.
+Further, the Geary's c value is slightly less than 1 (0.82128) which indicates that the indicator (rate of overnight tourists) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values. This is a similar finding to the Moran's I result above.
 :::
 
 ### 7.3 Local Measures of Spatial Autocorrelation
 
-We also carry out local measures of spatial autocorrelation. In contrast with global measures of spatial autocorrelation which assesses the overall study area, local measures help to evaluate the spatial distribution of indicators of specific locations with respect to their neighbours and allows the detection of clusters (high-high or low-low) or outliers (high-low or low-high).
+Besides global measures of spatial autocorrelation, we study further by also carrying out local measures of spatial autocorrelation. In contrast with the former which assesses the overall study area, local measures help to evaluate the spatial distribution of tourism indicators of specific locations with respect to their neighbours and allows the detection of clusters (high-high or low-low) or outliers (high-low or low-high). In general, the hypotheses for local moran's I are as follows:
+
+-   [**H0 null hypothesis:**]{.underline} There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
+
+-   [**H1 alternative hypothesis:**]{.underline} There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
+
+We set the confidence interval to be at 95%. Note that the p-values studied for this analysis are under the label "p_ii_sim" as it is the representative p-value for all simulations.
 
 ### 7.3.1 Total Revenue
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -1131,6 +1202,7 @@ lisa <- combined_data_spat %>%
 We visualise local Moran's I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
 map1 <- tm_shape(lisa)+
   tm_fill("ii",
@@ -1161,15 +1233,16 @@ tmap_arrange(map1, map2, ncol=2)
 
 Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for total revenue which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
 
-Of these provinces, Nakhon Sawan and provinces on the northeast side of Thailand have local moran's I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of total revenue.
+Of these provinces, Nakhon Sawan and provinces on the northeast side of Thailand have local moran's I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, more specifically spatial clustering of similar values of total revenue.
 
-In contrast, the Chachoengsao province has a local moran's I value that is close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation in this province and there is spatial dispersion as the province has a total revenue value dissimilar to its neighbours.
+In contrast, the Chachoengsao province has a local moran's I value that is close to 1 but negative and has a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation in this province, more specifically spatial dispersion as the province has a total revenue value dissimilar to its neighbours.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -1189,12 +1262,6 @@ Similar to our interpretation of the local moran's I and p-value plot above, we 
 ::: panel-tabset
 ## Local Moran's I
 
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
-
 ```{r}
 set.seed(1234) 
 lisa <- combined_data_spat %>%
@@ -1209,8 +1276,9 @@ lisa <- combined_data_spat %>%
 We visualise local Moran's I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map3 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -1221,7 +1289,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map4 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -1234,18 +1302,19 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map3, map4, ncol=2)
 ```
 
-Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for number of foreign tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. Conversely, we note that Chonburi displays the strongest positive spatial autocorrelation for number of foreign tourists which indicates clustering. However, we note from the corresponding plot of p-values that the p-values for these results are not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation at these two provinces could have occurred randomly.
+Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for number of foreign tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. In contrast, we note that Chonburi displays the strongest positive spatial autocorrelation for number of foreign tourists which could indicate clustering. However, we note from the corresponding plot of p-values that the p-values for these results are not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation at these two provinces could have occurred randomly.
 
-We note that provinces Kanchanaburi, Nakhon Sawan, Chainat, Surin, Sisaket, Amnat Charoen, Mukdahan and Samut Prakan have local moran's I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of number of foreign tourists.
+We note that provinces Kanchanaburi, Nakhon Sawan, Chainat, Surin, Sisaket, Amnat Charoen, Mukdahan and Samut Prakan have local moran's I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation, specifically spatial clustering of similar values of number of foreign tourists in these provinces.
 
-In contrast, the Chachoengsao province has a local moran's I value that are close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation, specifically spatial dispersion as Chachoengsao has a dissimilar number of foreign tourists as compared to its neighbours.
+In contrast, the Chachoengsao province has a local moran's I value that is close to 1 but negative and a corresponding significant p-value. There is sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation, specifically spatial dispersion as Chachoengsao has a dissimilar number of foreign tourists as compared to its neighbours.
 
 ## LISA
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -1263,19 +1332,13 @@ Similar to our interpretation of the local moran's I and p-value plot above, we 
 
 -   Samut Prakan is categorised as a High-High cluster
 
-Conversely, there is spatial disperson for Chachoengsao which has been categorised as a Low-High outlier.
+Conversely, there is spatial dispersion for Chachoengsao which has been categorised as a Low-High outlier.
 :::
 
 ### 7.3.3 Rate of overnight tourists
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -1291,8 +1354,9 @@ lisa <- combined_data_spat %>%
 We visualise local Moran's I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map5 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -1303,7 +1367,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map6 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -1316,7 +1380,7 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map5, map6, ncol=2)
 ```
 
 Based on the results above, we note that the rate of overnight tourist indicator has a more diverse range of local moran's I values as compared to the other two indicators of total revenue and number of foreign tourists.
@@ -1327,11 +1391,12 @@ We note the following:
 
 -   Mae Hong Son, Nakhon Si Thammarat, Uttaradit and Phra Nakhon Si Ayutthaya have negative local moran's I values with corresponding signficant p-values
 
-There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces - for the former group, there is spatial clustering of similar values of rate of overnight tourists while for the latter, there is spatial dispersion as provinces have dissimilar values of rate of overnight tourists.
+There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces - for the former group, there is spatial clustering of similar rates of overnight tourists while for the latter, there is spatial dispersion as provinces have dissimilar rates of overnight tourists.
 
 ## LISA
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -1349,12 +1414,18 @@ Similar to our interpretation of the local moran's I and p-value plot above, we 
 
 -   Phayao and Chiang Rai are categorised as High-High clusters
 
-Conversely, there is spatial disperson for Mae Hong Son and Uttaradit which have been categorised as Low-High outliers, and for Nakhon Si Thammarat and Phra Nakhon Si Ayutthaya which have been categorised as High-Low outliers.
+Conversely, there is spatial dispersion for:
+
+-   Mae Hong Son and Uttaradit which have been categorised as Low-High outliers, and
+
+-   Nakhon Si Thammarat and Phra Nakhon Si Ayutthaya which have been categorised as High-Low outliers.
 :::
 
 ## 8. Determining independence from space and time
 
-We earlier created three data frames of Thailand's tourism data based on different time periods: pre-COVID, during COVID and post-COVID. In this section, we will determine the independence of the three indicators of tourism - total revenue, number of foreign tourists and rate of overnight tourists - from space and time.
+After studying the independence of the tourism indicators - total revenue, number of foreign tourists and rate of overnight tourists - from space, we further analyse their independence from both space and time.
+
+We will utilise the three data frames of Thailand's tourism data that were earlier created in [5.3.3 Relational join with precovid, duringcovid and postcovid data frames] - *combined_tourism_precovid, combined_tourism_durcovid* and *combined_tourism_postcovid* *-* based on different time periods: pre-COVID, during COVID and post-COVID.
 
 ### 8.1 Computing Distance-based Spatial Weights
 
@@ -1418,6 +1489,7 @@ We visualise where these centroids are:
 ## Pre-COVID
 
 ```{r}
+#| code-fold: true
 tmap_mode('plot')
 tm_shape(province) +
   tm_fill()+
@@ -1431,6 +1503,7 @@ tm_shape(province) +
 ## During COVID
 
 ```{r}
+#| code-fold: true
 tmap_mode('plot')
 tm_shape(province) +
   tm_fill()+
@@ -1444,6 +1517,7 @@ tm_shape(province) +
 ## Post-COVID
 
 ```{r}
+#| code-fold: true
 tmap_mode('plot')
 tm_shape(province) +
   tm_fill()+
@@ -1516,7 +1590,7 @@ str(knn6_postcovid)
 ```
 :::
 
-Based on the output from above, we note that each province has six neighbours for each time period
+Based on the output from above, we note that each province has six neighbours for each time period. We then extract the weights of each province's neighbours at each time period using [*st_weights()*](https://sfdep.josiahparry.com/reference/st_weights) function of sfdep:
 
 ```{r}
 weights_precovid <- st_weights(knn6_precovid)
@@ -1525,6 +1599,8 @@ weights_postcovid <- st_weights(knn6_postcovid)
 ```
 
 ### 8.1.6 Plotting distance-based neighbours
+
+We visualise the distribution of the point geometries and their connections with their distance-based neighbours for each time period using the code chunks below:
 
 ::: panel-tabset
 ## Pre-COVID
@@ -1553,15 +1629,15 @@ plot(knn6_postcovid,coords_postcovid,pch = 19, cex = 0.6, add = TRUE, col = "red
 
 ### 8.2.1 Moran's I
 
-Moran’s I describe how features differ from the values in the study area as a whole.
+Similar to the spatial analysis conducted above, we will first study the global measures of spatial autocorrelation. Moran’s I describe how tourism indicators differ across the whole study area. We will utilise the [*global_moran_perm()*](https://rdrr.io/cran/sfdep/man/global_moran_perm.html)function of the sfdep package as it allows a number of simulations of the Moran's I analysis to be run. The hypotheses for the analysis are as follows:
 
-H0 null hypothesis: There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their similarity
+-   [**H0 null hypothesis:**]{.underline} There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their similarity
 
-H1 alternative hypothesis: There is spatial autocorrelation in the indicator of interest.
+-   [**H1 alternative hypothesis:**]{.underline} There is spatial autocorrelation in the indicator of interest.
 
-We set the confidence interval to be at 95%.
+We set the confidence interval to be at 95%. Note that the p-values studied for this analysis are under the label "p_ii_sim" as it is the representative p-value for all simulations.
 
-### 8.2.1.1 Total revenue
+### 8.2.1.1 Total Revenue
 
 ::: panel-tabset
 ## Pre-COVID
@@ -1578,6 +1654,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1589,7 +1666,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.402, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive and almost close to zero indicating that total revenue seem to occur randomly across provinces.
+Further, the Moran’s I value is close to zero indicating that total revenue seems to occur randomly across provinces.
 
 ## During COVID
 
@@ -1605,6 +1682,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1616,7 +1694,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.421, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is negative and almost close to zero indicating that total revenue seem to occur randomly across provinces.
+Further, the Moran’s I value is close to zero indicating that total revenue seems to occur randomly across provinces.
 
 ## Post-COVID
 
@@ -1632,6 +1710,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1643,7 +1722,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.645, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is negative and almost close to zero indicating that total revenue seem to occur randomly across provinces.
+Further, the Moran’s I value is close to zero indicating that total revenue seems to occur randomly across provinces.
 :::
 
 ### 8.2.1.2 Number of foreign tourists
@@ -1663,6 +1742,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1674,7 +1754,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.153, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive and almost close to zero indicating that number of foreign tourists seem to occur randomly across provinces.
+Further, the Moran’s I value is close to zero indicating that number of foreign tourists seem to occur randomly across provinces.
 
 ## During COVID
 
@@ -1689,6 +1769,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,  
      freq = TRUE,
      breaks = 20,
@@ -1699,7 +1780,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.65, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is negative and almost close to zero indicating that number of foreign tourists seem to occur randomly across provinces.
+Further, the Moran’s I value is close to zero indicating that number of foreign tourists seem to occur randomly across provinces.
 
 ## Post-COVID
 
@@ -1714,6 +1795,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1724,7 +1806,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.325, higher than the p-value of 0.05. This indicates that the p-value is not significant. There is insufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive and almost close to zero indicating that number of foreign tourists seem to occur randomly across provinces.
+Further, the Moran’s I value is close to zero indicating that number of foreign tourists seem to occur randomly across provinces.
 :::
 
 ### 8.2.1.3 Rate of overnight tourists
@@ -1744,6 +1826,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1755,7 +1838,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.008, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive (0.15155) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
+Further, the Moran’s I value is positive (0.15155) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar rates of overnight tourists.
 
 ## During COVID
 
@@ -1770,6 +1853,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1781,7 +1865,7 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.001, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive (0.20827) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
+Further, the Moran’s I value is positive (0.20827) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar rates of overnight tourists.
 
 ## Post-COVID
 
@@ -1796,6 +1880,7 @@ moran_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(moran_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1807,20 +1892,20 @@ abline(v=0,
 
 Based on the results above, we note that the p-value is 0.004, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Moran’s I value is positive (0.18353) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
+Further, the Moran’s I value is positive (0.18353) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar rates of overnight tourists.
 :::
 
 ### 8.2.2 Geary's c
 
-Similar to that done for spatial analysis, we also carry out Geary's c analysis to determine spatial autocorrelation of the different tourism indicators between immediate neighbours.
+Similar to that done for spatial analysis, we also carry out Geary's c analysis to determine spatial autocorrelation of the different tourism indicators between immediate neighbours. We utilise [*global_c_perm()*](https://sfdep.josiahparry.com/reference/global_c_perm) function of sfdep package as it allows a number of simulations to be run for the Geary's c analysis. The hypotheses for this analysis is as follows:
 
-H0 null hypothesis: There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their dissimilarity
+-   [**H0 null hypothesis:**]{.underline} There is no spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and spatial location of the values have no influence on their dissimilarity
 
-H1 alternative hypothesis: There is spatial autocorrelation in the indicator of interest.
+-   [**H1 alternative hypothesis:**]{.underline} There is spatial autocorrelation in the indicator of interest.
 
-We set the confidence interval to be at 95%.
+We set the confidence interval to be 95%. Note that the p-values studied for this analysis are under the label "p_ii_sim" as it is the representative p-value for all simulations.
 
-### 8.2.2.1 Total revenue
+### 8.2.2.1 Total Revenue
 
 ::: panel-tabset
 ## Pre-COVID
@@ -1837,6 +1922,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1864,6 +1950,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1891,6 +1978,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1922,6 +2010,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -1948,6 +2037,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,  
      freq = TRUE,
      breaks = 20,
@@ -1973,6 +2063,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -2003,6 +2094,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -2014,7 +2106,7 @@ abline(v=1,
 
 Based on the results above, we note that the p-value is 0.015, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Geary's c value is less than one (0.85382) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
+Further, the Geary's c value is less than one (0.85382) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar rates of overnight tourists.
 
 ## During COVID
 
@@ -2029,6 +2121,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -2040,7 +2133,7 @@ abline(v=1,
 
 Based on the results above, we note that the p-value is 0.001, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Geary's c value is less than one (0.78232) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
+Further, the Geary's c value is less than one (0.78232) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar rates of overnight tourists.
 
 ## Post-COVID
 
@@ -2055,6 +2148,7 @@ geary_result
 We run a histogram of the results to determine if sufficient simulations have been run i.e. if the distribution of results seem to be close to a normal distribution. Based on the output below, nsim = 1999 seems to be sufficient.
 
 ```{r}
+#| code-fold: true
 hist(geary_result$res,
      freq = TRUE,
      breaks = 20,
@@ -2066,25 +2160,25 @@ abline(v=1,
 
 Based on the results above, we note that the p-value is 0.0035, smaller than the p-value of 0.05. This indicates that the p-value is significant. There is sufficient evidence to reject the null hypothesis at the 95% confidence level.
 
-Further, the Geary's c value is less than one (0.78502) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar values.
+Further, the Geary's c value is less than one (0.78502) which indicates that the indicator (rate of tourists who stay overnight) has a moderate degree of positive spatial autocorrelation/clustering, that it is not randomly distributed across provinces and that nearby provinces are likely to have similar rates of overnight tourists.
 :::
 
 ## 8.3 Local Measures of Spatial Autocorrelation
 
-Similar to that carried out for spatial analysis, we also carry out local measures of spatial autocorrelation for the spatio-temporal analysis. As shared, local measures help to evaluate the spatial distribution of tourism indicators of specific locations with respect to their neighbours and allow the detection of clusters (high-high or low-low) or outliers (high-low or low-high).
+Similar to that carried out for spatial analysis, we also carry out local measures of spatial autocorrelation for the spatio-temporal analysis. As shared, local measures help to evaluate the spatial distribution of tourism indicators of specific locations with respect to their neighbours and allow the detection of clusters (high-high or low-low) or outliers (high-low or low-high). In general, the hypotheses for local moran's I are as follows:
+
+-   [**H0 null hypothesis:**]{.underline} There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
+
+-   [**H1 alternative hypothesis:**]{.underline} There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
+
+We set the confidence interval to be at 95%. Note that the p-values studied for this analysis are under the label "p_ii_sim" as it is the representative p-value for all simulations.
 
 ### 8.3.1 Total Revenue
 
-### 8.3.1.1 Pre-COVID
+#### 8.3.1.1 Pre-COVID
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2100,8 +2194,9 @@ lisa <- combined_tourism_precovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map7 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2112,7 +2207,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map8 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2125,20 +2220,21 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map7, map8, ncol=2)
 ```
 
 Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for total revenue which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
 
-Of these provinces, Tak, Phrae, Nakhon Sawan, Ubon Ratchathani, Nakhon Pathom, Roi Et, Mukdahan and Surin have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of total revenue.
+Tak, Phrae, Nakhon Sawan, Ubon Ratchathani, Nakhon Pathom, Roi Et, Mukdahan and Surin have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces. specifically spatial clustering of similar values of total revenue.
 
-In contrast, the Chachoengsao and Samut Prakan provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and there is spatial dispersion as the provinces have total revenue values that are dissimilar to their neighbours.
+In contrast, the Chachoengsao and Samut Prakan provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial dispersion as the provinces have total revenue values that are dissimilar to their neighbours.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2150,19 +2246,17 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that provinces Tak, Phrae, Nakhon Sawan, Ubon Ratchathani, Nakhon Pathom, Roi Et, Mukdahan and Surin are categorised as Low-Low clusters while Chachoengsao and Samut Prakan provinces are Low-High outliers.
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   provinces Tak, Phrae, Nakhon Sawan, Ubon Ratchathani, Nakhon Pathom, Roi Et, Mukdahan and Surin are categorised as Low-Low clusters
+
+-   while Chachoengsao and Samut Prakan provinces are Low-High outliers.
 :::
 
 ### 8.3.1.2 During COVID
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2178,8 +2272,9 @@ lisa <- combined_tourism_durcovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map9 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2190,7 +2285,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map10 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2203,20 +2298,21 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map9, map10, ncol=2)
 ```
 
 Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for total revenue which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
 
-Of these provinces, Nakhon Pathom, Roi Et, Mukdahan, Nakhon Sawan, Surin and Ubon Ratchathani have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of total revenue.
+Nakhon Pathom, Roi Et, Mukdahan, Nakhon Sawan, Surin and Ubon Ratchathani have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial clustering of similar values of total revenue.
 
-In contrast, the Chachoengsao, Ratchaburi and Samut Songkhram provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and there is spatial dispersion as the provinces have total revenue values that are dissimilar to their neighbours.
+In contrast, the Chachoengsao, Ratchaburi and Samut Songkhram provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial dispersion as the provinces have total revenue values that are dissimilar to their neighbours.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map based on the *mean* classification:
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2228,19 +2324,17 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that provinces Nakhon Pathom, Roi Et, Mukdahan, Nakhon Sawan, Surin and Ubon Ratchathani are categorised as Low-Low clusters while Chachoengsao, Ratchaburi and Samut Songkhram provinces are Low-High outliers.
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   provinces Nakhon Pathom, Roi Et, Mukdahan, Nakhon Sawan, Surin and Ubon Ratchathani are categorised as Low-Low clusters
+
+-   while Chachoengsao, Ratchaburi and Samut Songkhram provinces are Low-High outliers.
 :::
 
 ### 8.3.1.3 Post-COVID
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2256,8 +2350,9 @@ lisa <- combined_tourism_postcovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map11 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2268,7 +2363,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map12 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2281,20 +2376,21 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map11, map12, ncol=2)
 ```
 
 Based on the results above, we note that Samut Sakhon displays the strongest negative spatial autocorrelation for total revenue which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
 
-Of these provinces, Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Chachoengsao, Nakhon Phanom, Surin and Samut Songkhram have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. Of these provinces, Chachoengsao and Samut Songkhram have local moran's I values that are the highest, at approximately 0.56 and 0.43 respectively. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of total revenue.
+Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Chachoengsao, Nakhon Phanom, Surin and Samut Songkhram have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. Of these provinces, Chachoengsao and Samut Songkhram have local moran's I values that are the highest, at approximately 0.56 and 0.43 respectively. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial clustering of similar values of total revenue.
 
-In contrast, the Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and there is spatial dispersion as the provinces have total revenue values that are dissimilar to their neighbours.
+In contrast, the Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial dispersion as the provinces have total revenue values that are dissimilar to their neighbours.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map based on the *mean* classification:
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2306,7 +2402,13 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that: - provinces Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Nakhon Phanom and Surin are categorised as Low-Low clusters - Chachoengsao and Samut Songkhram are categorised as High-High clusters - Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces are Low-High outliers.
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   provinces Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Nakhon Phanom and Surin are categorised as Low-Low clusters
+
+-   Chachoengsao and Samut Songkhram are categorised as High-High clusters
+
+-   Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces are Low-High outliers.
 :::
 
 ### 8.3.2 Number of foreign tourists
@@ -2315,12 +2417,6 @@ Similar to our interpretation of the local moran’s I and p-value plots, we not
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2336,8 +2432,9 @@ lisa <- combined_tourism_precovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map13 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2348,7 +2445,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map14 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2361,20 +2458,21 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map13, map14, ncol=2)
 ```
 
 Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for number of foreign tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
 
-Of these provinces, Nakhon Sawan, Surin, Mukdahan, Samut Prakan, Chainat, Maha Sarakham, Khon Kaen, Roi Et and Nakhon Phanom have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of total revenue.
+Nakhon Sawan, Surin, Mukdahan, Samut Prakan, Chainat, Maha Sarakham, Khon Kaen, Roi Et and Nakhon Phanom have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial clustering of similar values of total revenue.
 
-In contrast, the Chachoengsao province has a local moran’s I value that are close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation, more specifically spatial dispersion, in this province which has number of foreign tourists that are dissimilar to its neighbours.
+In contrast, the Chachoengsao province has a local moran’s I value that are close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation, specifically spatial dispersion, in this province which has number of foreign tourists that are dissimilar to its neighbours.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map based on the *mean* classification:
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2386,19 +2484,19 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that: - provinces Nakhon Sawan, Surin, Mukdahan, Chainat, Maha Sarakham, Khon Kaen, Roi Et and Nakhon Phanom are categorised as Low-Low clusters - Samut Prakan is a High-High cluster - Chachoengsao is a Low-High outlier
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   provinces Nakhon Sawan, Surin, Mukdahan, Chainat, Maha Sarakham, Khon Kaen, Roi Et and Nakhon Phanom are categorised as Low-Low clusters
+
+-   Samut Prakan is a High-High cluster
+
+-   Chachoengsao is a Low-High outlier
 :::
 
 ### 8.3.2.2 During COVID
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2414,8 +2512,9 @@ lisa <- combined_tourism_durcovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map15 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2426,7 +2525,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map16 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2439,20 +2538,21 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map15, map16, ncol=2)
 ```
 
 Based on the results above, we note that Bangkok displays the strongest negative spatial autocorrelation for number of foreign tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
 
-Of these provinces, Yasothon, Khon Kaen, Kanchanaburi, Amnat Charoen, Nakhon Phanom, Roi Et and Ubon Ratchathani have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of number of foreign tourists.
+Yasothon, Khon Kaen, Kanchanaburi, Amnat Charoen, Nakhon Phanom, Roi Et and Ubon Ratchathani have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial clustering of similar values of number of foreign tourists.
 
-In contrast, the Chachoengsao and Samut Prakan provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and there is spatial dispersion as the provinces have number of foreign tourists that are dissimilar to their neighbours.
+In contrast, the Chachoengsao and Samut Prakan provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial dispersion as the provinces have number of foreign tourists that are dissimilar to their neighbours.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map based on the *mean* classification:
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2464,19 +2564,17 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that provinces Yasothon, Khon Kaen, Kanchanaburi, Amnat Charoen, Nakhon Phanom, Roi Et and Ubon Ratchathani are categorised as Low-Low clusters while Chachoengsao and Samut Prakan provinces are Low-High outliers.
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   provinces Yasothon, Khon Kaen, Kanchanaburi, Amnat Charoen, Nakhon Phanom, Roi Et and Ubon Ratchathani are categorised as Low-Low clusters
+
+-   while Chachoengsao and Samut Prakan provinces are Low-High outliers.
 :::
 
 ### 8.3.2.3 Post-COVID
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2492,8 +2590,9 @@ lisa <- combined_tourism_postcovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map17 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2504,7 +2603,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map18 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2517,20 +2616,21 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map17, map18, ncol=2)
 ```
 
 Based on the results above, we note that Samut Sakhon displays the strongest negative spatial autocorrelation for number of foreign tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
 
-Of these provinces, Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Chachoengsao, Nakhon Phanom, Surin and Samut Songkhram have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. Of these provinces, Chachoengsao and Samut Songkhram have local moran's I values that are the highest, at approximately 0.56 and 0.43 respectively. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of number of foreign tourists.
+Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Chachoengsao, Nakhon Phanom, Surin and Samut Songkhram have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. Of these provinces, Chachoengsao and Samut Songkhram have local moran's I values that are the highest, at approximately 0.56 and 0.43 respectively. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial clustering of similar values of number of foreign tourists.
 
-In contrast, Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and there is spatial dispersion as the provinces have number of foreign tourists values that are dissimilar to their neighbours.
+In contrast, Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces have local moran’s I values that are close to 1 but negative and corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial dispersion as the provinces have number of foreign tourists values that are dissimilar to their neighbours.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map based on the *mean* classification:
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2542,7 +2642,13 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that: - provinces Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Nakhon Phanom and Surin are categorised as Low-Low clusters - Chachoengsao and Samut Songkhram are categorised as High-High clusters - Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces are Low-High outliers.
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   provinces Roi Et, Ubon Ratchathani, Songkhla, Mukdahan, Nakhon Phanom and Surin are categorised as Low-Low clusters
+
+-   Chachoengsao and Samut Songkhram are categorised as High-High clusters
+
+-   Ratchaburi, Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom provinces are Low-High outliers.
 :::
 
 ### 8.3.3 Rate of overnight tourists
@@ -2551,12 +2657,6 @@ Similar to our interpretation of the local moran’s I and p-value plots, we not
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2572,8 +2672,9 @@ lisa <- combined_tourism_precovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map19 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2584,7 +2685,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map20 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2597,18 +2698,19 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map19, map20, ncol=2)
 ```
 
 Tak, Samut Prakan, Chiang Mai, Ratchaburi, Chachoengsao and Nakhon Si Thammarat have local moran’s I values that are close to 1 but negative and corresponding significant p-values.There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation, more specifically spatial dispersion, in these provinces which have rates of overnight tourists that are dissimilar to their neighbours. Of the provinces, Chiang Mai displays the strongest negative spatial autocorrelation for rate of overnight tourists.
 
-In contrast, the Kalasin, Nan, Surin and Samut Songkhram provinces have local moran's I values that are close to 1 and positive, with corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces and that there is spatial clustering of similar values of rate of overnight tourists.
+In contrast, the Kalasin, Nan, Surin and Samut Songkhram provinces have local moran's I values that are close to 1 and positive, with corresponding significant p-values. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation in these provinces, specifically spatial clustering of similar values of rate of overnight tourists.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map based on the *mean* classification:
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2620,19 +2722,21 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that: - Tak and Chiang Mai are High-Low outliers - Samut Prakan, Ratchaburi, Chachoengsao and Nakhon Si Thammarat are Low-High outliers - Kalasin, Nan and Surin are Low-Low clusters - Samut Songkhram is a High-High cluster
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   Tak and Chiang Mai are High-Low outliers
+
+-   Samut Prakan, Ratchaburi, Chachoengsao and Nakhon Si Thammarat are Low-High outliers
+
+-   Kalasin, Nan and Surin are Low-Low clusters
+
+-   Samut Songkhram is a High-High cluster
 :::
 
 ### 8.3.3.2 During COVID
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2648,8 +2752,9 @@ lisa <- combined_tourism_durcovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map21 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2660,7 +2765,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map22 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2673,7 +2778,7 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map21, map22, ncol=2)
 ```
 
 Based on the results above, we note that Phetchaburi displays the strongest negative spatial autocorrelation for rate of overnight tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
@@ -2684,9 +2789,10 @@ In contrast, the Maha Sarakham and Nakhon Si Thammarat provinces have local mora
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map based on the *mean* classification:
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2698,19 +2804,21 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that: - Sisaket, Surin, Buriram, Yasothon, Amnat Charoen and Sa Kaeo are High-High clusters - Samut Prakan, Bangkok, Nonthaburi, Nakhon Pathom, Samut Sakhon, Ranong, and Phra Nakhon Si Ayutthaya are Low-Low clusters - Maha Sarakham is a Low-High outlier - Nakhon Si Thammarat is a High-Low outlier
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   Sisaket, Surin, Buriram, Yasothon, Amnat Charoen and Sa Kaeo are High-High clusters
+
+-   Samut Prakan, Bangkok, Nonthaburi, Nakhon Pathom, Samut Sakhon, Ranong, and Phra Nakhon Si Ayutthaya are Low-Low clusters
+
+-   Maha Sarakham is a Low-High outlier
+
+-   Nakhon Si Thammarat is a High-Low outlier
 :::
 
 ### 8.3.3.3 Post-COVID
 
 ::: panel-tabset
 ## Local Moran's I
-
-H0 null hypothesis: There is no local spatial autocorrelation in the indicator of tourism i.e. observed values are spatially randomly distributed and there is no relationship between the value at a location and the values at neighbouring locations.
-
-H1 alternative hypothesis: There is local spatial autocorrelation in the indicator of interest. The value at a location is either similar or dissimilar to values at neighbouring locations.
-
-We set the confidence interval to be at 95%.
 
 ```{r}
 set.seed(1234) 
@@ -2726,8 +2834,9 @@ lisa <- combined_tourism_postcovid %>%
 We visualise local Moran’s I and corresponding p-value using the code chunk below:
 
 ```{r}
+#| code-fold: true
 tmap_mode("plot")
-map1 <- tm_shape(lisa)+
+map23 <- tm_shape(lisa)+
   tm_fill("ii",
           title = "Local Moran Statistic")+
   tm_text("province_eng",size = 0.3)+
@@ -2738,7 +2847,7 @@ map1 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-map2 <- tm_shape(lisa)+
+map24 <- tm_shape(lisa)+
   tm_fill("p_ii_sim",
           breaks = c(0,0.001,0.01,0.05,1),
           labels = c("0.001","0.01","0.05","Not sig"),
@@ -2751,20 +2860,21 @@ map2 <- tm_shape(lisa)+
     main.title.size = 0.5
   )
 
-tmap_arrange(map1, map2, ncol=2)
+tmap_arrange(map23, map24, ncol=2)
 ```
 
 Based on the results above, we note that Yala displays the strongest negative spatial autocorrelation for rate of overnight tourists which indicates that it is dissimilar and hence could be an outlier in comparison to its neighbours. However, we note from the corresponding plot of p-values that the p-value for this result is not significant, there is insufficient evidence to reject the null hypothesis at the confidence interval of 95% and indicates that the spatial autocorrelation could have occurred randomly.
 
-Chiang Rai, Phayao and Nan have local moran’s I values that are positive and more than 1 with corresponding p-values that are significant. Chiang Mai, Nonthaburi and Bangkok have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation, more specifically spatial clustering, in these provinces which have similar values of rates of overnight tourists. For Chiang Rai, Phayao and Nan, strong spatial clustering is observed.
+Chiang Rai, Phayao and Nan have local moran’s I values that are positive and more than 1 with corresponding p-values that are significant. Chiang Mai, Nonthaburi and Bangkok have local moran’s I values that are positive but less than 1 with corresponding p-values that are significant. There is hence sufficient evidence to reject the null hypothesis for these provinces. There is local spatial autocorrelation, more specifically spatial clustering, in these provinces which have similar rates of overnight tourists. For Chiang Rai, Phayao and Nan, strong spatial clustering is observed.
 
 In contrast, Mae Hong Son has a local moran’s I value that is close to 1 but negative and a corresponding significant p-value. There is hence sufficient evidence to reject the null hypothesis for this province. There is local spatial autocorrelation, more specifically spatial dispersion in this province which has a rate of overnight tourists that is dissimilar to its neighbours.
 
 ## LISA
 
-We can also plot the LISA map. In lisa sf data.frame, there are three fields containing the LISA categories - *mean*, *median* and *pysal*. In general, classification in *mean* will be used, as shown in the code chunk below.
+We can also plot the LISA map based on the *mean* classification:
 
 ```{r}
+#| code-fold: true
 lisa_sig <- lisa  %>%
   filter(p_ii_sim < 0.05)
 tmap_mode("plot")
@@ -2776,12 +2886,24 @@ tm_shape(lisa_sig) +
   tm_borders(alpha = 0.4)
 ```
 
-Similar to our interpretation of the local moran’s I and p-value plots, we note that: - Chiang Rai, Phayao, Chiang Mai and Nan are High-High clusters - Nonthaburi and Bangkok are Low-Low clusters - Mae Hong Son is a Low-High outlier
+Similar to our interpretation of the local moran’s I and p-value plots, we note that:
+
+-   Chiang Rai, Phayao, Chiang Mai and Nan are High-High clusters
+
+-   Nonthaburi and Bangkok are Low-Low clusters
+
+-   Mae Hong Son is a Low-High outlier
 :::
 
 ## 9. Determining emerging hot spot/cold spot areas
 
+In this section, we will carry out Emerging Hot Spot Analysis (EHSA) which is a spatio-temporal analysis method for revealing and describing how hot and cold spot areas evolve over time.
+
+We earlier built a space-time cube in [5.4 Creating a time series cube] and will next calculate Getis-Ord local Gi\* statistic for each bin using a False Discovery Rate (FDR) correction.
+
 ### 9.1 Computing Gi\*
+
+The code chunk below is used to identify neighbours and to derive inverse distance weights:
 
 ```{r}
 spt_nb <- spt %>%
@@ -2796,6 +2918,8 @@ spt_nb <- spt %>%
   set_nbs("nb") %>%
   set_wts("wt")
 ```
+
+The dataset now has neighbours and weights for each time slice.
 
 We then use the new "nb" and "wt" columns created to calculate the local Gi\* for each location. We do this by grouping by "year_month" and using [local_gstar_perm()](https://sfdep.josiahparry.com/reference/local_gstar) of sfdep package, and thereafter using unnest() to unnest the gi_star column of the newly created *gi_stars* data frame:
 
@@ -2839,7 +2963,13 @@ gi_stars_overnight <- spt_nb %>%
 
 ### 9.2 Mann-Kendall Test
 
-We then run the Mann-Kendall Test for each location for each indicator:
+We then evaluate the hot and cold spot trends by running the Mann-Kendall Test for each location for each tourism indicator. Mann-Kendall test tests for the presence of a monotonic series i.e. only increases (or decreases) and never changes direction. The hypotheses for Mann-Kendall Test are as follows:
+
+-   [**H0 null hypothesis:**]{.underline}No monotonic trend
+
+-   [**H1 alternative hypothesis:**]{.underline} Monotonic trend is present
+
+We will note two values *sl* and *tau* - for the former, it indicates the p-value while the latter ranges between -1 and 1 where -1 represents a perfectly decreasing series while 1 represents a perfectly increasing series.
 
 ::: panel-tabset
 ## Total revenue
@@ -2857,7 +2987,7 @@ head(ehsa_totrev)
 
 We note that not all provinces are statistically significant and that there are a mix of provinces with positive and negative increasing trends.
 
-We arrange the data to show significant hot/cold spots:
+We arrange the data to show significant merging hot/cold spots:
 
 ```{r}
 emerging_totrev <- ehsa_totrev %>%
@@ -2882,7 +3012,7 @@ head(ehsa_foreign)
 
 We note that not all provinces are statistically significant and that there are a mix of provinces with positive and negative increasing trends.
 
-We arrange the data to show significant hot/cold spots:
+We arrange the data to show significant emerging hot/cold spots:
 
 ```{r}
 emerging_foreign <- ehsa_foreign %>%
@@ -2907,7 +3037,7 @@ head(ehsa_overnight)
 
 We note that not all provinces are statistically significant and that there are a mix of provinces with positive and negative increasing trends.
 
-We arrange the data to show significant hot/cold spots:
+We arrange the data to show significant emerging hot/cold spots:
 
 ```{r}
 emerging_overnight <- ehsa_overnight %>%
@@ -2920,8 +3050,12 @@ emerging_overnight
 
 ### 9.3 Performing emerging hotspot analysis
 
+Lastly, we will perform EHSA analysis by using the emerging_hotspot_analysis() of sfdep package which takes a spacetime object i.e. spt and the quoted name of the variable of interest (i.e. tourism indicators) for the .var argument. The k argument is used to specify the number of time lags which is set to 1 by default.
+
 ::: panel-tabset
 ## Total revenue
+
+### **EHSA analysis**
 
 ```{r}
 set.seed(1234)
@@ -2931,19 +3065,37 @@ ehsa_totrev <- emerging_hotspot_analysis(
   k=1,
   nsim = 99
 )
+```
 
+```{r}
+#| eval: false
+#| echo: false
+ehsa_totrev <- write_rds(ehsa_totrev,"data/rds/ehsa_totrev.rds")
+```
+
+```{r}
+#| echo: false
+ehsa_totrev <- read_rds("data/rds/ehsa_totrev.rds")
+```
+
+```{r}
 ehsa_totrev
 ```
 
-### Visualising the distribution of EHSA classes:
+### Visualising the distribution of EHSA classes
+
+We visualise the distribution of the EHSA classes:
 
 ```{r}
+#| code-fold: true
 ggplot(ehsa_totrev,
        aes(x=classification))+
   geom_bar()
 ```
 
-### Visualising EHSA:
+### Visualising EHSA
+
+We then join the *ehsa_totrev* dataframe to *province* sf object via a left join before visualising the EHSA classes via a map:
 
 ```{r}
 prov_ehsa_totrev <- province %>%
@@ -2952,6 +3104,7 @@ prov_ehsa_totrev <- province %>%
 ```
 
 ```{r}
+#| code-fold: true
 ehsa_totrev_sig <- prov_ehsa_totrev %>%
   filter(p_value < 0.05)
 
@@ -2972,6 +3125,8 @@ tm_shape(prov_ehsa_totrev)+
 
 ## Number of foreign tourists
 
+### EHSA analysis
+
 ```{r}
 set.seed(1234)
 ehsa_foreign <- emerging_hotspot_analysis(
@@ -2984,15 +3139,18 @@ ehsa_foreign <- emerging_hotspot_analysis(
 ehsa_foreign
 ```
 
-### Visualising the distribution of EHSA classes:
+### Visualising the distribution of EHSA classes
 
 ```{r}
+#| code-fold: true
 ggplot(ehsa_foreign,
        aes(x=classification))+
   geom_bar()
 ```
 
-### Visualising EHSA:
+### Visualising EHSA
+
+We then join the *ehsa_foreign* dataframe to *province* sf object via a left join before visualising the EHSA classes via a map:
 
 ```{r}
 prov_ehsa_foreign <- province %>%
@@ -3001,6 +3159,7 @@ prov_ehsa_foreign <- province %>%
 ```
 
 ```{r}
+#| code-fold: true
 ehsa_foreign_sig <- prov_ehsa_foreign %>%
   filter(p_value < 0.05)
 
@@ -3021,6 +3180,8 @@ tm_shape(prov_ehsa_foreign)+
 
 ## Rate of overnight tourists
 
+### EHSA analysis
+
 ```{r}
 set.seed(1234)
 ehsa_overnight <- emerging_hotspot_analysis(
@@ -3033,15 +3194,18 @@ ehsa_overnight <- emerging_hotspot_analysis(
 ehsa_overnight
 ```
 
-### Visualising the distribution of EHSA classes:
+### Visualising the distribution of EHSA classes
 
 ```{r}
+#| code-fold: true
 ggplot(ehsa_overnight,
        aes(x=classification))+
   geom_bar()
 ```
 
-### Visualising EHSA:
+### Visualising EHSA
+
+We then join the *ehsa_overnight* dataframe to *province* sf object via a left join before visualising the EHSA classes via a map:
 
 ```{r}
 prov_ehsa_overnight <- province %>%
@@ -3050,6 +3214,7 @@ prov_ehsa_overnight <- province %>%
 ```
 
 ```{r}
+#| code-fold: true
 ehsa_overnight_sig <- prov_ehsa_overnight %>%
   filter(p_value < 0.05)
 
@@ -3071,4 +3236,62 @@ tm_shape(prov_ehsa_overnight)+
 
 ## 10. Conclusion
 
-\<WIP\>
+We summarise our findings in the table below:
+
++--------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                                      | Total Revenue                                                                                                                                                                                                                                                                            | Number of foreign tourists                                                                                                                                                                                                                                                                                 | Rate of overnight tourists                                                                                                                                                                                                                                   |
++======================================+==========================================================================================================================================================================================================================================================================================+============================================================================================================================================================================================================================================================================================================+==============================================================================================================================================================================================================================================================+
+| **Independence from space**          | With reference to the entire Thailand study area, total revenue occurs randomly.                                                                                                                                                                                                         | With reference to the entire Thailand study area, number of foreign tourists occurs randomly.                                                                                                                                                                                                              | Moderate degree of positive spatial autocorrelation/clustering across entire Thailand study area.                                                                                                                                                            |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | However, at the localised level:                                                                                                                                                                                                                                                         | However, at the localised level:                                                                                                                                                                                                                                                                           | At the localised level, it is observed that:                                                                                                                                                                                                                 |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | -   Nakhon Sawan and provinces at the northeast side of Thailand are Low-Low clusters while                                                                                                                                                                                              | -   Kanchanaburi, Nakhon Sawan, Chainat, Surin, Sisaket, Amnat Charoen and Mukdahan are Low-Low clusters                                                                                                                                                                                                   | -   Nonthaburi, Ranong, Surat Thani, Bangkok, Phang Nga and Samut Praka are Low-Low clusters                                                                                                                                                                 |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | -   Chachoengsao is a Low-High outlier.                                                                                                                                                                                                                                                  | -   Samut Prakan is a High-High cluster                                                                                                                                                                                                                                                                    | -   Phayao and Chiang Rai are High-High clusters                                                                                                                                                                                                             |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |                                                                                                                                                                                                                                                                                          | -   Chachoengsao is a Low-High outlier.                                                                                                                                                                                                                                                                    | -   Mae Hong Son and Uttaradit are Low-High outliers                                                                                                                                                                                                         |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            | -   Nakhon Si Thammarat and Phra Nakhon Si Ayutthaya are High-Low outliers.                                                                                                                                                                                  |
++--------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Independence from space and time** | Across the three time periods - pre-COVID, during COVID and post-COVID - total revenue occurs randomly across the entire Thailand study area.                                                                                                                                            | Across the three time periods - pre-COVID, during COVID and post-COVID - number of of tourists occurs randomly across the entire Thailand study area.                                                                                                                                                      | Across the three time periods - pre-COVID, during COVID and post-COVID - rate of overnight tourists has a moderate degree of positive spatial autocorrelation/clustering across entire Thailand study area.                                                  |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | However, at the localised level, we note the following:                                                                                                                                                                                                                                  | However, at the localised level, we note the following:                                                                                                                                                                                                                                                    | At the localised level,                                                                                                                                                                                                                                      |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | -   [**Across all three time periods**]{.underline}**, Roi Et, Ubon Ratchathani, Mukdahan and Surin were consistently Low-Low clusters.**                                                                                                                                                | -   [**Across all three time periods**]{.underline}**, Roi Et and Nakhon Phanom were consistently Low-Low clusters.**                                                                                                                                                                                      | -   There were were no similarities across all three time periods.                                                                                                                                                                                           |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | -   [**For pre-COVID and during COVID**]{.underline}**, Nakhon Sawan, Nakhon Pathom were consistently Low-Low clusters while Chachoengsao was consistently a Low-High outlier.**                                                                                                         | -   [**For pre-COVID and during COVID**]{.underline}**, Khon Kaen was consistently a Low-Low cluster while Chachoengsao was consistently a Low-High outlier.**                                                                                                                                             | -   [**During COVID and post-COVID**]{.underline}**, Bangkok and Nonthaburi were consistently Low-Low clusters.**                                                                                                                                            |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | -   [**During COVID and post-COVID**]{.underline}**, Ratchaburi was consistently a Low-High outlier.**                                                                                                                                                                                   | -   [**For pre-COVID and post-COVID**]{.underline}**, Mukdahan and Surin were consistently Low-Low clusters.**                                                                                                                                                                                             | -   Specific to each time period, the following were observed:                                                                                                                                                                                               |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | -   Specific to each time period, the following were observed:                                                                                                                                                                                                                           | -   [**During COVID and post-COVID**]{.underline}**, Ubon Ratchathani was consistently a Low-Low cluster while Samut Prakan was consistently a Low-High outlier.**                                                                                                                                         |     -   Pre-COVID:                                                                                                                                                                                                                                           |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |     -   Pre-COVID:                                                                                                                                                                                                                                                                       | -   Specific to each time period, the following were observed:                                                                                                                                                                                                                                             |         -   Tak and Chiang Mai were High-Low outliers                                                                                                                                                                                                        |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |         -   Tak and Phrae were Low-Low clusters                                                                                                                                                                                                                                          |     -   Pre-COVID:                                                                                                                                                                                                                                                                                         |         -   Samut Prakan, Ratchaburi, Chachoengsao and Nakhon Si Thammarat were Low-High outliers                                                                                                                                                            |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |         -   Samut Prakan was a Low-High outlier                                                                                                                                                                                                                                          |         -   Nakhon Sawan, Chainat and Maha Sarakham were Low-Low clusters.                                                                                                                                                                                                                                 |         -   Kalasin, Nan and Surin were Low-Low clusters                                                                                                                                                                                                     |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |     -   During COVID:                                                                                                                                                                                                                                                                    |         -   Samut Prakan was a High-High cluster.                                                                                                                                                                                                                                                          |         -   Samut Songkhram was a High-High cluster                                                                                                                                                                                                          |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |         -   Samut Songkhram was a Low-High outlier                                                                                                                                                                                                                                       |     -   During COVID:                                                                                                                                                                                                                                                                                      |     -   During COVID:                                                                                                                                                                                                                                        |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |     -   Post-COVID:                                                                                                                                                                                                                                                                      |         -   Yasothon, Kanchanaburi and Amnat Charoen were Low-Low clusters                                                                                                                                                                                                                                 |         -   Sisaket, Surin, Buriram, Yasothon, Amnat Charoen and Sa Kaeo were High-High clusters                                                                                                                                                             |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |         -   Songkhla and Nakhon Phanom were Low-Low clusters                                                                                                                                                                                                                             |     -   Post-COVID:                                                                                                                                                                                                                                                                                        |         -   Samut Prakan, Nakhon Pathom, Samut Sakhon, Ranong, and Phra Nakhon Si Ayutthaya were Low-Low clusters                                                                                                                                            |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |         -   Chaochoengsao and Samut Songkhram were High-High clusters                                                                                                                                                                                                                    |         -   Songkhla was a Low-Low cluster                                                                                                                                                                                                                                                                 |         -   Maha Sarakham was a Low-High outlier                                                                                                                                                                                                             |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |         -   Samut Prakan, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom were Low-High outliers                                                                                                                                                                                |         -   Chaochoengsao and Samut Songkhram were High-High clusters                                                                                                                                                                                                                                      |         -   Nakhon Si Thammarat was a High-Low outlier                                                                                                                                                                                                       |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | **While there are similarities for some provinces over time for the total revenue indicator, there were different provinces that emerged as clusters or outliers over time. This suggests that the total revenue tourism indicator may exhibit both spatial and temporal dependencies.** |         -   Ratchaburi, Nakhon Nayok, Pathum Thani, Nonthaburi and Nakhon Pathom were Low-High outliers.                                                                                                                                                                                                   |     -   Post-COVID:                                                                                                                                                                                                                                          |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |                                                                                                                                                                                                                                                                                          | **While there are similarities for some provinces over time for the number of foreign tourists indicator, there were different provinces that emerged as clusters or outliers over time. This suggests that the number of foreign tourists indicator may exhibit both spatial and temporal dependencies.** |         -   Chiang Rai, Phayao, Chiang Mai and Nan were High-High clusters                                                                                                                                                                                   |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |         -   Mae Hong Son was a Low-High outlier                                                                                                                                                                                                              |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            | As compared to the other two tourism indicators, there were less similarities across the provinces over time for the rate of overnight tourists. This strongly indicates that the rate of overnight tourists exhibit both spatial and temporal dependencies. |
++--------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Emerging hot/cold spot analysis**  | A mix of provinces with no pattern detected, sporadic coldspot and sporadic hotspot were observed:                                                                                                                                                                                       | A mix of provinces with no pattern detected, sporadic coldspot and sporadic hotspot were observed:                                                                                                                                                                                                         | A mix of provinces with no pattern detected, oscillating coldspot and oscillating hotspot were observed:                                                                                                                                                     |
+|                                      |                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
+|                                      | -                                                                                                                                                                                                                                                                                        |                                                                                                                                                                                                                                                                                                            |                                                                                                                                                                                                                                                              |
++--------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
