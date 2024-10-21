@@ -91,7 +91,7 @@ The code chunk below performs 3 tasks:
 -   After all the R packages have been installed, they will be loaded.
 
 ```{r}
-pacman::p_load(sf,spdep,GWmodel,SpatialML,tmap,rsample,Metrics, tidyverse,spatstat)
+pacman::p_load(sf,spdep,GWmodel,SpatialML,tmap,rsample,Metrics, tidyverse,spatstat,kableExtra)
 ```
 
 ## 8.4 Preparing Data
@@ -108,7 +108,7 @@ mdata
 We note that the object is a simple feature data frame, with point geometry and 15901 features and 17 fields. The projected coordinates system is SVY21.
 
 ::: callout-note
-## Notes from Prof Kam
+## In-class note from Prof Kam
 
 -   note that proximity to xx are derived values - note that there are some inconsistencies in the values i.e. some too small
 :::
@@ -127,13 +127,15 @@ test_data <- testing(resale_split)
 ```
 
 ::: callout-note
-## Notes from Prof Kam
+## In-class note from Prof Kam
 
 -   note that the above is random sampling method
 
 -   65% is train and 35% is test
 
 -   can immediately pull out training and test data set as separate datasets
+
+-   always save the training and test datasets as new rds files
 :::
 
 We save the train and test data sets as new rds files and load them into the R environment to avoid rerunning the above step:
@@ -167,6 +169,16 @@ corrplot::corrplot(cor(mdata_nogeo[,2:17]),
          type = "upper")
 ```
 
+::: callout-note
+## In-class note from Prof Kam:
+
+-   another way to generate the correlation matrix is using the code chunk below:
+
+```{r}
+ggstatsplot::ggcorrmat(mdata_nogeo[,2:17])
+```
+:::
+
 Note that matrix reorder is very important for mining the hidden structure and pattern in the matrix. There are four methods in corrplot (parameter order), namely “AOE”, “FPC”, “hclust”, “alphabet”. In the code chunk above, “AOE” order is used. It orders the variables by using the *angular order of the eigenvectors* method suggested by [Michael Friendly](https://www.datavis.ca/papers/corrgram.pdf).
 
 The correlation matrix above shows that **all correlation values are below 0.8, there is hence no sign of multicollinearity.**
@@ -181,6 +193,23 @@ price_mlr <- lm(resale_price ~ floor_area_sqm + storey_order + remaining_lease_m
                 data = train_data)
 ```
 
+::: callout-note
+## In-class note from Prof Kam
+
+-   note that only use training data to calibrate the model, will not use test data to calibrate
+
+-   we can use olsrr to generate report - provide a more organised way to look through results:
+
+```{r}
+#| echo: false
+price_mlr <- read_rds("data/rds/price_mlr.rds")
+```
+
+```{r}
+olsrr::ols_regress(price_mlr)
+```
+:::
+
 We save this as a new rds file and load it into the R environment to avoid re-running the above step:
 
 ```{r}
@@ -194,6 +223,30 @@ summary(price_mlr)
 ```
 
 We note that the adjusted R2 is 0.737 which indicates that the predictors are able to explain 73.7% of the HDB resale prices.
+
+::: callout-note
+## In-class note from Prof Kam
+
+-   Multicollinearity check with VIF
+
+```{r}
+vif <- performance::check_collinearity(price_mlr)
+kable(vif,
+      caption = "Variance Inflation Factor (VIF) results") %>%
+  kable_styling(font_size = 18)
+```
+
+-   can use kable to print out a nice table from tibble data
+
+-   Plotting VIF:
+
+```{r}
+plot(vif) +
+  theme(axis.text.x = element_text(angle = 45, hjust =1))
+```
+
+-   plot above is user-friendly, at one glance can see all predictors are not highly correlated
+:::
 
 ## 8.7 gwr predictive model
 
@@ -221,6 +274,54 @@ bw_adaptive <- bw.gwr(resale_price ~ floor_area_sqm + storey_order + remaining_l
                 adaptive = TRUE,
                 longlat = FALSE)
 ```
+
+::: callout-note
+## In-class note from Prof Kam
+
+-   Note that gw can now handle non-sp data format hence the codes below use train_data and test_data directly and not the sp formats
+-   Predictive Modelling with MLR:
+
+```{r}
+#| eval: false
+bw_adaptive_train <- bw.gwr(resale_price ~ floor_area_sqm + storey_order + remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + PROX_MRT + PROX_PARK+ PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+                data = train_data,
+                approach = "CV",
+                kernel = "gaussian",
+                adaptive = TRUE,
+                longlat = FALSE)
+```
+
+```{r}
+#| eval: false
+gwr_adaptive <- gwr.basic(resale_price ~ floor_area_sqm + storey_order + remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + PROX_MRT + PROX_PARK+ PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+                data = train_data,
+                bw = bw_adaptive_train,
+                kernel = "gaussian",
+                adaptive = TRUE,
+                longlat = FALSE)
+```
+
+```{r}
+#| eval: false
+gwr_bw_test_nonsp_adaptive <- bw.gwr(resale_price ~ floor_area_sqm + storey_order + remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + PROX_MRT + PROX_PARK+ PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+                data = test_data,
+                approach = "CV",
+                kernel = "gaussian",
+                adaptive = TRUE,
+                longlat = FALSE)
+```
+
+```{r}
+#| eval: false
+gwr_pred_train <- gwr.predict(resale_price ~ floor_area_sqm + storey_order + remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + PROX_MRT + PROX_PARK+ PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+                data = train_data,
+                predictdata = test_data,
+                bw = 40,
+                kernel = "gaussian",
+                adaptive = TRUE,
+                longlat = FALSE)
+```
+:::
 
 The result shows that 40 neighbour points will be the optimal bandwidth to be used if adaptive bandwidth is used for this data set.
 
@@ -319,7 +420,7 @@ gwr_pred <- gwr.predict(resale_price ~ floor_area_sqm + storey_order + remaining
 ```
 
 ::: callout-note
-## Notes from Prof Kam
+## In-class note from Prof Kam
 
 -   Likely issue is several points with same postal code hence same coordinates - spatial ML can tolerate but gwr unable to handle hence error of "No regression point is fixed"
 
@@ -340,7 +441,7 @@ gwr_pred <- gwr.predict(resale_price ~ floor_area_sqm + storey_order + remaining
     Prof shared that [either method above works]{.underline} but what extent to which results will be sensitive to the bw - for HDB property transaction, Prof didn't find much difference. If data set is small, high chance will have variation but if data set is big and use method such as random forest (for which have a lot of randomisation), should be able to resolve.
 :::
 
-## 8.8 Preparing coordinates data
+## 8.8 Preparing coordinates data (for Predictive Modelling via SpatialML method)
 
 ### 8.8.1 Extracting coordinates data
 
@@ -374,6 +475,40 @@ In this step, we will drop the geometry column of the sf data.frame by using st_
 train_data <- train_data %>%
   st_drop_geometry()
 ```
+
+::: callout-note
+## In-class note from Prof Kam
+
+-   **note that need to extract coordinates (coords) as dataframe** which will be used to calibrate model - SpatialML unable to use train and test data directly
+
+    -   **note from grf documentation that only can accept dframe** - one for dependent variable and one for independent variable. coords must also be in the sequence x and y.
+
+-   **need to drop geometry column from train_data to make it from sf data frame to normal data frame**, otherwise will keep getting error when running SpatialML
+
+```{r}
+train_data_nogeom <- train_data %>%
+  st_drop_geometry()
+```
+
+```{r}
+#| eval: false
+set.seed(1234)
+rf <- ranger(resale_price ~ floor_area_sqm + storey_order + remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + PROX_MRT + PROX_PARK+ PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+                data = train_data_nogeom)
+```
+
+```{r}
+#| eval: false
+set.seed(1234)
+gwRF_adaptive <- grf(resale_price ~ floor_area_sqm + storey_order + remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + PROX_MRT + PROX_PARK+ PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+                dframe = train_data_nogeom,
+                bw = 55,
+                kernel = "adaptive",
+                coords = coords_train)
+```
+
+-   note that dframe and coords have to be consistent i.e. both derive from training data
+:::
 
 ## 8.9 Calibrating Random Forest Model
 
@@ -429,9 +564,11 @@ gwRF_adaptive <- read_rds("data/rds/gwRF_adaptive.rds")
 ```
 
 ::: callout-note
-## Notes from Prof Kam:
+## In-class notes from Prof Kam:
 
--   Query on why bw = 55 is used
+-   **Query on why bw = 55 is used \>\> note got some forest sample size = 55**
+-   note in gwRF_adaptive, LGofFit means Local Goodness of Fit
+-   note that by default trees = 500 for grf function, can adjust ntree to change no. of trees
 :::
 
 ### 8.10.2 Predicting by using test data
@@ -444,6 +581,52 @@ The code chunk below will be used to combine the test data with its correspondin
 test_data <- cbind(test_data,coords_test) %>%
   st_drop_geometry()
 ```
+
+::: callout-note
+## In-class notes from Prof Kam
+
+```{r}
+#| eval: false
+test_data_nogeom <- cbind(test_data,coords_test) %>%
+  st_drop_geometry()
+```
+
+-   note that above combine test_data with coords_test as next code chunk requires the data in the same table i.e. x.var.name = "X" and y.var.name = "Y", this is different from what was done for train_data under the SpatialML methods as the code required a separate coords file for the coords argument i.e. coords = coords_train
+
+```{r}
+#| eval: false
+gwRF_pred <- predict.grf(gwRF_adaptive,
+                         test_data_nogeom,
+                         x.var.name = "X",
+                         y.var.name = "Y",
+                         local.w = 1,
+                         global.w = 0)
+```
+
+-   above gives predicted values from test data
+
+-   make the output into a dataframe:
+
+```{r}
+#| eval: false
+write_rds(gwRF_pred,"data/rds/GRF_pred.rds")
+```
+
+```{r}
+#| eval: false
+GRF_pred <- read_rds("data/rds/GRF_pred.rds")
+```
+
+```{r}
+#| eval: false
+GRF_pred_df <- as.data.frame(GRF_pred)
+```
+
+```{r}
+#| eval: false
+test_data_pred <- cbind(test_data,GRF_pred_df)
+```
+:::
 
 #### 8.10.2.2 Predicting with test data
 
@@ -519,7 +702,15 @@ ggplot(test_data_p,
 A better predictive model is one that has scatter points close to the diagonal line. The scatterplot can also be used to detect if there are any outliers in the model.
 
 ::: callout-note
-## Notes from Prof Kam:
+## In-class notes from Prof Kam
+
+-   note that as we are doing geospatial, we are interested in the distribution of the results over space
+
+-   to check if the above means that we will need to visualise the distribution via tmap etc rather than just a scatterplot
+:::
+
+::: callout-note
+## In-class notes from Prof Kam:
 
 -   important to first determine bandwidth for gwRF then calibrate model - technically the same bandwidth should be used throughout the geographically weighted models to ensure that samples are consisten
 

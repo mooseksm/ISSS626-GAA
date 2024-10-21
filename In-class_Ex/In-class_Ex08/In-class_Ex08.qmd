@@ -190,4 +190,4 @@ but luckily for this case, it has the latitude and longitude values.
 
 ## Notes on Hands-on Exercise 8
 
-Refer to this site: <https://isss626-ksm.netlify.app/hands-on_ex/hands-on_ex08/hands-on_ex08>
+Refer to this site: <https://isss626-ksm.netlify.app/hands-on_ex/hands-on_ex08/hands-on_ex08> for in-class notes from Prof Kam
