@@ -174,7 +174,7 @@ corrplot::corrplot(cor(mdata_nogeo[,2:17]),
 
 -   another way to generate the correlation matrix is using the code chunk below:
 
-```{r}
+```{r, fig.width=10,fig.height=10}
 ggstatsplot::ggcorrmat(mdata_nogeo[,2:17])
 ```
 :::
