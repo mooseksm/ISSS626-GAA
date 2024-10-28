@@ -1,0 +1,21 @@
+---
+title: "Take-home Exercise 3"
+author: "Kock Si Min"
+date: October 26, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# Take-home Exercise 3: Predicting HDB Resale Prices with Geographically Weighted Machine Learning Methods
+
+## 1. Setting the Scene
+
+Housing is a sign of household wealth. Buying housing has always been a major investment for most people and its price is affected by several factors that can be global in nature such as the general economy of a country or inflation rate or specific to the nature of the property.
+
+Factors can further be divided to structural and locational factors - the former are variables related to the property such as the size, fitting, tenure while the latter are variables related to the neighbourhood of the property such as promitity to childcare services, public transport and shopping centres.
