@@ -80,6 +80,7 @@ add_list <- sort(unique(resale_selected$address))
 The code chunk below creates a function to obtain coordinates:
 
 ```{r}
+#| eval: false
 get_coords <- function(add_list){
   
   # Create a data frame to store all retrieved coordinates
@@ -155,6 +156,7 @@ get_coords <- function(add_list){
 We obtain the coordinates from *add_list:*
 
 ```{r}
+#| eval: false
 coords <- get_coords(add_list)
 ```
 
@@ -191,3 +193,90 @@ but luckily for this case, it has the latitude and longitude values.
 ## Notes on Hands-on Exercise 8
 
 Refer to this site: <https://isss626-ksm.netlify.app/hands-on_ex/hands-on_ex08/hands-on_ex08> for in-class notes from Prof Kam
+
+-   overlapping points
+
+## Notes on Take-home Ex03
+
+-   stick to SpatialML package but take note of rendering time, **need to play around w number of trees etc (if have big sample size i.e. 15000, use less trees i.e. 50 instead of default 500)**
+
+-   just pick out 3-room or 4-room flats etc to reduce the number of observations
+
+-   use st_distance() to find proximity to parks etc
+
+-   for the number of xxx within 350m/to count number of point features within 1km of another point features:
+
+    -   refer to hands-on ex01 [geoprocessing function](https://r4gdsa.netlify.app/chap01.html#geoprocessing-with-sf-package)
+
+    -   refer to example below
+
+### Count number of points within a distance
+
+#### Importing data
+
+*ELDERCARE* is in shapefile format while *CHASClinics* is in kml format.
+
+Note that the import code is written differently for kml file which requires an extension .kml
+
+```{r}
+eldercare <- st_read(dsn = "data/geospatial",
+                     layer = "ELDERCARE") %>%
+  st_transform(3414)
+
+CHAS <- st_read("data/geospatial/CHASClinics.kml") %>%
+  st_transform(3414)
+```
+
+-   sf package's st_read will allow almost any data structure to be imported
+
+-   st_transform() is important as it ensures that all data files have the same EPSG code - different codes will have different units i.e. WGS 84 in decimal degree while SVY21 is in metres. Prof also shared that typically kml files are in WGS 84 format.
+
+-   note that in this case can keep z coordinate - if have to use spatstat, need to drop it
+
+#### Creating a buffer
+
+Next, st_buffer() of sf package is used to create a buffer of 1km around each eldercare feature:
+
+-   note that SVY21/EPSG 3414 unit of measurement is in metres hence 1000 instead of 1
+
+```{r}
+buffer_1km <- st_buffer(eldercare,
+                        dist = 1000)
+```
+
+#### Visualise our buffer
+
+-   plot the newly created buffers and the CHAS clinics
+
+-   plot polygon before point if not all points would be covered by polygon
+
+-   note that there are points that are not mutually exclusive
+
+```{r}
+tmap_mode("view")
+tm_shape(buffer_1km)+
+  tm_polygons()+
+  tm_shape(CHAS)+
+  tm_dots()
+```
+
+```{r}
+tmap_mode("plot")
+```
+
+::: callout-note
+Note that there is an outlier from the above data (screenshot appended below):
+
+![](images/clipboard-1988866560.png)
+:::
+
+#### Counting points
+
+The code chunk below is used to count the number of CHAS clinic within 1 km of each eldercare centre
+
+```{r}
+buffer_1km$pts_count <- lengths(
+  st_intersects(buffer_1km, CHAS))
+```
+
+-   lengths return the number and provide it in the new field "pts_count" in buffer_1km

@@ -1,0 +1,237 @@
+---
+title: "In-class Exercise 9"
+author: "Kock Si Min"
+date: October 28, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# Modelling Geographical Accessibility
+
+-   Prof shared that for real-life cases, we cannot use fixed capacity and demand i.e. 100 used in hands-on exercise 9, instead we need to determine real figures
+
+## The Data
+
+Four datasets will be used:
+
+-   `MP14_SUBZONE_NO_SEA_PL`: URA Master Plan 2014 subzone boundary GIS data. This data set is downloaded from data.gov.sg.
+
+-   `hexagons`: A 250m radius hexagons GIS data. This data set was created by using [*st_make_grid()*](https://r-spatial.github.io/sf/reference/st_make_grid.html) of sf package. It is in ESRI shapefile format.
+
+-   `ELDERCARE`: GIS data showing location of eldercare service. [This data](https://data.gov.sg/dataset/eldercare-services) is downloaded from data.gov.sg. There are two versions. One in ESRI shapefile format. The other one in Google kml file format. For the purpose of this hands-on exercise, ESRI shapefile format is provided.
+
+-   `OD_Matrix`: a distance matrix in csv format. There are six fields in the data file. They are:
+
+    -   `origin_id`: the unique id values of the origin (i.e. `fid` of hexagon data set.),
+
+    -   `destination_id`: the unique id values of the destination (i.e. `fid` of `ELDERCARE` data set.),
+
+    -   `entry_cost`: the perpendicular distance between the origins and the nearest road),
+
+    -   `network_cost`: the actual network distance from the origin and destination,
+
+    -   `exit_cost`: the perpendicular distance between the destination and the nearest road), and
+
+    -   `total_cost`: the summation of `entry_cost`, `network_cost` and `exit_cost`.
+
+All values of the cost-related fields are in metres.
+
+## Getting Started
+
+```{r}
+pacman::p_load(sf,SpatialAcc,tidyverse,tmap,ggstatsplot, reshape2,rstantools)
+```
+
+## Geospatial Data Wrangling
+
+### Importing geospatial data
+
+```{r}
+mpsz <- st_read(dsn = "data/geospatial",
+                layer = "MP14_SUBZONE_NO_SEA_PL") %>%
+  st_transform(3414)
+```
+
+```{r}
+hexagons <- st_read(dsn = "data/geospatial",
+                layer = "hexagons") %>%
+  st_transform(3414)
+```
+
+```{r}
+eldercare <- st_read(dsn = "data/geospatial",
+                layer = "ELDERCARE") %>%
+  st_transform(3414)
+```
+
+### Data cleaning and updating attribute fields of the geospatial data
+
+-   supply
+
+    -   artificially create a new column "capacity" to make it easy to calibrate the model
+
+    -   but in reality, need to collect real data i.e. survey, web crawling to collect actual capacity of eldercare centre
+
+    -   retain fid and ADDRESSPOS which represent id and address of eldercare
+
+```{r}
+eldercare <- eldercare %>%
+  select(fid,ADDRESSPOS) %>%
+  mutate(capacity = 100)
+```
+
+-   demand
+
+    -   artificially create a new column "demand" to make it easy to calibrate the model
+
+    -   but in reality, need to collect real data i.e. crawl from hdb website the number of floors then multiply by constant unit to estimate number of elderly folks
+
+    -   retain unique id aka fid
+
+```{r}
+hexagons <- hexagons %>%
+  select(fid) %>%
+  mutate(demand = 100)
+```
+
+## Aspatial Data Handling and Wrangling
+
+### Importing Distance Matrix
+
+-   for info, Prof used [r5r](https://cran.r-project.org/web/packages/r5r/vignettes/r5r.html) to create ODMatrix; is a java library that calculate shorter distance from road network i.e. OpenStreetMap
+
+-   note that ODMatrix is in the structure of long and thin - this is how its returned from r5r:
+
+    -   total cost is summation of entry, network and exit costs
+
+    -   entry cost: perpendicular distance from origin point to nearest road i.e. walk/bus to mrt distance
+
+    -   exit cost: perpendicular distance from destination point to nearest road
+
+```{r}
+ODMatrix <- read_csv("data/aspatial/OD_Matrix.csv", skip = 0)
+```
+
+### Tidying distance matrix
+
+-   **rows represent origins** i.e. aka **the from field** and the **columns represent destinations** i.e. aka the to field
+-   code chunk below uses *spread()* of **tidyr** package to **transform the ODMatrix from a thin format into a fat format:**
+
+```{r}
+distmat <- ODMatrix %>%
+  select(origin_id,destination_id,total_cost) %>%
+  pivot_wider(names_from= destination_id,
+              values_from = total_cost) %>%
+  select(c(-c('origin_id')))
+```
+
+```{r}
+distmat_km <- as.matrix(distmat/1000)
+```
+
+-   note that distmat_km is 3125 observations of 120 variables - 3125 match with hexagons 3125 observations of 3 variables (demand), 120 match with eldercare 120 observations of 4 variables (supply)
+
+-   Prof shared that should use pivot_longer()
+
+## Modelling and Visualising Accessibility using Hansen Method
+
+### Computing Hansen's accessibility
+
+```{r}
+acc_Hansen <- data.frame(ac(hexagons$demand,
+                            eldercare$capacity,
+                            distmat_km,
+                            d0 = 50,
+                            power = 2,
+                            family = "Hansen"))
+
+colnames(acc_Hansen) <- "accHansen"
+acc_Hansen <- as_tibble(acc_Hansen)
+hexagon_Hansen <- bind_cols(hexagons,acc_Hansen)
+```
+
+### Visualising Hansen's accessibility
+
+#### Extracting map extend
+
+We will extract the extend of hexagons simple feature data frame by using *st_bbox()* of sf package:
+
+```{r}
+mapex <- st_bbox(hexagons)
+mapex
+```
+
+The code chunk below uses a collection of mapping functions of the **tmap** package to create a high cartographic quality map to indicate the accessibility to eldercare centres in Singapore:
+
+```{r}
+tmap_mode('plot')
+tm_shape(hexagon_Hansen,
+         bbox = mapex) +
+  tm_fill(col = "accHansen",
+          n = 10,
+          style = "quantile",
+          border.col = "black",
+          border.lwd = 1)+
+  tm_shape(eldercare) +
+  tm_symbols(size = 0.1, col = "skyblue") +
+  tm_layout(main.title = "Accessibility to eldercare: Hansen method",
+            main.title.position = "center",
+            main.title.size = 2,
+            legend.outside = FALSE,
+            legend.height = 0.28,
+            legend.width = 3.0,
+            legend.format = list(digits = 6),
+            legend.position = c("right","top"),
+            frame = TRUE) +
+  tm_compass(type = "8star", size = 2) +
+  tm_scale_bar(width = 0.15)+
+  tm_grid(lwd = 0.1, alpha = 0.5)
+```
+
+::: callout-note
+## Questions to raise
+
+-   why do i need to indicate bbox = mapex when the geometry in hexagon_Hansen is based on the hexagons polygon geometry?
+    -   Prof wants to make sure extend does not change, ensure that every plot will have the same map extend
+:::
+
+### Statistical graphic visualisation
+
+```{r}
+hexagon_Hansen <- st_join(hexagon_Hansen, mpsz,
+                          join = st_intersects)
+```
+
+We use ggplot to plot the distribution via boxplot:
+
+```{r}
+ggplot(hexagon_Hansen,
+       aes(y=log(accHansen),
+           x= REGION_N))+
+  geom_boxplot()+
+  geom_point(stat = "summary",
+             fun.y = "mean",
+             color = "red",
+             size = 2)
+```
+
+We also utilise ggbetweenstats:
+
+-   combines EDA with CDA and showcases it in one framework
+
+-   type = "p" indicate parametric test which compares mean value, "np" would mean non-parametric test which compares the median, "robust" method would trim outliers, "bayes" method means it create multiple permutations before presenting cut-off line
+
+```{r}
+ggbetweenstats(data = hexagon_Hansen,
+               x= REGION_N,
+               y = accHansen,
+               type = "p")
+```
+
+## 

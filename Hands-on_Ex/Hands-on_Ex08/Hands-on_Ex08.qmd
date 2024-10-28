@@ -111,6 +111,19 @@ We note that the object is a simple feature data frame, with point geometry and 
 ## In-class note from Prof Kam
 
 -   note that proximity to xx are derived values - note that there are some inconsistencies in the values i.e. some too small
+
+-   **to overcome overlap, need to use st_jitter():**
+
+    -   prof shared that there is either amount or factor - **is better to use amount since its based on units of coordinates**
+
+    -   put amount as 2 - don't use v big figures **but also don't use decimal points as when there's rounding, it might round to 0 then back to square one**
+
+    -   must be careful about the distance set to avoid jittering the point out of the boundary
+
+    ```{r}
+    mdata <- mdata %>%
+      st_jitter(amount = 2)
+    ```
 :::
 
 ### 8.4.2 Data Sampling
@@ -566,7 +579,7 @@ gwRF_adaptive <- read_rds("data/rds/gwRF_adaptive.rds")
 ::: callout-note
 ## In-class notes from Prof Kam:
 
--   **Query on why bw = 55 is used \>\> note got some forest sample size = 55**
+-   **Query on why bw = 55 is used \>\> Prof shared that same as above steps, will have to calculate bw and use that bw**
 -   note in gwRF_adaptive, LGofFit means Local Goodness of Fit
 -   note that by default trees = 500 for grf function, can adjust ntree to change no. of trees
 :::

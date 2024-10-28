@@ -1,0 +1,71 @@
+---
+title: "Hands-on Exercise 9"
+author: "Kock Si Min"
+date: October 26, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# Processing and Visualising Flow Data
+
+## 10.1 Overview
+
+Spatial interaction represents the flow of people, material or information between locations in a geographical space. It encompasses everything from freight shipments, energy flows, global trade in rare antiquities, flight schedules, rush hour woes and pedestrian foot traffic.
+
+Each spatial interaction, as an analogy for a set of movements, is composed of a discrete origin/destination pair. Each pair can be presented as a cell in a matrix where rows are related to the locations (centroids) of origin while columns are related to locations (centroids) of destination. Such a matrix is known as an origin/destination (OD) matrix or spatial interaction matrix.
+
+In this hands-on exercise, I will build an OD matrix by using the [*Passenger Volume by Origin Destination Bus Stops*](https://datamall.lta.gov.sg/content/datamall/en/search_datasets.html?searchText=passenger%20origin) data set downloaded from [LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html).
+
+By the end of the hands-on exercise, I would have:
+
+-   imported and extracted OD data for a selected time interval,
+
+-   imported and saved geospatial data (i.e. bus stops and mpsz) into sf tibble data frame objects,
+
+-   populated planning subzone code into bus stops sf tibble data frame,
+
+-   constructed desired lines in the geospatial data from the OD data, and
+
+-   visualised passenger volume by origin and destination bus stops by using the desired lines data.
+
+## 10.2 Getting Started
+
+Before we start, we will need to install and load the necessary R packages into the R environment:
+
+-   [sf](https://r-spatial.github.io/sf/) for importing, integrating, processing and transforming geospatial data.
+
+-   [tidyverse](https://www.tidyverse.org/) for importing, integrating, wrangling and visualising data.
+
+-   [tmap](https://r-tmap.github.io/tmap/) for creating elegent and cartographic quality thematic maps.
+
+-   [stplanr](https://docs.ropensci.org/stplanr/) provides functions for solving common problems in transport planning and modelling such as downloading and cleaning transport datasets; creating geographic “desire lines” from origin-destination (OD) data; route assignment, locally and interfaces to routing services such as CycleStreets.net; calculation of route segment attributes such as bearing and aggregate flow; and ‘travel watershed’ analysis.
+
+-   [DT](https://rstudio.github.io/DT/) provides an R interface to the JavaScript library DataTables. R data objects (matrices or data frames) can be displayed as tables on HTML pages, and DataTables provides filtering, pagination, sorting, and many other features in the tables.
+
+```{r}
+pacman::p_load(sf,tidyverse,tmap,stplanr, DT, XML, xml2)
+```
+
+## 10.3 Preparing the Flow Data
+
+### 10.3.1 Importing the OD data
+
+The code chunk below uses *read_csv()* of **readr** package to import the *Passenger Volume by Origin Destination Bus Stops* dataset as a tibble data frame into the R environment:
+
+```{r}
+#| eval: false
+odbus <- xmlParse("data/aspatial/PassengerVolumeByOriginDestinationBusStops.xml")
+```
+
+::: callout-note
+
+**skip**
+
+:   Number of lines to skip before reading data. If `comment` is supplied any commented lines are ignored *after* skipping.
+:::
