@@ -22,6 +22,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -190,6 +224,10 @@ ul.task-list li input[type="checkbox"] {
     <a class="dropdown-item" href="../../In-class_Ex/In-class_Ex08/In-class_Ex08.html">
  <span class="dropdown-text">In-class Exercise 8</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../In-class_Ex/In-class_Ex09/In-class_Ex09.html">
+ <span class="dropdown-text">In-class Exercise 9</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -255,9 +293,24 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#take-home-exercise-3-predicting-hdb-resale-prices-with-geographically-weighted-machine-learning-methods" id="toc-take-home-exercise-3-predicting-hdb-resale-prices-with-geographically-weighted-machine-learning-methods" class="nav-link active" data-scroll-target="#take-home-exercise-3-predicting-hdb-resale-prices-with-geographically-weighted-machine-learning-methods">Take-home Exercise 3: Predicting HDB Resale Prices with Geographically Weighted Machine Learning Methods</a>
+  <li><a href="#take-home-exercise-3-predicting-hdb-resale-prices-with-geographically-weighted-machine-learning-methods" id="toc-take-home-exercise-3-predicting-hdb-resale-prices-with-geographically-weighted-machine-learning-methods" class="nav-link active" data-scroll-target="#take-home-exercise-3-predicting-hdb-resale-prices-with-geographically-weighted-machine-learning-methods"><strong>Take-home Exercise 3: Predicting HDB Resale Prices with Geographically Weighted Machine Learning Methods</strong></a>
   <ul class="collapse">
   <li><a href="#setting-the-scene" id="toc-setting-the-scene" class="nav-link" data-scroll-target="#setting-the-scene">1. Setting the Scene</a></li>
+  <li><a href="#the-task" id="toc-the-task" class="nav-link" data-scroll-target="#the-task">2. The Task</a></li>
+  <li><a href="#the-data" id="toc-the-data" class="nav-link" data-scroll-target="#the-data">3. The Data</a></li>
+  <li><a href="#installing-and-loading-r-packages" id="toc-installing-and-loading-r-packages" class="nav-link" data-scroll-target="#installing-and-loading-r-packages">4. Installing and Loading R packages</a></li>
+  <li><a href="#aspatial-data-wrangling" id="toc-aspatial-data-wrangling" class="nav-link" data-scroll-target="#aspatial-data-wrangling">5. Aspatial Data Wrangling</a>
+  <ul class="collapse">
+  <li><a href="#hdb-resale-prices-data-wrangling" id="toc-hdb-resale-prices-data-wrangling" class="nav-link" data-scroll-target="#hdb-resale-prices-data-wrangling">5.1 HDB Resale Prices Data Wrangling</a></li>
+  <li><a href="#creating-new-variables" id="toc-creating-new-variables" class="nav-link" data-scroll-target="#creating-new-variables">5.1.1 Creating new variables</a></li>
+  <li><a href="#reverse-geocoding-using-one-map-api" id="toc-reverse-geocoding-using-one-map-api" class="nav-link" data-scroll-target="#reverse-geocoding-using-one-map-api">5.1.2 Reverse geocoding using One Map API</a></li>
+  <li><a href="#adding-the-coords-data-to-resale-data-frame-and-removing-unwanted-variables" id="toc-adding-the-coords-data-to-resale-data-frame-and-removing-unwanted-variables" class="nav-link" data-scroll-target="#adding-the-coords-data-to-resale-data-frame-and-removing-unwanted-variables">5.1.3 Adding the coords data to resale data frame and removing unwanted variables</a></li>
+  <li><a href="#recoding-storey_range-and-flat_model-variables" id="toc-recoding-storey_range-and-flat_model-variables" class="nav-link" data-scroll-target="#recoding-storey_range-and-flat_model-variables">5.1.4 Recoding “storey_range” and “flat_model” variables</a></li>
+  <li><a href="#saving-as-a-new-rds-file" id="toc-saving-as-a-new-rds-file" class="nav-link" data-scroll-target="#saving-as-a-new-rds-file">5.1.5 Saving as a new rds file</a></li>
+  <li><a href="#locational-factors-data-wrangling" id="toc-locational-factors-data-wrangling" class="nav-link" data-scroll-target="#locational-factors-data-wrangling">5.2 Locational Factors Data Wrangling</a></li>
+  <li><a href="#locational-factors-with-geographic-coordinates" id="toc-locational-factors-with-geographic-coordinates" class="nav-link" data-scroll-target="#locational-factors-with-geographic-coordinates">5.2.1 Locational factors with geographic coordinates</a></li>
+  <li><a href="#geospatial-data-wrangling" id="toc-geospatial-data-wrangling" class="nav-link" data-scroll-target="#geospatial-data-wrangling">5.3 Geospatial Data Wrangling</a></li>
+  </ul></li>
   </ul></li>
   </ul>
 </nav>
@@ -295,7 +348,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">October 27, 2024</p>
+      <p class="date-modified">November 3, 2024</p>
     </div>
   </div>
     
@@ -307,13 +360,704 @@ ul.task-list li input[type="checkbox"] {
 
 
 <section id="take-home-exercise-3-predicting-hdb-resale-prices-with-geographically-weighted-machine-learning-methods" class="level1">
-<h1>Take-home Exercise 3: Predicting HDB Resale Prices with Geographically Weighted Machine Learning Methods</h1>
+<h1><strong>Take-home Exercise 3: Predicting HDB Resale Prices with Geographically Weighted Machine Learning Methods</strong></h1>
 <section id="setting-the-scene" class="level2">
 <h2 class="anchored" data-anchor-id="setting-the-scene">1. Setting the Scene</h2>
-<p>Housing is a sign of household wealth. Buying housing has always been a major investment for most people and its price is affected by several factors that can be global in nature such as the general economy of a country or inflation rate or specific to the nature of the property.</p>
-<p>Factors can further be divided to structural and locational factors - the former are variables related to the property such as the size, fitting, tenure while the latter are variables related to the neighbourhood of the property such as promitity to childcare services, public transport and shopping centres.</p>
+<p>Housing is a sign of household wealth. Buying housing has always been a major investment for most people and its price is affected by several factors that can be global in nature such as the general economy of a country, inflation rate or ithey can also be factors specific to the nature of the property.</p>
+<p>This can be further divided to structural and locational factors - the former are variables related to the property such as the size, fitting, tenure while the latter are variables related to the neighbourhood of the property such as promitity to childcare services, public transport and shopping centres.</p>
+<p>Conventionally, predictive models for housing resale prices were built by using the Ordinary Least Square (OLS) method. However, this method failed to take into consideration that spatial autocorrelation and spatial heterogeneity exist in geographic data sets such as housing transactions. With the existence of spatial autocorrelation, the OLS estimation of predictive housing resale pricing models could lead to biased, inconsistent, or inefficient results (Anselin 1998). In view of this limitation,&nbsp;<strong>Geographical Weighted Models</strong>&nbsp;were introduced to better calibrate predictive models for housing resale prices.</p>
+</section>
+<section id="the-task" class="level2">
+<h2 class="anchored" data-anchor-id="the-task">2. The Task</h2>
+<p>In this take-home exercise, we will calibrate a predictive model to predict HDB resale prices between July-September 2024 by using HDB resale transaction records in 2023.</p>
+</section>
+<section id="the-data" class="level2">
+<h2 class="anchored" data-anchor-id="the-data">3. The Data</h2>
+<p>The following datasets will be used:</p>
+<ul>
+<li><p><strong>Aspatial Data:</strong></p>
+<ul>
+<li><a href="https://data.gov.sg/datasets/d_8b84c4ee58e3cfc0ece0d773c8ca6abc/view">HDB Resale Flat Prices</a> from <a href="https://data.gov.sg/">Data.gov.sg</a>: A list of HDB resale transacted prices in Singapore from Jan 2017 onwards. In this exercise, our focus will be on 3-room flat types, given the <a href="https://www.asiaone.com/money/more-3-room-resale-flats-change-hands-800k-and-higher-2024">increasing resale price of 3-room HDB flats in recent years.</a></li>
+</ul></li>
+<li><p><strong>Geospatial dataset</strong>:</p>
+<ul>
+<li><p>URA’s Master Plan 2019 Subzone Boundary from <a href="https://data.gov.sg/">Data.gov.sg</a></p></li>
+<li><p>Locational factors with geographic coordinates from <a href="https://data.gov.sg/">Data.gov.sg</a></p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>S/N</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><strong>Eldercare</strong>: List of eldercare in Singapore</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td><strong>Hawker Centre</strong>: List of hawker centres in Singapore</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td><strong>Parks:</strong> List of parks in Singapore</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><strong>Supermarket</strong>: List of supermarkets in Singapore</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td><strong>CHAS clinics</strong>: List of CHAS clinics in Singapore</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td><strong>Childcare service:</strong> List of childcare services in Singapore</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td><strong>Kindergartens</strong>: List of kindergartens in Singapore</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Locational factors with geographic coordinates from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">Datamall.lta.gov.sg</a>:</p>
+<table class="table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 75%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>S/N</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><strong>MRT</strong>&nbsp;data is a list of MRT/LRT stations in Singapore with the station names and codes.</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td><strong>Bus stops</strong>&nbsp;data is a list of bus stops in Singapore</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Locational factors without geographic coordinates from <a href="https://data.gov.sg/">Data.gov.sg</a> and other sources:</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>S/N</th>
+<th>Data</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><strong>Primary school</strong> data is extracted from the list on General information of schools</td>
+<td><a href="https://data.gov.sg/">Data.gov.sg</a></td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td><strong>Good primary schools</strong>&nbsp;is a list of primary schools that are ordered in ranking in terms of popularity</td>
+<td><a href="https://www.salary.sg/2021/best-primary-schools-2021-by-popularity">Local Salary Forum</a></td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td><strong>CBD</strong> coordinates obtained from Google</td>
+<td>Google</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><strong>Shopping malls</strong> data is a list of Shopping malls in Singapore</td>
+<td>obtained from <a href="https://en.wikipedia.org/wiki/List_of_shopping_malls_in_Singapore">Wikipedia</a>.</td>
+</tr>
+</tbody>
+</table></li>
+</ul></li>
+</ul>
+</section>
+<section id="installing-and-loading-r-packages" class="level2">
+<h2 class="anchored" data-anchor-id="installing-and-loading-r-packages">4. Installing and Loading R packages</h2>
+<p>We will install and load the following R packages:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(tidyverse, sf, GWmodel, SpatialML, tmap, rsample, Metrics, httr, jsonlite, rvest, fastDummies)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="aspatial-data-wrangling" class="level2">
+<h2 class="anchored" data-anchor-id="aspatial-data-wrangling">5. Aspatial Data Wrangling</h2>
+<section id="hdb-resale-prices-data-wrangling" class="level3">
+<h3 class="anchored" data-anchor-id="hdb-resale-prices-data-wrangling">5.1 HDB Resale Prices Data Wrangling</h3>
+<p>We will load the HDB Resale Flat Prices data using the code chunk below and we filter the data to (i) retain data from 2023 onwards as the intent of the take-home exercise is to predict HDB resale prices in July to September 2024 using 2023 data and (ii) focus on just 3-room flat types.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>resale <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/hdbresale.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(month <span class="sc">&gt;=</span> <span class="st">"2023-01"</span> <span class="sc">&amp;</span> month <span class="sc">&lt;=</span> <span class="st">"2024-09"</span> <span class="sc">&amp;</span> flat_type <span class="sc">==</span> <span class="st">"3 ROOM"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>A glimpse at the data indicates that there are 11642 observations across 11 variables:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(resale)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 11,642
+Columns: 11
+$ month               &lt;chr&gt; "2023-01", "2023-01", "2023-01", "2023-01", "2023-…
+$ town                &lt;chr&gt; "ANG MO KIO", "ANG MO KIO", "ANG MO KIO", "ANG MO …
+$ flat_type           &lt;chr&gt; "3 ROOM", "3 ROOM", "3 ROOM", "3 ROOM", "3 ROOM", …
+$ block               &lt;chr&gt; "225", "310C", "225", "319", "319", "220", "457", …
+$ street_name         &lt;chr&gt; "ANG MO KIO AVE 1", "ANG MO KIO AVE 1", "ANG MO KI…
+$ storey_range        &lt;chr&gt; "04 TO 06", "25 TO 27", "07 TO 09", "04 TO 06", "0…
+$ floor_area_sqm      &lt;dbl&gt; 67, 70, 67, 73, 73, 67, 89, 68, 75, 74, 75, 67, 74…
+$ flat_model          &lt;chr&gt; "New Generation", "Model A", "New Generation", "Ne…
+$ lease_commence_date &lt;dbl&gt; 1978, 2012, 1978, 1977, 1977, 1977, 1980, 1981, 19…
+$ remaining_lease     &lt;chr&gt; "54 years 01 month", "88 years 09 months", "54 yea…
+$ resale_price        &lt;dbl&gt; 380000, 635000, 380000, 365000, 418000, 380000, 42…</code></pre>
+</div>
+</div>
+</section>
+<section id="creating-new-variables" class="level3">
+<h3 class="anchored" data-anchor-id="creating-new-variables">5.1.1 Creating new variables</h3>
+<p>Based on the output above, we also note that the address of the HDB flats have been split into “block”, “street_name” and has no postal code. To facilitate the development of geographically weighted predictive models, we will need to combine the “block” and “street_name” to form a new field “address” and utilise <a href="https://www.onemap.gov.sg/apidocs/">One Map API</a> to carry out reverse geocoding i.e.&nbsp;to return x, y coordinates for the address that is passed through the system.</p>
+<p>In the code chunk below, we will create “address” as a new field and as we do so, we also split the “remaining_lease” field which is current in the XX years and YY months format to “remaining_lease_yr” and “remaining_lease_mth” respectively before converting the “remaining_lease_yr” to months by multiplying it by 12 and adding on to the “remaining_lease_mth” field to obtain the remaining lease in terms of months:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>resale <span class="ot">&lt;-</span> resale <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">address =</span> <span class="fu">paste</span>(block,street_name)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">remaining_lease_yr =</span> <span class="fu">as.integer</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_sub</span>(remaining_lease, <span class="dv">0</span>, <span class="dv">2</span>)))<span class="sc">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">remaining_lease_mth =</span> <span class="fu">as.integer</span>(</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_sub</span>(remaining_lease, <span class="dv">9</span>, <span class="dv">11</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">remaining_lease_mth =</span> remaining_lease_yr<span class="sc">*</span><span class="dv">12</span> <span class="sc">+</span> remaining_lease_mth)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="reverse-geocoding-using-one-map-api" class="level3">
+<h3 class="anchored" data-anchor-id="reverse-geocoding-using-one-map-api">5.1.2 Reverse geocoding using One Map API</h3>
+<p>To carry reverse geocoding, we will need to create a list of unique addresses from the <em>resale</em> dataset. However, it is important to note that we should not push too much data i.e.&nbsp;10,000 to the system as it will result in a longer lag time before results can be returned. We hence first split the <em>resale</em> data so that we divide the 11642 observations into two:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>resale1 <span class="ot">&lt;-</span> resale <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(month <span class="sc">&lt;=</span> <span class="st">"2023-10"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>resale2 <span class="ot">&lt;-</span> resale <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(month <span class="sc">&gt;</span> <span class="st">"2023-10"</span> <span class="sc">&amp;</span> month <span class="sc">&lt;=</span> <span class="st">"2024-09"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We utilise the <em>resale1</em> and <em>resale2</em> datasets to generate two lists of unique addresses:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>add_list1 <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(resale1<span class="sc">$</span>address))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>add_list2 <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(resale2<span class="sc">$</span>address))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then create a <em>get_coords</em> function below to obtain the x,y coordinates of the addresses:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>get_coords <span class="ot">&lt;-</span> <span class="cf">function</span>(add_list){</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create a data frame to store all retrieved coordinates</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  postal_coords <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> add_list){</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">#print(i)</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> <span class="fu">GET</span>(<span class="st">'https://www.onemap.gov.sg/api/common/elastic/search?'</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">query=</span><span class="fu">list</span>(<span class="at">searchVal=</span>i,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                     <span class="at">returnGeom=</span><span class="st">'Y'</span>,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                     <span class="at">getAddrDetails=</span><span class="st">'Y'</span>))</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    data <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">rawToChar</span>(r<span class="sc">$</span>content))</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    found <span class="ot">&lt;-</span> data<span class="sc">$</span>found</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> data<span class="sc">$</span>results</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Create a new data frame for each address</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    new_row <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If single result, append </span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (found <span class="sc">==</span> <span class="dv">1</span>){</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>      postal <span class="ot">&lt;-</span> res<span class="sc">$</span>POSTAL </span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>      lat <span class="ot">&lt;-</span> res<span class="sc">$</span>LATITUDE</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>      lng <span class="ot">&lt;-</span> res<span class="sc">$</span>LONGITUDE</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>      new_row <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">address=</span> i, </span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>                            <span class="at">postal =</span> postal, </span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>                            <span class="at">latitude =</span> lat, </span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>                            <span class="at">longitude =</span> lng)</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If multiple results, drop NIL and append top 1</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> (found <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Remove those with NIL as postal</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>      res_sub <span class="ot">&lt;-</span> res[res<span class="sc">$</span>POSTAL <span class="sc">!=</span> <span class="st">"NIL"</span>, ]</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Set as NA first if no Postal</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">nrow</span>(res_sub) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>          new_row <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">address=</span> i, </span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>                                <span class="at">postal =</span> <span class="cn">NA</span>, </span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>                                <span class="at">latitude =</span> <span class="cn">NA</span>, </span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>                                <span class="at">longitude =</span> <span class="cn">NA</span>)</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>      <span class="cf">else</span>{</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>        top1 <span class="ot">&lt;-</span> <span class="fu">head</span>(res_sub, <span class="at">n =</span> <span class="dv">1</span>)</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>        postal <span class="ot">&lt;-</span> top1<span class="sc">$</span>POSTAL </span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>        lat <span class="ot">&lt;-</span> top1<span class="sc">$</span>LATITUDE</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>        lng <span class="ot">&lt;-</span> top1<span class="sc">$</span>LONGITUDE</span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>        new_row <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">address=</span> i, </span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>                              <span class="at">postal =</span> postal, </span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>                              <span class="at">latitude =</span> lat, </span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>                              <span class="at">longitude =</span> lng)</span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> {</span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>      new_row <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">address=</span> i, </span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>                            <span class="at">postal =</span> <span class="cn">NA</span>, </span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>                            <span class="at">latitude =</span> <span class="cn">NA</span>, </span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a>                            <span class="at">longitude =</span> <span class="cn">NA</span>)</span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add the row</span></span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>    postal_coords <span class="ot">&lt;-</span> <span class="fu">rbind</span>(postal_coords, new_row)</span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(postal_coords)</span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We obtain the coordinates from the two lists using the code chunk below:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>coords1 <span class="ot">&lt;-</span> <span class="fu">get_coords</span>(add_list1)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>coords2 <span class="ot">&lt;-</span> <span class="fu">get_coords</span>(add_list2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then join both data frames together:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>coords <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(coords1, coords2) <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(postal, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We save the coords as a new rds file and load it into the R environment to avoid re-running the above steps:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(coords, <span class="st">"data/rds/coords.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>coords <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/coords.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="adding-the-coords-data-to-resale-data-frame-and-removing-unwanted-variables" class="level3">
+<h3 class="anchored" data-anchor-id="adding-the-coords-data-to-resale-data-frame-and-removing-unwanted-variables">5.1.3 Adding the coords data to resale data frame and removing unwanted variables</h3>
+<p>We then add the x, y coordinates data to the <em>resale</em> data frame while also just keeping variables that would be needed for further analysis:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>resale_tidy <span class="ot">&lt;-</span> <span class="fu">left_join</span>(resale, coords, <span class="at">by =</span> <span class="st">"address"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(month, storey_range, floor_area_sqm, flat_model, resale_price, remaining_lease_mth, latitude, longitude)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="recoding-storey_range-and-flat_model-variables" class="level3">
+<h3 class="anchored" data-anchor-id="recoding-storey_range-and-flat_model-variables">5.1.4 Recoding “storey_range” and “flat_model” variables</h3>
+<p>We note that the variables “storey_range” and “flat_model” are categorical variables specifically:</p>
+<ul>
+<li><p>“storey_range” is in character format “XX TO YY” i.e.&nbsp;“01 TO 03” up till “40 TO 42”</p></li>
+<li><p>“flat_model” is in character format i.e.&nbsp;“Terrace”, “DBSS”</p></li>
+</ul>
+<p>To faciliate downstream regression analysis, we will need to recode these categorical variables. We carry out label encoding by first converting the variables into factors and subsequently as integers:</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">“storey_range”</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">“flat_model”</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(resale_tidy,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> storey_range))<span class="sc">+</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">fill =</span> <span class="st">"skyblue"</span>)<span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Distribution of storey range"</span>)<span class="sc">+</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex03_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>resale_tidy<span class="sc">$</span>storey_range <span class="ot">&lt;-</span>  <span class="fu">as.integer</span>(<span class="fu">factor</span>(resale_tidy<span class="sc">$</span>storey_range))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We note that this labels “01 TO 03” as 1, so on and so forth such that “40 TO 42” is labelled as 14.</p>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(resale_tidy,</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> flat_model))<span class="sc">+</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">fill =</span> <span class="st">"lightyellow"</span>)<span class="sc">+</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Distribution of flat model"</span>)<span class="sc">+</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex03_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>resale_tidy<span class="sc">$</span>flat_model <span class="ot">&lt;-</span>  <span class="fu">as.integer</span>(<span class="fu">factor</span>(resale_tidy<span class="sc">$</span>flat_model))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We note that this labels the flat model types as follows:</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Flat Model</th>
+<th>Label</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>DBSS</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>Improved</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td>Model A</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td>New Generation</td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>Premium Apartment</td>
+<td>5</td>
+</tr>
+<tr class="even">
+<td>Simplified</td>
+<td>6</td>
+</tr>
+<tr class="odd">
+<td>Standard</td>
+<td>7</td>
+</tr>
+<tr class="even">
+<td>Terrace</td>
+<td>8</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="saving-as-a-new-rds-file" class="level3">
+<h3 class="anchored" data-anchor-id="saving-as-a-new-rds-file">5.1.5 Saving as a new rds file</h3>
+<p>We save the output as a new rds file and load it into the R environment:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(resale_tidy,<span class="st">"data/rds/resale_tidy.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>resale_tidy <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/resale_tidy.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="locational-factors-data-wrangling" class="level3">
+<h3 class="anchored" data-anchor-id="locational-factors-data-wrangling">5.2 Locational Factors Data Wrangling</h3>
+<p>As seen in <a href="#the-data">3. The Data</a>, we will utilise several locational data for this take-home exercise - some with geographic coordinates and some without. For the latter, we will need to run a similar reverse geocoding step as that in <a href="#reverse-geocoding-using-one-map-api">5.1.2 Reverse geocoding using One Map API</a> to obtain the x, y coordinates of the locational factors.</p>
+<p>We will first import the locational factors data into the R environment:</p>
+</section>
+<section id="locational-factors-with-geographic-coordinates" class="level3">
+<h3 class="anchored" data-anchor-id="locational-factors-with-geographic-coordinates">5.2.1 Locational factors with geographic coordinates</h3>
+<ul>
+<li><p>Note that for this group of factors, we will also apply the <code>st_transform()</code> function to ensure that the EPSG code is 3414.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Eldercare</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">Hawker Centre</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Parks</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-4" role="tab" aria-controls="tabset-2-4" aria-selected="false">Supermarkets</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-5" role="tab" aria-controls="tabset-2-5" aria-selected="false">CHAS Clinics</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-6" role="tab" aria-controls="tabset-2-6" aria-selected="false">Childcare Services</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-7-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-7" role="tab" aria-controls="tabset-2-7" aria-selected="false">Kindergartens</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-8-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-8" role="tab" aria-controls="tabset-2-8" aria-selected="false">MRT</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-9-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-9" role="tab" aria-controls="tabset-2-9" aria-selected="false">Bus Stops</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>eldercare <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">layer =</span> <span class="st">"ELDERCARE"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `ELDERCARE' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 133 features and 18 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: 14481.92 ymin: 28218.43 xmax: 41665.14 ymax: 46804.9
+Projected CRS: SVY21</code></pre>
+</div>
+</div>
+<p>We note that the <em>eldercare</em> sf has a point geometry.</p>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>hawker <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/HawkerCentresGEOJSON.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `HawkerCentresGEOJSON' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\HawkerCentresGEOJSON.geojson' 
+  using driver `GeoJSON'
+Simple feature collection with 125 features and 2 fields
+Geometry type: POINT
+Dimension:     XYZ
+Bounding box:  xmin: 103.6974 ymin: 1.272716 xmax: 103.9882 ymax: 1.449017
+z_range:       zmin: 0 zmax: 0
+Geodetic CRS:  WGS 84</code></pre>
+</div>
+</div>
+<p>We note that the <em>hawker</em> sf object has a point geometry.</p>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>parks <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/Parks.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `Parks' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\Parks.geojson' 
+  using driver `GeoJSON'
+Simple feature collection with 430 features and 2 fields
+Geometry type: POINT
+Dimension:     XYZ
+Bounding box:  xmin: 103.6929 ymin: 1.214491 xmax: 104.0538 ymax: 1.462094
+z_range:       zmin: 0 zmax: 0
+Geodetic CRS:  WGS 84</code></pre>
+</div>
+</div>
+<p>We note that the <em>parks</em> sf object has a point geometry.</p>
+</div>
+<div id="tabset-2-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-4-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>supermarkets <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/SupermarketsGEOJSON.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `SupermarketsGEOJSON' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\SupermarketsGEOJSON.geojson' 
+  using driver `GeoJSON'
+Simple feature collection with 526 features and 2 fields
+Geometry type: POINT
+Dimension:     XYZ
+Bounding box:  xmin: 103.6258 ymin: 1.24715 xmax: 104.0036 ymax: 1.461526
+z_range:       zmin: 0 zmax: 0
+Geodetic CRS:  WGS 84</code></pre>
+</div>
+</div>
+<p>We note that the <em>supermarkets</em> sf object has a point geometry.</p>
+</div>
+<div id="tabset-2-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-5-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>chas <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/CHASClinics.geojson"</span>)<span class="sc">%&gt;%</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `CHASClinics' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\CHASClinics.geojson' 
+  using driver `GeoJSON'
+Simple feature collection with 1193 features and 2 fields
+Geometry type: POINT
+Dimension:     XYZ
+Bounding box:  xmin: 103.5818 ymin: 1.016264 xmax: 103.9903 ymax: 1.456037
+z_range:       zmin: 0 zmax: 0
+Geodetic CRS:  WGS 84</code></pre>
+</div>
+</div>
+<p>We note that the <em>chas</em> sf object has a point geometry.</p>
+</div>
+<div id="tabset-2-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-6-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>childcare <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/ChildCareServices.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `ChildCareServices' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\ChildCareServices.geojson' 
+  using driver `GeoJSON'
+Simple feature collection with 1925 features and 2 fields
+Geometry type: POINT
+Dimension:     XYZ
+Bounding box:  xmin: 103.6878 ymin: 1.247759 xmax: 103.9897 ymax: 1.462134
+z_range:       zmin: 0 zmax: 0
+Geodetic CRS:  WGS 84</code></pre>
+</div>
+</div>
+<p>We note that the <em>childcare</em> sf object has a point geometry.</p>
+</div>
+<div id="tabset-2-7" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-7-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>kindergartens <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/Kindergartens.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `Kindergartens' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\Kindergartens.geojson' 
+  using driver `GeoJSON'
+Simple feature collection with 448 features and 2 fields
+Geometry type: POINT
+Dimension:     XYZ
+Bounding box:  xmin: 103.6887 ymin: 1.247759 xmax: 103.9717 ymax: 1.455452
+z_range:       zmin: 0 zmax: 0
+Geodetic CRS:  WGS 84</code></pre>
+</div>
+</div>
+<p>We note that the <em>kindergartens</em> sf object has a point geometry.</p>
+</div>
+<div id="tabset-2-8" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-8-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>mrt <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial"</span>,</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="at">layer =</span> <span class="st">"RapidTransitSystemStation"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `RapidTransitSystemStation' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 230 features and 5 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: 6068.209 ymin: 27478.44 xmax: 45377.5 ymax: 47913.58
+Projected CRS: SVY21</code></pre>
+</div>
+</div>
+<p>We note that the <em>mrt</em> sf object has a polygon geometry.</p>
+</div>
+<div id="tabset-2-9" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-9-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>busstop <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial"</span>,</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="at">layer =</span> <span class="st">"BusStop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `BusStop' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 5166 features and 3 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: 3970.122 ymin: 26482.1 xmax: 48285.52 ymax: 52983.82
+Projected CRS: SVY21</code></pre>
+</div>
+</div>
+<p>We note that the <em>busstops</em> sf object has a point geometry.</p>
+</div>
+</div>
+</div>
+<h3 id="locational-factors-without-geographic-coordinates" class="anchored">5.2.2 Locational factors without geographic coordinates</h3></li>
+</ul>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Primary school</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">Good primary school</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">CBD</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-4" role="tab" aria-controls="tabset-3-4" aria-selected="false">Shopping malls</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<p>To obtain primary school data, we download the csv file on <a href="https://data.gov.sg/collections/457/view">“General Information of schools”</a> from Data.gov.sg. We then filter the data to just primary schools and postal code for the purpose of carrying out reverse geocoding in the subsequent step. Note that in this case we have also converted the postal codes for three primary schools, namely Cantonment Primary School, CHIJ Kellock and Radin Mas Primary School as an initial trial of drawing the x, y coordinates from the postal codes yielded NA x,y coordinates for these three schools. This was due to the missing zero in front of the postal codes in the original dataset.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>schools <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/schools.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(mainlevel_code <span class="sc">==</span> <span class="st">"PRIMARY"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(school_name,postal_code) <span class="sc">%&gt;%</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">postal_code =</span> <span class="fu">case_when</span>(</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"88256"</span> <span class="sc">~</span> <span class="st">"088256"</span>,</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"99757"</span> <span class="sc">~</span> <span class="st">"099757"</span>,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"99840"</span> <span class="sc">~</span> <span class="st">"099840"</span>,</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(postal_code)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then generate a unique list of postal codes from the <em>schools</em> data frame:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>add_list <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(schools<span class="sc">$</span>postal_code))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then apply the <em>get_coords</em> function to obtain the x, y coordinates and save it as a new rds file to avoid re-running the process:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>coords_sch <span class="ot">&lt;-</span> <span class="fu">get_coords</span>(add_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(coords_sch, <span class="st">"data/rds/coords_sch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>coords_sch <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/coords_sch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then <code>left_join()</code> the <em>schools</em> data frame with <em>coords_sch:</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>prisch <span class="ot">&lt;-</span> <span class="fu">left_join</span>(schools, coords_sch, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"postal_code"</span> <span class="ot">=</span> <span class="st">"postal"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="sc">-</span>address))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We save the output as a new rds file:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(prisch, <span class="st">"data/rds/prisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>prisch <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/prisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+
+</div>
+<div id="tabset-3-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-4-tab">
+
+</div>
+</div>
+</div>
+</section>
+<section id="geospatial-data-wrangling" class="level3">
+<h3 class="anchored" data-anchor-id="geospatial-data-wrangling">5.3 Geospatial Data Wrangling</h3>
+<p>We will load the Master Plan 2019 Subzone Boundary data using the code chunk below, note that we also apply <code>st_transform()</code> to ensure that the data file has the right EPSG code 3414 which is the projected coordinate system for Singapore:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>mpsz <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">layer =</span> <span class="st">"MPSZ-2019"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `MPSZ-2019' from data source 
+  `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 332 features and 6 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 103.6057 ymin: 1.158699 xmax: 104.0885 ymax: 1.470775
+Geodetic CRS:  WGS 84</code></pre>
+</div>
+</div>
+<p>We check if the EPSG code has been correctly transformed using the code chunk below:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">st_crs</span>(mpsz)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Coordinate Reference System:
+  User input: EPSG:3414 
+  wkt:
+PROJCRS["SVY21 / Singapore TM",
+    BASEGEOGCRS["SVY21",
+        DATUM["SVY21",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]],
+        ID["EPSG",4757]],
+    CONVERSION["Singapore Transverse Mercator",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",1.36666666666667,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",103.833333333333,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",1,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",28001.642,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",38744.572,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["northing (N)",north,
+            ORDER[1],
+            LENGTHUNIT["metre",1]],
+        AXIS["easting (E)",east,
+            ORDER[2],
+            LENGTHUNIT["metre",1]],
+    USAGE[
+        SCOPE["Cadastre, engineering survey, topographic mapping."],
+        AREA["Singapore - onshore and offshore."],
+        BBOX[1.13,103.59,1.47,104.07]],
+    ID["EPSG",3414]]</code></pre>
+</div>
+</div>
+<p>We note that the <em>mpsz</em> has a multipolygon geometry.</p>
+<ul>
+<li><p>Structural factors</p>
+<ul>
+<li><p>Area of the unit</p></li>
+<li><p>Floor level</p></li>
+<li><p>Remaining lease</p></li>
+<li><p>Age of the unit</p></li>
+<li><p>Main Upgrading Program (MUP) completed (optional)</p></li>
+</ul></li>
+</ul>
 
 
+</section>
 </section>
 </section>
 
