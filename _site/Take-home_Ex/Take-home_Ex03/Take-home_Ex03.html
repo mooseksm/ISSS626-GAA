@@ -306,11 +306,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#reverse-geocoding-using-one-map-api" id="toc-reverse-geocoding-using-one-map-api" class="nav-link" data-scroll-target="#reverse-geocoding-using-one-map-api">5.1.2 Reverse geocoding using One Map API</a></li>
   <li><a href="#adding-the-coords-data-to-resale-data-frame-and-removing-unwanted-variables" id="toc-adding-the-coords-data-to-resale-data-frame-and-removing-unwanted-variables" class="nav-link" data-scroll-target="#adding-the-coords-data-to-resale-data-frame-and-removing-unwanted-variables">5.1.3 Adding the coords data to resale data frame and removing unwanted variables</a></li>
   <li><a href="#recoding-storey_range-and-flat_model-variables" id="toc-recoding-storey_range-and-flat_model-variables" class="nav-link" data-scroll-target="#recoding-storey_range-and-flat_model-variables">5.1.4 Recoding “storey_range” and “flat_model” variables</a></li>
+  <li><a href="#jittering" id="toc-jittering" class="nav-link" data-scroll-target="#jittering">5.1.5 Jittering</a></li>
   <li><a href="#saving-as-a-new-rds-file" id="toc-saving-as-a-new-rds-file" class="nav-link" data-scroll-target="#saving-as-a-new-rds-file">5.1.5 Saving as a new rds file</a></li>
   <li><a href="#locational-factors-data-wrangling" id="toc-locational-factors-data-wrangling" class="nav-link" data-scroll-target="#locational-factors-data-wrangling">5.2 Locational Factors Data Wrangling</a></li>
   <li><a href="#locational-factors-with-geographic-coordinates" id="toc-locational-factors-with-geographic-coordinates" class="nav-link" data-scroll-target="#locational-factors-with-geographic-coordinates">5.2.1 Locational factors with geographic coordinates</a></li>
   <li><a href="#geospatial-data-wrangling" id="toc-geospatial-data-wrangling" class="nav-link" data-scroll-target="#geospatial-data-wrangling">5.3 Geospatial Data Wrangling</a></li>
   </ul></li>
+  <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps">Next steps</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -424,8 +426,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>Locational factors with geographic coordinates from <a href="https://datamall.lta.gov.sg/content/datamall/en.html">Datamall.lta.gov.sg</a>:</p>
 <table class="table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 75%">
+<col style="width: 26%">
+<col style="width: 73%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -461,8 +463,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>2</td>
-<td><strong>Good primary schools</strong>&nbsp;is a list of primary schools that are ordered in ranking in terms of popularity</td>
-<td><a href="https://www.salary.sg/2021/best-primary-schools-2021-by-popularity">Local Salary Forum</a></td>
+<td><strong>Good primary schools</strong>&nbsp;is a list of primary schools that are ordered in ranking in terms of popularity for year 2024</td>
+<td><a href="https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/">Local Salary Forum</a></td>
 </tr>
 <tr class="odd">
 <td>3</td>
@@ -526,7 +528,8 @@ $ resale_price        &lt;dbl&gt; 380000, 635000, 380000, 365000, 418000, 380000
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_sub</span>(remaining_lease, <span class="dv">0</span>, <span class="dv">2</span>)))<span class="sc">%&gt;%</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">remaining_lease_mth =</span> <span class="fu">as.integer</span>(</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_sub</span>(remaining_lease, <span class="dv">9</span>, <span class="dv">11</span>))) <span class="sc">%&gt;%</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">remaining_lease_mth =</span> remaining_lease_yr<span class="sc">*</span><span class="dv">12</span> <span class="sc">+</span> remaining_lease_mth)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">remaining_lease_mth =</span> remaining_lease_yr<span class="sc">*</span><span class="dv">12</span> <span class="sc">+</span> remaining_lease_mth) <span class="sc">%&gt;%</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age =</span> <span class="dv">2024</span> <span class="sc">-</span> lease_commence_date)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="reverse-geocoding-using-one-map-api" class="level3">
@@ -637,7 +640,7 @@ $ resale_price        &lt;dbl&gt; 380000, 635000, 380000, 365000, 418000, 380000
 <p>We then add the x, y coordinates data to the <em>resale</em> data frame while also just keeping variables that would be needed for further analysis:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>resale_tidy <span class="ot">&lt;-</span> <span class="fu">left_join</span>(resale, coords, <span class="at">by =</span> <span class="st">"address"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(month, storey_range, floor_area_sqm, flat_model, resale_price, remaining_lease_mth, latitude, longitude)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(month, storey_range, floor_area_sqm, flat_model, resale_price, remaining_lease_mth, age, latitude, longitude)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="recoding-storey_range-and-flat_model-variables" class="level3">
@@ -736,14 +739,27 @@ $ resale_price        &lt;dbl&gt; 380000, 635000, 380000, 365000, 418000, 380000
 </div>
 </div>
 </section>
+<section id="jittering" class="level3">
+<h3 class="anchored" data-anchor-id="jittering">5.1.5 Jittering</h3>
+<p>We convert the <em>resale_tidy</em> data frame into a simple features data object and apply <code>st_transform()</code> to change the EPSG code to 3414:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>resale_tidy <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(resale_tidy, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>), <span class="at">crs =</span> <span class="dv">4326</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then apply <code>st_jitter()</code> as HDB units can share the same postal code:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>resale_tidy <span class="ot">&lt;-</span> resale_tidy <span class="sc">%&gt;%</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_jitter</span>(<span class="at">amount =</span> .<span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 <section id="saving-as-a-new-rds-file" class="level3">
 <h3 class="anchored" data-anchor-id="saving-as-a-new-rds-file">5.1.5 Saving as a new rds file</h3>
 <p>We save the output as a new rds file and load it into the R environment:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(resale_tidy,<span class="st">"data/rds/resale_tidy.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(resale_tidy,<span class="st">"data/rds/resale_tidy.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>resale_tidy <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/resale_tidy.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>resale_tidy <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/resale_tidy.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="locational-factors-data-wrangling" class="level3">
@@ -760,9 +776,9 @@ $ resale_price        &lt;dbl&gt; 380000, 635000, 380000, 365000, 418000, 380000
 <div class="tab-content">
 <div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>eldercare <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">layer =</span> <span class="st">"ELDERCARE"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>eldercare <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">layer =</span> <span class="st">"ELDERCARE"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `ELDERCARE' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial' 
@@ -778,8 +794,8 @@ Projected CRS: SVY21</code></pre>
 </div>
 <div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>hawker <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/HawkerCentresGEOJSON.geojson"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>hawker <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/HawkerCentresGEOJSON.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `HawkerCentresGEOJSON' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\HawkerCentresGEOJSON.geojson' 
@@ -796,8 +812,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>parks <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/Parks.geojson"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>parks <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/Parks.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `Parks' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\Parks.geojson' 
@@ -814,8 +830,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <div id="tabset-2-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-4-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>supermarkets <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/SupermarketsGEOJSON.geojson"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>supermarkets <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/SupermarketsGEOJSON.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `SupermarketsGEOJSON' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\SupermarketsGEOJSON.geojson' 
@@ -832,8 +848,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <div id="tabset-2-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-5-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>chas <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/CHASClinics.geojson"</span>)<span class="sc">%&gt;%</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>chas <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/CHASClinics.geojson"</span>)<span class="sc">%&gt;%</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `CHASClinics' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\CHASClinics.geojson' 
@@ -850,8 +866,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <div id="tabset-2-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-6-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>childcare <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/ChildCareServices.geojson"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>childcare <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/ChildCareServices.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `ChildCareServices' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\ChildCareServices.geojson' 
@@ -868,8 +884,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <div id="tabset-2-7" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-7-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>kindergartens <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/Kindergartens.geojson"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>kindergartens <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/Kindergartens.geojson"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `Kindergartens' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial\Kindergartens.geojson' 
@@ -886,9 +902,9 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <div id="tabset-2-8" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-8-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>mrt <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial"</span>,</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="at">layer =</span> <span class="st">"RapidTransitSystemStation"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>mrt <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial"</span>,</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="at">layer =</span> <span class="st">"RapidTransitSystemStation"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `RapidTransitSystemStation' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial' 
@@ -904,9 +920,9 @@ Projected CRS: SVY21</code></pre>
 </div>
 <div id="tabset-2-9" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-9-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>busstop <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial"</span>,</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="at">layer =</span> <span class="st">"BusStop"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>busstop <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial"</span>,</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="at">layer =</span> <span class="st">"BusStop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `BusStop' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial' 
@@ -928,53 +944,165 @@ Projected CRS: SVY21</code></pre>
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Primary school</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">Good primary school</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">CBD</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-4" role="tab" aria-controls="tabset-3-4" aria-selected="false">Shopping malls</a></li></ul>
 <div class="tab-content">
 <div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
-<p>To obtain primary school data, we download the csv file on <a href="https://data.gov.sg/collections/457/view">“General Information of schools”</a> from Data.gov.sg. We then filter the data to just primary schools and postal code for the purpose of carrying out reverse geocoding in the subsequent step. Note that in this case we have also converted the postal codes for three primary schools, namely Cantonment Primary School, CHIJ Kellock and Radin Mas Primary School as an initial trial of drawing the x, y coordinates from the postal codes yielded NA x,y coordinates for these three schools. This was due to the missing zero in front of the postal codes in the original dataset.</p>
+<p>To obtain primary school data, we download the csv file on <a href="https://data.gov.sg/collections/457/view">“General Information of schools”</a> from Data.gov.sg. We then filter the data to primary and mixed levels schools, noting that there are schools that comprise both primary and secondary levels under the same name. In this step, we filter out schools that are a mix of secondary and tertiary levels i.e.&nbsp;Temasek Junior College.</p>
+<p>Further, we retain the postal code field for the purpose of carrying out reverse geocoding in the subsequent step. Note that in this case we have also converted the postal codes for three primary schools, namely Cantonment Primary School, CHIJ Kellock and Radin Mas Primary School as an initial trial of drawing the x, y coordinates from the postal codes yielded NA x,y coordinates for these three schools. This was due to the missing zero in front of the postal codes in the original dataset.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>schools <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/schools.csv"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(mainlevel_code <span class="sc">==</span> <span class="st">"PRIMARY"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(school_name,postal_code) <span class="sc">%&gt;%</span></span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">postal_code =</span> <span class="fu">case_when</span>(</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"88256"</span> <span class="sc">~</span> <span class="st">"088256"</span>,</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"99757"</span> <span class="sc">~</span> <span class="st">"099757"</span>,</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"99840"</span> <span class="sc">~</span> <span class="st">"099840"</span>,</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(postal_code)</span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>allschools <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/schools.csv"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>prisch <span class="ot">&lt;-</span> allschools <span class="sc">%&gt;%</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(mainlevel_code <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"PRIMARY"</span>,<span class="st">"MIXED LEVELS"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>school_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"TEMASEK JUNIOR COLLEGE"</span>,<span class="st">"SINGAPORE SPORTS SCHOOL"</span>,<span class="st">"SCHOOL OF THE ARTS, SINGAPORE"</span>,<span class="st">"RIVER VALLEY HIGH SCHOOL</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>,<span class="st">"RAFFLES INSTITUTION"</span>,<span class="st">"NUS HIGH SCHOOL OF MATHEMATICS AND SCIENCE</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>,<span class="st">"NATIONAL JUNIOR COLLEGE</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>,<span class="st">"HWA CHONG INSTITUTION</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>,<span class="st">"ANGLO-CHINESE SCHOOL (INDEPENDENT)"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(school_name,postal_code) <span class="sc">%&gt;%</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">postal_code =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"88256"</span> <span class="sc">~</span> <span class="st">"088256"</span>,</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"99757"</span> <span class="sc">~</span> <span class="st">"099757"</span>,</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>    postal_code <span class="sc">==</span> <span class="st">"99840"</span> <span class="sc">~</span> <span class="st">"099840"</span>,</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(postal_code)</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We then generate a unique list of postal codes from the <em>schools</em> data frame:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>add_list <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(schools<span class="sc">$</span>postal_code))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>add_list <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(prisch<span class="sc">$</span>postal_code))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We then apply the <em>get_coords</em> function to obtain the x, y coordinates and save it as a new rds file to avoid re-running the process:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>coords_sch <span class="ot">&lt;-</span> <span class="fu">get_coords</span>(add_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>coords_sch <span class="ot">&lt;-</span> <span class="fu">get_coords</span>(add_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(coords_sch, <span class="st">"data/rds/coords_sch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(coords_sch, <span class="st">"data/rds/coords_sch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>coords_sch <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/coords_sch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>coords_sch <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/coords_sch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We then <code>left_join()</code> the <em>schools</em> data frame with <em>coords_sch:</em></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>prisch <span class="ot">&lt;-</span> <span class="fu">left_join</span>(schools, coords_sch, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"postal_code"</span> <span class="ot">=</span> <span class="st">"postal"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="sc">-</span>address))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>prisch <span class="ot">&lt;-</span> <span class="fu">left_join</span>(prisch, coords_sch, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"postal_code"</span> <span class="ot">=</span> <span class="st">"postal"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="sc">-</span>address))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We save the output as a new rds file:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(prisch, <span class="st">"data/rds/prisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(prisch, <span class="st">"data/rds/prisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>prisch <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/prisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>prisch <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/prisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
-
+<p>The <a href="https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/">Salary.sg</a> forum ranks all 180 primary schools in Singapore. To study how the proximity of good primary schools to HDB will affect resale prices, we will extract and focus on the top 20% primary schools (36 out of 180) for this locational factor:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>goodprisch <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/goodprisch.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">school =</span> <span class="fu">toupper</span>(school)) <span class="sc">%&gt;%</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  .[<span class="dv">1</span><span class="sc">:</span><span class="dv">36</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>As there are only the names of the primary school, we will need to obtain their x, y coordinates by doing a <code>left_join</code> with <em>prisch</em> data frame that was earlier imported.</p>
+<p>However, before we do so, we note that there could be a mix of curly and straight apostrophes in school names which could create issues when we do a <code>left_join()</code>. We hence standardize the apostrophes to a straight one using the code chunk below:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>goodprisch <span class="ot">&lt;-</span> goodprisch <span class="sc">%&gt;%</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">school =</span> <span class="fu">trimws</span>(<span class="fu">gsub</span>(<span class="st">"['’]"</span>, <span class="st">"'"</span>, school)))</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>prisch <span class="ot">&lt;-</span> prisch <span class="sc">%&gt;%</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">school_name =</span> <span class="fu">trimws</span>(<span class="fu">gsub</span>(<span class="st">"['’]"</span>, <span class="st">"'"</span>, school_name)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then do a <code>left_join()</code> however we manually input the postal codes for four schools for which the namings slightly differ between both data frames:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>goodprisch <span class="ot">&lt;-</span> <span class="fu">left_join</span>(goodprisch, prisch, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"school"</span> <span class="ot">=</span> <span class="st">"school_name"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(school,postal_code) <span class="sc">%&gt;%</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">postal_code =</span> <span class="fu">case_when</span>(</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    school <span class="sc">==</span> <span class="st">"CHIJ ST. NICHOLAS GIRLS'"</span> <span class="sc">~</span> <span class="st">"569405"</span>,</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>    school <span class="sc">==</span> <span class="st">"SINGAPORE CHINESE GIRLS"</span> <span class="sc">~</span> <span class="st">"309437"</span>,</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>    school <span class="sc">==</span> <span class="st">"KUO CHUAN PRESBYTERIAN PRIMARY"</span> <span class="sc">~</span> <span class="st">"579793"</span>,</span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>    school <span class="sc">==</span> <span class="st">"PEI HWA PRESBYTERIAN PRIMARY"</span> <span class="sc">~</span> <span class="st">"597610"</span>,</span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(postal_code)</span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>  ),<span class="at">postal_code =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(postal_code), <span class="st">"309437"</span>, postal_code))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Note that the last line of code above was added as there was difficulty in indicating that the postal code for SINGAPORE CHINESE GIRLS was 309437. As it was the only NA entry after the postal codes had been adjusted, a last line was used to manually make the postal code for the school 309437.</p>
+</div>
+</div>
+<p>We then generate a unique list of postal codes from the <em>goodprisch</em> data frame:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>add_list <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(goodprisch<span class="sc">$</span>postal_code))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then apply the <em>get_coords</em> function to obtain the x, y coordinates and save it as a new rds file to avoid re-running the process:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>coords_goodprisch <span class="ot">&lt;-</span> <span class="fu">get_coords</span>(add_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(coords_goodprisch, <span class="st">"data/rds/coords_goodprisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>coords_goodprisch <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/coords_goodprisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then <code>left_join()</code> the <em>goodprisch</em> data frame with <em>coords_goodprisch:</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>goodprisch <span class="ot">&lt;-</span> <span class="fu">left_join</span>(goodprisch, coords_goodprisch, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"postal_code"</span> <span class="ot">=</span> <span class="st">"postal"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="sc">-</span>address))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We save the output as a new rds file:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(goodprisch, <span class="st">"data/rds/goodprisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>goodprisch <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/goodprisch.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </div>
 <div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
-
+<p>We obtain the coordinates of Singapore’s CBD via Google. Based on this <a href="https://www.findlatitudeandlongitude.com/l/central+business+district%2C+singapore/424476/">site</a>, the latitude and longitude are 1.352083, 103.819836:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>cbd <span class="ot">&lt;-</span> <span class="fu">st_sfc</span>(<span class="fu">st_point</span>(<span class="fu">c</span>(<span class="fl">103.819836</span>, <span class="fl">1.352083</span>)), <span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We save this as a new rds file:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(cbd, <span class="st">"data/rds/cbd.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>cbd <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/cbd.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </div>
 <div id="tabset-3-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-4-tab">
-
+<p>A list of shopping malls was generated with reference to <a href="https://en.wikipedia.org/wiki/List_of_shopping_malls_in_Singapore">Wikipedia</a>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>shoppingmall <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/shopping_mall.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>To ensure that there are no duplicates, we generate a unique list using the code chunk below:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>add_list <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(shoppingmall<span class="sc">$</span>shopping_mall))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>As we only have the shopping mall names, we need to apply the <em>get_coords</em> function to obtain the x, y coordinates and save it as a new rds file to avoid re-running the process:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>coords_mall <span class="ot">&lt;-</span> <span class="fu">get_coords</span>(add_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(coords_mall, <span class="st">"data/rds/coords_mall.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>coords_mall <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/coords_mall.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then <code>left_join()</code> the <em>shoppingmall</em> data frame with <em>coords_mall:</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>shoppingmall <span class="ot">&lt;-</span> <span class="fu">left_join</span>(shoppingmall, coords_mall, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"shopping_mall"</span> <span class="ot">=</span> <span class="st">"address"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We save the output as a new rds file:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(shoppingmall, <span class="st">"data/rds/shoppingmall.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>shoppingmall <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/rds/shoppingmall.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </div>
 </div>
 </div>
@@ -983,9 +1111,9 @@ Projected CRS: SVY21</code></pre>
 <h3 class="anchored" data-anchor-id="geospatial-data-wrangling">5.3 Geospatial Data Wrangling</h3>
 <p>We will load the Master Plan 2019 Subzone Boundary data using the code chunk below, note that we also apply <code>st_transform()</code> to ensure that the data file has the right EPSG code 3414 which is the projected coordinate system for Singapore:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>mpsz <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">layer =</span> <span class="st">"MPSZ-2019"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>mpsz <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>,</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">layer =</span> <span class="st">"MPSZ-2019"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">3414</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `MPSZ-2019' from data source 
   `C:\mooseksm\ISSS626-GAA\Take-home_Ex\Take-home_Ex03\data\geospatial' 
@@ -999,7 +1127,7 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <p>We check if the EPSG code has been correctly transformed using the code chunk below:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">st_crs</span>(mpsz)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">st_crs</span>(mpsz)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Coordinate Reference System:
   User input: EPSG:3414 
@@ -1045,19 +1173,45 @@ PROJCRS["SVY21 / Singapore TM",
 </div>
 </div>
 <p>We note that the <em>mpsz</em> has a multipolygon geometry.</p>
+</section>
+</section>
+<section id="next-steps" class="level2">
+<h2 class="anchored" data-anchor-id="next-steps">Next steps</h2>
 <ul>
-<li><p>Structural factors</p>
+<li><p>Locational factors</p>
 <ul>
-<li><p>Area of the unit</p></li>
-<li><p>Floor level</p></li>
-<li><p>Remaining lease</p></li>
-<li><p>Age of the unit</p></li>
-<li><p>Main Upgrading Program (MUP) completed (optional)</p></li>
+<li><p>Use st_distance() or function in sf package</p>
+<ul>
+<li><p>Proximity to CBD</p></li>
+<li><p>Proximity to eldercare</p></li>
+<li><p>Proximity to foodcourt/hawker centres</p></li>
+<li><p>Proximity to MRT</p></li>
+<li><p>Proximity to park</p></li>
+<li><p>Proximity to good primary school</p></li>
+<li><p>Proximity to shopping mall</p></li>
+<li><p>Proximity to supermarket</p></li>
+</ul></li>
+<li><p>Generate a buffer from HDB and use point-in-geometry</p>
+<ul>
+<li><p>Numbers of kindergartens within 350m</p></li>
+<li><p>Numbers of childcare centres within 350m</p></li>
+<li><p>Numbers of bus stop within 350m</p></li>
+<li><p>Numbers of primary school within 1km</p></li>
+</ul></li>
+</ul></li>
+</ul>
+<!-- -->
+<ul>
+<li><p>Structural factors (done)</p>
+<ul>
+<li><p>“floor_area_sqm”: Area of the unit</p></li>
+<li><p>“storey_range”: Floor level</p></li>
+<li><p>“remaining_lease_mth”: Remaining lease</p></li>
+<li><p>“age”: Age of the unit</p></li>
 </ul></li>
 </ul>
 
 
-</section>
 </section>
 </section>
 
