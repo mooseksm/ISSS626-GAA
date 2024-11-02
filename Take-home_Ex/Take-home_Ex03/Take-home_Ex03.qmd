@@ -12,10 +12,485 @@ execute:
   message: false
 ---
 
-# Take-home Exercise 3: Predicting HDB Resale Prices with Geographically Weighted Machine Learning Methods
+# **Take-home Exercise 3: Predicting HDB Resale Prices with Geographically Weighted Machine Learning Methods**
 
 ## 1. Setting the Scene
 
-Housing is a sign of household wealth. Buying housing has always been a major investment for most people and its price is affected by several factors that can be global in nature such as the general economy of a country or inflation rate or specific to the nature of the property.
+Housing is a sign of household wealth. Buying housing has always been a major investment for most people and its price is affected by several factors that can be global in nature such as the general economy of a country, inflation rate or ithey can also be factors specific to the nature of the property.
 
-Factors can further be divided to structural and locational factors - the former are variables related to the property such as the size, fitting, tenure while the latter are variables related to the neighbourhood of the property such as promitity to childcare services, public transport and shopping centres.
+This can be further divided to structural and locational factors - the former are variables related to the property such as the size, fitting, tenure while the latter are variables related to the neighbourhood of the property such as promitity to childcare services, public transport and shopping centres.
+
+Conventionally, predictive models for housing resale prices were built by using the Ordinary Least Square (OLS) method. However, this method failed to take into consideration that spatial autocorrelation and spatial heterogeneity exist in geographic data sets such as housing transactions. With the existence of spatial autocorrelation, the OLS estimation of predictive housing resale pricing models could lead to biased, inconsistent, or inefficient results (Anselin 1998). In view of this limitation, **Geographical Weighted Models** were introduced to better calibrate predictive models for housing resale prices.
+
+## 2. The Task
+
+In this take-home exercise, we will calibrate a predictive model to predict HDB resale prices between July-September 2024 by using HDB resale transaction records in 2023.
+
+## 3. The Data
+
+The following datasets will be used:
+
+-   **Aspatial Data:**
+
+    -   [HDB Resale Flat Prices](https://data.gov.sg/datasets/d_8b84c4ee58e3cfc0ece0d773c8ca6abc/view) from [Data.gov.sg](https://data.gov.sg/): A list of HDB resale transacted prices in Singapore from Jan 2017 onwards. In this exercise, our focus will be on 3-room flat types, given the [increasing resale price of 3-room HDB flats in recent years.](https://www.asiaone.com/money/more-3-room-resale-flats-change-hands-800k-and-higher-2024)
+
+-   **Geospatial dataset**:
+
+    -   URA's Master Plan 2019 Subzone Boundary from [Data.gov.sg](https://data.gov.sg/)
+
+    -   Locational factors with geographic coordinates from [Data.gov.sg](https://data.gov.sg/)
+
+        | S/N | Data                                                           |
+        |-----|----------------------------------------------------------------|
+        | 1   | **Eldercare**: List of eldercare in Singapore                  |
+        | 2   | **Hawker Centre**: List of hawker centres in Singapore         |
+        | 3   | **Parks:** List of parks in Singapore                          |
+        | 4   | **Supermarket**: List of supermarkets in Singapore             |
+        | 5   | **CHAS clinics**: List of CHAS clinics in Singapore            |
+        | 6   | **Childcare service:** List of childcare services in Singapore |
+        | 7   | **Kindergartens**: List of kindergartens in Singapore          |
+
+    -   Locational factors with geographic coordinates from [Datamall.lta.gov.sg](https://datamall.lta.gov.sg/content/datamall/en.html):
+
+        | S/N | Data                                                                                      |
+        |------------------|------------------------------------------------------|
+        | 1   | **MRT** data is a list of MRT/LRT stations in Singapore with the station names and codes. |
+        | 2   | **Bus stops** data is a list of bus stops in Singapore                                    |
+
+    -   Locational factors without geographic coordinates from [Data.gov.sg](https://data.gov.sg/) and other sources:
+
+        | S/N | Data                                                                                                     | Source                                                                                        |
+        |------------------|-----------------------------|--------------------------|
+        | 1   | **Primary school** data is extracted from the list on General information of schools                     | [Data.gov.sg](https://data.gov.sg/)                                                           |
+        | 2   | **Good primary schools** is a list of primary schools that are ordered in ranking in terms of popularity | [Local Salary Forum](https://www.salary.sg/2021/best-primary-schools-2021-by-popularity)      |
+        | 3   | **CBD** coordinates obtained from Google                                                                 | Google                                                                                        |
+        | 4   | **Shopping malls** data is a list of Shopping malls in Singapore                                         | obtained from [Wikipedia](https://en.wikipedia.org/wiki/List_of_shopping_malls_in_Singapore). |
+
+## 4. Installing and Loading R packages
+
+We will install and load the following R packages:
+
+```{r}
+pacman::p_load(tidyverse, sf, GWmodel, SpatialML, tmap, rsample, Metrics, httr, jsonlite, rvest, fastDummies)
+```
+
+## 5. Aspatial Data Wrangling
+
+### 5.1 HDB Resale Prices Data Wrangling
+
+We will load the HDB Resale Flat Prices data using the code chunk below and we filter the data to (i) retain data from 2023 onwards as the intent of the take-home exercise is to predict HDB resale prices in July to September 2024 using 2023 data and (ii) focus on just 3-room flat types.
+
+```{r}
+resale <- read_csv("data/aspatial/hdbresale.csv") %>%
+  filter(month >= "2023-01" & month <= "2024-09" & flat_type == "3 ROOM")
+```
+
+A glimpse at the data indicates that there are 11642 observations across 11 variables:
+
+```{r}
+glimpse(resale)
+```
+
+### 5.1.1 Creating new variables
+
+Based on the output above, we also note that the address of the HDB flats have been split into "block", "street_name" and has no postal code. To facilitate the development of geographically weighted predictive models, we will need to combine the "block" and "street_name" to form a new field "address" and utilise [One Map API](https://www.onemap.gov.sg/apidocs/) to carry out reverse geocoding i.e. to return x, y coordinates for the address that is passed through the system.
+
+In the code chunk below, we will create "address" as a new field and as we do so, we also split the "remaining_lease" field which is current in the XX years and YY months format to "remaining_lease_yr" and "remaining_lease_mth" respectively before converting the "remaining_lease_yr" to months by multiplying it by 12 and adding on to the "remaining_lease_mth" field to obtain the remaining lease in terms of months:
+
+```{r}
+resale <- resale %>%
+  mutate(address = paste(block,street_name)) %>%
+  mutate(remaining_lease_yr = as.integer(
+    str_sub(remaining_lease, 0, 2)))%>%
+  mutate(remaining_lease_mth = as.integer(
+    str_sub(remaining_lease, 9, 11))) %>%
+  mutate(remaining_lease_mth = remaining_lease_yr*12 + remaining_lease_mth)
+```
+
+### 5.1.2 Reverse geocoding using One Map API
+
+To carry reverse geocoding, we will need to create a list of unique addresses from the *resale* dataset. However, it is important to note that we should not push too much data i.e. 10,000 to the system as it will result in a longer lag time before results can be returned. We hence first split the *resale* data so that we divide the 11642 observations into two:
+
+```{r}
+resale1 <- resale %>%
+  filter(month <= "2023-10")
+
+resale2 <- resale %>%
+  filter(month > "2023-10" & month <= "2024-09")
+```
+
+We utilise the *resale1* and *resale2* datasets to generate two lists of unique addresses:
+
+```{r}
+add_list1 <- sort(unique(resale1$address))
+add_list2 <- sort(unique(resale2$address))
+```
+
+We then create a *get_coords* function below to obtain the x,y coordinates of the addresses:
+
+```{r}
+get_coords <- function(add_list){
+  
+  # Create a data frame to store all retrieved coordinates
+  postal_coords <- data.frame()
+    
+  for (i in add_list){
+    #print(i)
+
+    r <- GET('https://www.onemap.gov.sg/api/common/elastic/search?',
+           query=list(searchVal=i,
+                     returnGeom='Y',
+                     getAddrDetails='Y'))
+    data <- fromJSON(rawToChar(r$content))
+    found <- data$found
+    res <- data$results
+    
+    # Create a new data frame for each address
+    new_row <- data.frame()
+    
+    # If single result, append 
+    if (found == 1){
+      postal <- res$POSTAL 
+      lat <- res$LATITUDE
+      lng <- res$LONGITUDE
+      new_row <- data.frame(address= i, 
+                            postal = postal, 
+                            latitude = lat, 
+                            longitude = lng)
+    }
+    
+    # If multiple results, drop NIL and append top 1
+    else if (found > 1){
+      # Remove those with NIL as postal
+      res_sub <- res[res$POSTAL != "NIL", ]
+      
+      # Set as NA first if no Postal
+      if (nrow(res_sub) == 0) {
+          new_row <- data.frame(address= i, 
+                                postal = NA, 
+                                latitude = NA, 
+                                longitude = NA)
+      }
+      
+      else{
+        top1 <- head(res_sub, n = 1)
+        postal <- top1$POSTAL 
+        lat <- top1$LATITUDE
+        lng <- top1$LONGITUDE
+        new_row <- data.frame(address= i, 
+                              postal = postal, 
+                              latitude = lat, 
+                              longitude = lng)
+      }
+    }
+
+    else {
+      new_row <- data.frame(address= i, 
+                            postal = NA, 
+                            latitude = NA, 
+                            longitude = NA)
+    }
+    
+    # Add the row
+    postal_coords <- rbind(postal_coords, new_row)
+  }
+  return(postal_coords)
+}
+```
+
+We obtain the coordinates from the two lists using the code chunk below:
+
+```{r}
+#| eval: false
+coords1 <- get_coords(add_list1)
+coords2 <- get_coords(add_list2)
+```
+
+We then join both data frames together:
+
+```{r}
+#| eval: false
+coords <- bind_rows(coords1, coords2) %>%
+  distinct(postal, .keep_all = TRUE)
+```
+
+We save the coords as a new rds file and load it into the R environment to avoid re-running the above steps:
+
+```{r}
+#| eval: false
+write_rds(coords, "data/rds/coords.rds")
+```
+
+```{r}
+coords <- read_rds("data/rds/coords.rds")
+```
+
+### 5.1.3 Adding the coords data to resale data frame and removing unwanted variables
+
+We then add the x, y coordinates data to the *resale* data frame while also just keeping variables that would be needed for further analysis:
+
+```{r}
+resale_tidy <- left_join(resale, coords, by = "address") %>%
+  select(month, storey_range, floor_area_sqm, flat_model, resale_price, remaining_lease_mth, latitude, longitude)
+```
+
+### 5.1.4 Recoding "storey_range" and "flat_model" variables
+
+We note that the variables "storey_range" and "flat_model" are categorical variables specifically:
+
+-   "storey_range" is in character format "XX TO YY" i.e. "01 TO 03" up till "40 TO 42"
+
+-   "flat_model" is in character format i.e. "Terrace", "DBSS"
+
+To faciliate downstream regression analysis, we will need to recode these categorical variables. We carry out label encoding by first converting the variables into factors and subsequently as integers:
+
+::: panel-tabset
+## "storey_range"
+
+```{r}
+ggplot(resale_tidy,
+       aes(x = storey_range))+
+  geom_bar(fill = "skyblue")+
+  ggtitle("Distribution of storey range")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+resale_tidy$storey_range <-  as.integer(factor(resale_tidy$storey_range))
+```
+
+We note that this labels "01 TO 03" as 1, so on and so forth such that "40 TO 42" is labelled as 14.
+
+## "flat_model"
+
+```{r}
+ggplot(resale_tidy,
+       aes(x = flat_model))+
+  geom_bar(fill = "lightyellow")+
+  ggtitle("Distribution of flat model")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+resale_tidy$flat_model <-  as.integer(factor(resale_tidy$flat_model))
+```
+
+We note that this labels the flat model types as follows:
+
+| Flat Model        | Label |
+|-------------------|-------|
+| DBSS              | 1     |
+| Improved          | 2     |
+| Model A           | 3     |
+| New Generation    | 4     |
+| Premium Apartment | 5     |
+| Simplified        | 6     |
+| Standard          | 7     |
+| Terrace           | 8     |
+:::
+
+### 5.1.5 Saving as a new rds file
+
+We save the output as a new rds file and load it into the R environment:
+
+```{r}
+#| eval: false
+write_rds(resale_tidy,"data/rds/resale_tidy.rds")
+```
+
+```{r}
+resale_tidy <- read_rds("data/rds/resale_tidy.rds")
+```
+
+### 5.2 Locational Factors Data Wrangling
+
+As seen in [3. The Data], we will utilise several locational data for this take-home exercise - some with geographic coordinates and some without. For the latter, we will need to run a similar reverse geocoding step as that in [5.1.2 Reverse geocoding using One Map API] to obtain the x, y coordinates of the locational factors.
+
+We will first import the locational factors data into the R environment:
+
+### 5.2.1 Locational factors with geographic coordinates
+
+-   Note that for this group of factors, we will also apply the `st_transform()` function to ensure that the EPSG code is 3414.
+
+    ::: panel-tabset
+    ## Eldercare
+
+    ```{r}
+    eldercare <- st_read(dsn = "data/geospatial",
+                         layer = "ELDERCARE") %>%
+      st_transform(3414)
+    ```
+
+    We note that the *eldercare* sf has a point geometry.
+
+    ## Hawker Centre
+
+    ```{r}
+    hawker <- st_read("data/geospatial/HawkerCentresGEOJSON.geojson") %>%
+      st_transform(crs = 3414)
+    ```
+
+    We note that the *hawker* sf object has a point geometry.
+
+    ## Parks
+
+    ```{r}
+    parks <- st_read("data/geospatial/Parks.geojson") %>%
+      st_transform(crs = 3414)
+    ```
+
+    We note that the *parks* sf object has a point geometry.
+
+    ## Supermarkets
+
+    ```{r}
+    supermarkets <- st_read("data/geospatial/SupermarketsGEOJSON.geojson") %>%
+      st_transform(crs = 3414)
+    ```
+
+    We note that the *supermarkets* sf object has a point geometry.
+
+    ## CHAS Clinics
+
+    ```{r}
+    chas <- st_read("data/geospatial/CHASClinics.geojson")%>%
+      st_transform(crs = 3414)
+    ```
+
+    We note that the *chas* sf object has a point geometry.
+
+    ## Childcare Services
+
+    ```{r}
+    childcare <- st_read("data/geospatial/ChildCareServices.geojson") %>%
+      st_transform(crs = 3414)
+    ```
+
+    We note that the *childcare* sf object has a point geometry.
+
+    ## Kindergartens
+
+    ```{r}
+    kindergartens <- st_read("data/geospatial/Kindergartens.geojson") %>%
+      st_transform(crs = 3414)
+    ```
+
+    We note that the *kindergartens* sf object has a point geometry.
+
+    ## MRT
+
+    ```{r}
+    mrt <- st_read("data/geospatial",
+    layer = "RapidTransitSystemStation") %>%
+      st_transform(crs = 3414)
+    ```
+
+    We note that the *mrt* sf object has a polygon geometry.
+
+    ## Bus Stops
+
+    ```{r}
+    busstop <- st_read("data/geospatial",
+    layer = "BusStop") %>%
+      st_transform(crs = 3414)
+    ```
+
+    We note that the *busstops* sf object has a point geometry.
+    :::
+
+    ### 5.2.2 Locational factors without geographic coordinates
+
+::: panel-tabset
+## Primary school
+
+To obtain primary school data, we download the csv file on ["General Information of schools"](https://data.gov.sg/collections/457/view) from Data.gov.sg. We then filter the data to just primary schools and postal code for the purpose of carrying out reverse geocoding in the subsequent step. Note that in this case we have also converted the postal codes for three primary schools, namely Cantonment Primary School, CHIJ Kellock and Radin Mas Primary School as an initial trial of drawing the x, y coordinates from the postal codes yielded NA x,y coordinates for these three schools. This was due to the missing zero in front of the postal codes in the original dataset.
+
+```{r}
+schools <- read_csv("data/aspatial/schools.csv") %>%
+  filter(mainlevel_code == "PRIMARY") %>%
+  select(school_name,postal_code) %>%
+  mutate(postal_code = case_when(
+    postal_code == "88256" ~ "088256",
+    postal_code == "99757" ~ "099757",
+    postal_code == "99840" ~ "099840",
+    TRUE ~ as.character(postal_code)
+  ))
+```
+
+We then generate a unique list of postal codes from the *schools* data frame:
+
+```{r}
+add_list <- sort(unique(schools$postal_code))
+```
+
+We then apply the *get_coords* function to obtain the x, y coordinates and save it as a new rds file to avoid re-running the process:
+
+```{r}
+#| eval: false
+coords_sch <- get_coords(add_list)
+```
+
+```{r}
+#| eval: false
+write_rds(coords_sch, "data/rds/coords_sch.rds")
+```
+
+```{r}
+coords_sch <- read_rds("data/rds/coords_sch.rds")
+```
+
+We then `left_join()` the *schools* data frame with *coords_sch:*
+
+```{r}
+#| eval: false
+prisch <- left_join(schools, coords_sch, by = c("postal_code" = "postal")) %>%
+  select(c(-address))
+```
+
+We save the output as a new rds file:
+
+```{r}
+#| eval: false
+write_rds(prisch, "data/rds/prisch.rds")
+```
+
+```{r}
+prisch <- read_rds("data/rds/prisch.rds")
+```
+
+## Good primary school
+
+## CBD
+
+## Shopping malls
+:::
+
+### 5.3 Geospatial Data Wrangling
+
+We will load the Master Plan 2019 Subzone Boundary data using the code chunk below, note that we also apply `st_transform()` to ensure that the data file has the right EPSG code 3414 which is the projected coordinate system for Singapore:
+
+```{r}
+mpsz <- st_read(dsn = "data/geospatial",
+                layer = "MPSZ-2019") %>%
+  st_transform(crs = 3414)
+```
+
+We check if the EPSG code has been correctly transformed using the code chunk below:
+
+```{r}
+st_crs(mpsz)
+```
+
+We note that the *mpsz* has a multipolygon geometry.
+
+-   Structural factors
+
+    -   Area of the unit
+
+    -   Floor level
+
+    -   Remaining lease
+
+    -   Age of the unit
+
+    -   Main Upgrading Program (MUP) completed (optional)
