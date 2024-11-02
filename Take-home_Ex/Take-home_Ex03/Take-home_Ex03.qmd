@@ -53,18 +53,18 @@ The following datasets will be used:
     -   Locational factors with geographic coordinates from [Datamall.lta.gov.sg](https://datamall.lta.gov.sg/content/datamall/en.html):
 
         | S/N | Data                                                                                      |
-        |------------------|------------------------------------------------------|
+        |-------------------|-----------------------------------------------------|
         | 1   | **MRT** data is a list of MRT/LRT stations in Singapore with the station names and codes. |
         | 2   | **Bus stops** data is a list of bus stops in Singapore                                    |
 
     -   Locational factors without geographic coordinates from [Data.gov.sg](https://data.gov.sg/) and other sources:
 
-        | S/N | Data                                                                                                     | Source                                                                                        |
-        |------------------|-----------------------------|--------------------------|
-        | 1   | **Primary school** data is extracted from the list on General information of schools                     | [Data.gov.sg](https://data.gov.sg/)                                                           |
-        | 2   | **Good primary schools** is a list of primary schools that are ordered in ranking in terms of popularity | [Local Salary Forum](https://www.salary.sg/2021/best-primary-schools-2021-by-popularity)      |
-        | 3   | **CBD** coordinates obtained from Google                                                                 | Google                                                                                        |
-        | 4   | **Shopping malls** data is a list of Shopping malls in Singapore                                         | obtained from [Wikipedia](https://en.wikipedia.org/wiki/List_of_shopping_malls_in_Singapore). |
+        | S/N | Data                                                                                                                   | Source                                                                                        |
+        |------------------|----------------------------|--------------------------|
+        | 1   | **Primary school** data is extracted from the list on General information of schools                                   | [Data.gov.sg](https://data.gov.sg/)                                                           |
+        | 2   | **Good primary schools** is a list of primary schools that are ordered in ranking in terms of popularity for year 2024 | [Local Salary Forum](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/)     |
+        | 3   | **CBD** coordinates obtained from Google                                                                               | Google                                                                                        |
+        | 4   | **Shopping malls** data is a list of Shopping malls in Singapore                                                       | obtained from [Wikipedia](https://en.wikipedia.org/wiki/List_of_shopping_malls_in_Singapore). |
 
 ## 4. Installing and Loading R packages
 
@@ -104,7 +104,8 @@ resale <- resale %>%
     str_sub(remaining_lease, 0, 2)))%>%
   mutate(remaining_lease_mth = as.integer(
     str_sub(remaining_lease, 9, 11))) %>%
-  mutate(remaining_lease_mth = remaining_lease_yr*12 + remaining_lease_mth)
+  mutate(remaining_lease_mth = remaining_lease_yr*12 + remaining_lease_mth) %>%
+  mutate(age = 2024 - lease_commence_date)
 ```
 
 ### 5.1.2 Reverse geocoding using One Map API
@@ -231,7 +232,7 @@ We then add the x, y coordinates data to the *resale* data frame while also just
 
 ```{r}
 resale_tidy <- left_join(resale, coords, by = "address") %>%
-  select(month, storey_range, floor_area_sqm, flat_model, resale_price, remaining_lease_mth, latitude, longitude)
+  select(month, storey_range, floor_area_sqm, flat_model, resale_price, remaining_lease_mth, age, latitude, longitude)
 ```
 
 ### 5.1.4 Recoding "storey_range" and "flat_model" variables
@@ -288,6 +289,22 @@ We note that this labels the flat model types as follows:
 | Standard          | 7     |
 | Terrace           | 8     |
 :::
+
+### 5.1.5 Jittering
+
+We convert the *resale_tidy* data frame into a simple features data object and apply `st_transform()` to change the EPSG code to 3414:
+
+```{r}
+resale_tidy <- st_as_sf(resale_tidy, coords = c("longitude", "latitude"), crs = 4326) %>%
+  st_transform(crs = 3414)
+```
+
+We then apply `st_jitter()` as HDB units can share the same postal code:
+
+```{r}
+resale_tidy <- resale_tidy %>%
+  st_jitter(amount = .1)
+```
 
 ### 5.1.5 Saving as a new rds file
 
@@ -403,11 +420,22 @@ We will first import the locational factors data into the R environment:
 ::: panel-tabset
 ## Primary school
 
-To obtain primary school data, we download the csv file on ["General Information of schools"](https://data.gov.sg/collections/457/view) from Data.gov.sg. We then filter the data to just primary schools and postal code for the purpose of carrying out reverse geocoding in the subsequent step. Note that in this case we have also converted the postal codes for three primary schools, namely Cantonment Primary School, CHIJ Kellock and Radin Mas Primary School as an initial trial of drawing the x, y coordinates from the postal codes yielded NA x,y coordinates for these three schools. This was due to the missing zero in front of the postal codes in the original dataset.
+To obtain primary school data, we download the csv file on ["General Information of schools"](https://data.gov.sg/collections/457/view) from Data.gov.sg. We then filter the data to primary and mixed levels schools, noting that there are schools that comprise both primary and secondary levels under the same name. In this step, we filter out schools that are a mix of secondary and tertiary levels i.e. Temasek Junior College.
+
+Further, we retain the postal code field for the purpose of carrying out reverse geocoding in the subsequent step. Note that in this case we have also converted the postal codes for three primary schools, namely Cantonment Primary School, CHIJ Kellock and Radin Mas Primary School as an initial trial of drawing the x, y coordinates from the postal codes yielded NA x,y coordinates for these three schools. This was due to the missing zero in front of the postal codes in the original dataset.
 
 ```{r}
-schools <- read_csv("data/aspatial/schools.csv") %>%
-  filter(mainlevel_code == "PRIMARY") %>%
+allschools <- read_csv("data/aspatial/schools.csv") 
+```
+
+```{r}
+prisch <- allschools %>%
+  filter(mainlevel_code %in% c("PRIMARY","MIXED LEVELS")) %>%
+  filter(!school_name %in% c("TEMASEK JUNIOR COLLEGE","SINGAPORE SPORTS SCHOOL","SCHOOL OF THE ARTS, SINGAPORE","RIVER VALLEY HIGH SCHOOL
+","RAFFLES INSTITUTION","NUS HIGH SCHOOL OF MATHEMATICS AND SCIENCE
+","NATIONAL JUNIOR COLLEGE
+","HWA CHONG INSTITUTION
+","ANGLO-CHINESE SCHOOL (INDEPENDENT)")) %>%
   select(school_name,postal_code) %>%
   mutate(postal_code = case_when(
     postal_code == "88256" ~ "088256",
@@ -420,7 +448,7 @@ schools <- read_csv("data/aspatial/schools.csv") %>%
 We then generate a unique list of postal codes from the *schools* data frame:
 
 ```{r}
-add_list <- sort(unique(schools$postal_code))
+add_list <- sort(unique(prisch$postal_code))
 ```
 
 We then apply the *get_coords* function to obtain the x, y coordinates and save it as a new rds file to avoid re-running the process:
@@ -443,7 +471,7 @@ We then `left_join()` the *schools* data frame with *coords_sch:*
 
 ```{r}
 #| eval: false
-prisch <- left_join(schools, coords_sch, by = c("postal_code" = "postal")) %>%
+prisch <- left_join(prisch, coords_sch, by = c("postal_code" = "postal")) %>%
   select(c(-address))
 ```
 
@@ -460,9 +488,152 @@ prisch <- read_rds("data/rds/prisch.rds")
 
 ## Good primary school
 
+The [Salary.sg](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/) forum ranks all 180 primary schools in Singapore. To study how the proximity of good primary schools to HDB will affect resale prices, we will extract and focus on the top 20% primary schools (36 out of 180) for this locational factor:
+
+```{r}
+goodprisch <- read_csv("data/aspatial/goodprisch.csv") %>%
+  mutate(school = toupper(school)) %>%
+  .[1:36,]
+```
+
+As there are only the names of the primary school, we will need to obtain their x, y coordinates by doing a `left_join` with *prisch* data frame that was earlier imported.
+
+However, before we do so, we note that there could be a mix of curly and straight apostrophes in school names which could create issues when we do a `left_join()`. We hence standardize the apostrophes to a straight one using the code chunk below:
+
+```{r}
+goodprisch <- goodprisch %>%
+  mutate(school = trimws(gsub("['’]", "'", school)))
+
+prisch <- prisch %>%
+  mutate(school_name = trimws(gsub("['’]", "'", school_name)))
+```
+
+We then do a `left_join()` however we manually input the postal codes for four schools for which the namings slightly differ between both data frames:
+
+```{r}
+goodprisch <- left_join(goodprisch, prisch, by = c("school" = "school_name")) %>%
+  select(school,postal_code) %>%
+  mutate(postal_code = case_when(
+    school == "CHIJ ST. NICHOLAS GIRLS'" ~ "569405",
+    school == "SINGAPORE CHINESE GIRLS" ~ "309437",
+    school == "KUO CHUAN PRESBYTERIAN PRIMARY" ~ "579793",
+    school == "PEI HWA PRESBYTERIAN PRIMARY" ~ "597610",
+    TRUE ~ as.character(postal_code)
+  ),postal_code = ifelse(is.na(postal_code), "309437", postal_code))
+```
+
+::: callout-note
+Note that the last line of code above was added as there was difficulty in indicating that the postal code for SINGAPORE CHINESE GIRLS was 309437. As it was the only NA entry after the postal codes had been adjusted, a last line was used to manually make the postal code for the school 309437.
+:::
+
+We then generate a unique list of postal codes from the *goodprisch* data frame:
+
+```{r}
+add_list <- sort(unique(goodprisch$postal_code))
+```
+
+We then apply the *get_coords* function to obtain the x, y coordinates and save it as a new rds file to avoid re-running the process:
+
+```{r}
+#| eval: false
+coords_goodprisch <- get_coords(add_list)
+```
+
+```{r}
+#| eval: false
+write_rds(coords_goodprisch, "data/rds/coords_goodprisch.rds")
+```
+
+```{r}
+coords_goodprisch <- read_rds("data/rds/coords_goodprisch.rds")
+```
+
+We then `left_join()` the *goodprisch* data frame with *coords_goodprisch:*
+
+```{r}
+#| eval: false
+goodprisch <- left_join(goodprisch, coords_goodprisch, by = c("postal_code" = "postal")) %>%
+  select(c(-address))
+```
+
+We save the output as a new rds file:
+
+```{r}
+#| eval: false
+write_rds(goodprisch, "data/rds/goodprisch.rds")
+```
+
+```{r}
+goodprisch <- read_rds("data/rds/goodprisch.rds")
+```
+
 ## CBD
 
+We obtain the coordinates of Singapore's CBD via Google. Based on this [site](https://www.findlatitudeandlongitude.com/l/central+business+district%2C+singapore/424476/), the latitude and longitude are 1.352083, 103.819836:
+
+```{r}
+#| eval: false
+cbd <- st_sfc(st_point(c(103.819836, 1.352083)), crs = 3414)
+```
+
+We save this as a new rds file:
+
+```{r}
+#| eval: false
+write_rds(cbd, "data/rds/cbd.rds")
+```
+
+```{r}
+cbd <- read_rds("data/rds/cbd.rds")
+```
+
 ## Shopping malls
+
+A list of shopping malls was generated with reference to [Wikipedia](https://en.wikipedia.org/wiki/List_of_shopping_malls_in_Singapore):
+
+```{r}
+shoppingmall <- read_csv("data/aspatial/shopping_mall.csv")
+```
+
+To ensure that there are no duplicates, we generate a unique list using the code chunk below:
+
+```{r}
+add_list <- sort(unique(shoppingmall$shopping_mall))
+```
+
+As we only have the shopping mall names, we need to apply the *get_coords* function to obtain the x, y coordinates and save it as a new rds file to avoid re-running the process:
+
+```{r}
+#| eval: false
+coords_mall <- get_coords(add_list)
+```
+
+```{r}
+#| eval: false
+write_rds(coords_mall, "data/rds/coords_mall.rds")
+```
+
+```{r}
+coords_mall <- read_rds("data/rds/coords_mall.rds")
+```
+
+We then `left_join()` the *shoppingmall* data frame with *coords_mall:*
+
+```{r}
+#| eval: false
+shoppingmall <- left_join(shoppingmall, coords_mall, by = c("shopping_mall" = "address"))
+```
+
+We save the output as a new rds file:
+
+```{r}
+#| eval: false
+write_rds(shoppingmall, "data/rds/shoppingmall.rds")
+```
+
+```{r}
+shoppingmall <- read_rds("data/rds/shoppingmall.rds")
+```
 :::
 
 ### 5.3 Geospatial Data Wrangling
@@ -483,14 +654,47 @@ st_crs(mpsz)
 
 We note that the *mpsz* has a multipolygon geometry.
 
--   Structural factors
+## Next steps
 
-    -   Area of the unit
+-   Locational factors
 
-    -   Floor level
+    -   Use st_distance() or function in sf package
 
-    -   Remaining lease
+        -   Proximity to CBD
 
-    -   Age of the unit
+        -   Proximity to eldercare
 
-    -   Main Upgrading Program (MUP) completed (optional)
+        -   Proximity to foodcourt/hawker centres
+
+        -   Proximity to MRT
+
+        -   Proximity to park
+
+        -   Proximity to good primary school
+
+        -   Proximity to shopping mall
+
+        -   Proximity to supermarket
+
+    -   Generate a buffer from HDB and use point-in-geometry
+
+        -   Numbers of kindergartens within 350m
+
+        -   Numbers of childcare centres within 350m
+
+        -   Numbers of bus stop within 350m
+
+        -   Numbers of primary school within 1km
+
+```{=html}
+<!-- -->
+```
+-   Structural factors (done)
+
+    -   "floor_area_sqm": Area of the unit
+
+    -   "storey_range": Floor level
+
+    -   "remaining_lease_mth": Remaining lease
+
+    -   "age": Age of the unit
