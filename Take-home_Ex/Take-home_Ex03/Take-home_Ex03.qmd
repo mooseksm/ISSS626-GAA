@@ -16,9 +16,7 @@ execute:
 
 ## 1. Setting the Scene
 
-Housing is a sign of household wealth. Buying housing has always been a major investment for most people and its price is affected by several factors that can be global in nature such as the general economy of a country, inflation rate or ithey can also be factors specific to the nature of the property.
-
-This can be further divided to structural and locational factors - the former are variables related to the property such as the size, fitting, tenure while the latter are variables related to the neighbourhood of the property such as promitity to childcare services, public transport and shopping centres.
+Housing is a sign of household wealth. It is a major investment for most people and its price is affected by several factors that can be global in nature such as the general economy of a country, inflation rate or are factors specific to the nature of the property which can be further divided to structural and locational factors. Structural variables are related to the property such as the size, fitting, tenure while the locational variables are related to the neighbourhood of the property such as proximity to childcare services, public transport and shopping centres.
 
 Conventionally, predictive models for housing resale prices were built by using the Ordinary Least Square (OLS) method. However, this method failed to take into consideration that spatial autocorrelation and spatial heterogeneity exist in geographic data sets such as housing transactions. With the existence of spatial autocorrelation, the OLS estimation of predictive housing resale pricing models could lead to biased, inconsistent, or inefficient results (Anselin 1998). In view of this limitation, **Geographical Weighted Models** were introduced to better calibrate predictive models for housing resale prices.
 
@@ -60,7 +58,7 @@ The following datasets will be used:
     -   Locational factors without geographic coordinates from [Data.gov.sg](https://data.gov.sg/) and other sources:
 
         | S/N | Data                                                                                                                   | Source                                                                                        |
-        |------------------|----------------------------|--------------------------|
+        |------------------|------------------------------|------------------------|
         | 1   | **Primary school** data is extracted from the list on General information of schools                                   | [Data.gov.sg](https://data.gov.sg/)                                                           |
         | 2   | **Good primary schools** is a list of primary schools that are ordered in ranking in terms of popularity for year 2024 | [Local Salary Forum](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/)     |
         | 3   | **CBD** coordinates obtained from Google                                                                               | Google                                                                                        |
@@ -70,15 +68,21 @@ The following datasets will be used:
 
 We will install and load the following R packages:
 
+-   [httr](https://httr.r-lib.org/): allow R to talk to http
+
+-   [rvest](https://rvest.tidyverse.org/): used to crawl websites, less flexible than the version in python but easy to start with
+
+-   [jsonlite](https://cran.r-project.org/web/packages/jsonlite/): to communicate with one map API and convert data into dataframe format
+
 ```{r}
-pacman::p_load(tidyverse, sf, GWmodel, SpatialML, tmap, rsample, Metrics, httr, jsonlite, rvest, fastDummies)
+pacman::p_load(tidyverse, sf, GWmodel, SpatialML, tmap, rsample, Metrics, httr, jsonlite, rvest, fastDummies, corrplot)
 ```
 
 ## 5. Aspatial Data Wrangling
 
 ### 5.1 HDB Resale Prices Data Wrangling
 
-We will load the HDB Resale Flat Prices data using the code chunk below and we filter the data to (i) retain data from 2023 onwards as the intent of the take-home exercise is to predict HDB resale prices in July to September 2024 using 2023 data and (ii) focus on just 3-room flat types.
+We will load the HDB Resale Flat Prices data using the code chunk below and we filter the data to (i) retain data from 2023 onwards as the intent of the take-home exercise is to predict HDB resale prices in July to September 2024 using 2023 data and (ii) focus on just 3-room flat types.A glimpse at the data indicates that there are 11642 observations across 11 variables:
 
 ```{r}
 resale <- read_csv("data/aspatial/hdbresale.csv") %>%
@@ -99,14 +103,22 @@ In the code chunk below, we will create "address" as a new field and as we do so
 
 ```{r}
 resale <- resale %>%
-  mutate(address = paste(block,street_name)) %>%
-  mutate(remaining_lease_yr = as.integer(
-    str_sub(remaining_lease, 0, 2)))%>%
-  mutate(remaining_lease_mth = as.integer(
-    str_sub(remaining_lease, 9, 11))) %>%
-  mutate(remaining_lease_mth = remaining_lease_yr*12 + remaining_lease_mth) %>%
+  mutate(address = paste(block, street_name)) %>%
+  mutate(remaining_lease_yr = as.integer(str_extract(remaining_lease, "^[0-9]+"))) %>%
+  mutate(remaining_lease_mth = as.integer(str_extract(remaining_lease, "(?<=years, )[0-9]+"))) %>%
+  mutate(remaining_lease_mth = ifelse(is.na(remaining_lease_mth), 0, remaining_lease_mth)) %>%
+  mutate(remaining_lease_mth = remaining_lease_yr * 12 + remaining_lease_mth) %>%
   mutate(age = 2024 - lease_commence_date)
 ```
+
+We double check that the above code was run properly using the code chunk below:
+
+```{r}
+na_rows <- resale[rowSums(is.na(resale)) > 0, ]
+na_rows
+```
+
+We note that there are no NA values.
 
 ### 5.1.2 Reverse geocoding using One Map API
 
@@ -323,9 +335,9 @@ resale_tidy <- read_rds("data/rds/resale_tidy.rds")
 
 As seen in [3. The Data], we will utilise several locational data for this take-home exercise - some with geographic coordinates and some without. For the latter, we will need to run a similar reverse geocoding step as that in [5.1.2 Reverse geocoding using One Map API] to obtain the x, y coordinates of the locational factors.
 
-We will first import the locational factors data into the R environment:
-
 ### 5.2.1 Locational factors with geographic coordinates
+
+We will first import the locational factors data into the R environment:
 
 -   Note that for this group of factors, we will also apply the `st_transform()` function to ensure that the EPSG code is 3414.
 
@@ -397,12 +409,129 @@ We will first import the locational factors data into the R environment:
     ## MRT
 
     ```{r}
-    mrt <- st_read("data/geospatial",
-    layer = "RapidTransitSystemStation") %>%
+    mrt <- st_read(dsn = "data/geospatial", 
+                   layer = "RapidTransitSystemStation") %>%
+      st_transform(crs = 4326)
+    ```
+
+    We note that the *mrt* sf object has a polygon geometry and that a warning message is shown in the output above, indicating that there are some invalid geometry within the sf object i.e. Non closed ring detected. However, error occurred after we tried to apply `st_make_valid()` function.
+
+    Based on the code chunk below, we note that if we had tried to retain just rows of mrt stations with valid geometry, we will miss out on 3 observations as the total number of observations would drop from 230 to 227. Upon examination, we note that the 3 rows was for "UPPER THOMSON MRT STATION", "HARBOURFRONT MRT STATION" and "BOCC".
+
+    ```{r}
+    mrt_clean <- mrt %>%
+      filter(st_is_valid(.)) %>%  
+      filter(!is.na(geometry))
+    ```
+
+    Given that having "UPPER THOMSON MRT STATION" and "HARBOURFRONT MRT STATION" would be important to retain in the mrt data, we utilise another method to derive the coordinates of all mrt stations. We first extract the names of the mrt stations in the *mrt* sf object:
+
+    ```{r}
+    mrt_names <- mrt %>%
+      select(STN_NAM_DE) %>%
+      st_drop_geometry()
+    ```
+
+    We then extract unique mrt names into the list - we note that there are only 203 unique mrt names out of the 230 observations:
+
+    ```{r}
+    add_list <- sort(unique(mrt_names$STN_NAM_DE))
+    ```
+
+    We then utilise the get_coords function to obtain the x, y coordinates of the mrt stations:
+
+    ```{r}
+    coords_mrt_names <- get_coords(add_list)
+    ```
+
+    We save the output as a new rds file for safekeeping:
+
+    ```{r}
+    write_rds(coords_mrt_names,"data/rds/coords_mrt_names.rds")
+    ```
+
+    ```{r}
+    coords_mrt_names <- read_rds("data/rds/coords_mrt_names.rds")
+    ```
+
+    We then utilise `left_join()` to join the coordinates data with *mrt_names:*
+
+    ```{r}
+    mrt_names <- left_join(mrt_names,coords_mrt_names, by = c("STN_NAM_DE" = "address"))
+    ```
+
+    However based on the code chunk below, we note that the postal code for "HUME MRT STATION" and "FOUNDERS' MEMORIAL MRT STATION" were NA hence leading to NA latitude and longitude.
+
+    ```{r}
+    rows_with_na <- mrt_names %>%
+      filter(if_any(everything(), is.na))
+    rows_with_na
+    ```
+
+    This is understandable as these two stations are upcoming stations and their postal codes might not be accurately retrieved. We manually obtain the postal codes via Google search:
+
+    -   Hume MRT Station: 589681
+
+    -   Founders' Memorial MRT Station: 438965
+
+    We then create a list to apply the get_coords() function on:
+
+    ```{r}
+    #| eval: false
+    addedmrt <- list(589681,438965)
+    coords_addedmrt <- get_coords(addedmrt)
+    ```
+
+    ```{r}
+    mrt_names <- mrt_names %>%
+      mutate(
+        postal = case_when(
+          STN_NAM_DE == "HUME MRT STATION" ~ "589681",
+          STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "438965",
+          TRUE ~ as.character(postal)  # Default to existing value
+        ),
+        latitude = case_when(
+          STN_NAM_DE == "HUME MRT STATION" ~ "1.35502264316802",
+          STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "1.29141358573109",
+          TRUE ~ as.character(latitude)  # Default to existing value
+        ),
+        longitude = case_when(
+          STN_NAM_DE == "HUME MRT STATION" ~ "103.768680287307",
+          STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "103.868706430815",
+          TRUE ~ as.character(longitude)  # Default to existing value
+        )
+      )
+    ```
+
+    We double check if there are na rows using the code chunk below:
+
+    ```{r}
+    rows_with_na <- mrt_names %>%
+      filter(if_any(everything(), is.na))
+    rows_with_na
+    ```
+
+    We note that there are no longer any missing values.
+
+    We convert *mrt_names* as a sf object, apply `st_transform()` to ensure that it is in the SVY21 projected coordinate system (EPSG 3414) and save it as a new rds file:
+
+    ```{r}
+    #| eval: false
+    mrt_names <- st_as_sf(mrt_names, coords = c("longitude", "latitude"), crs = 4326) %>%   
       st_transform(crs = 3414)
     ```
 
-    We note that the *mrt* sf object has a polygon geometry.
+    ```{r}
+    #| eval: false
+    write_rds(mrt_names,"data/rds/mrt_names.rds")
+    ```
+
+    ```{r}
+    mrt_names <- read_rds("data/rds/mrt_names.rds")
+    mrt_names
+    ```
+
+    We note that the mrt data has a point geometry.
 
     ## Bus Stops
 
@@ -473,6 +602,14 @@ We then `left_join()` the *schools* data frame with *coords_sch:*
 #| eval: false
 prisch <- left_join(prisch, coords_sch, by = c("postal_code" = "postal")) %>%
   select(c(-address))
+```
+
+We convert the *prisch* data frame into a simple features data object and apply `st_transform()` to change the EPSG code to 3414:
+
+```{r}
+#| eval: false
+prisch <- st_as_sf(prisch, coords = c("longitude", "latitude"), crs = 4326) %>%   
+  st_transform(crs = 3414)
 ```
 
 We save the output as a new rds file:
@@ -556,6 +693,14 @@ goodprisch <- left_join(goodprisch, coords_goodprisch, by = c("postal_code" = "p
   select(c(-address))
 ```
 
+We convert the *goodprisch* data frame into a simple features data object and apply `st_transform()` to change the EPSG code to 3414:
+
+```{r}
+#| eval: false
+goodprisch <- st_as_sf(goodprisch, coords = c("longitude", "latitude"), crs = 4326) %>%   
+  st_transform(crs = 3414)
+```
+
 We save the output as a new rds file:
 
 ```{r}
@@ -573,7 +718,16 @@ We obtain the coordinates of Singapore's CBD via Google. Based on this [site](ht
 
 ```{r}
 #| eval: false
-cbd <- st_sfc(st_point(c(103.819836, 1.352083)), crs = 3414)
+latitude <- 1.352083
+longitude <- 103.819836
+
+cbd_coords <- data.frame(
+  longitude = longitude,
+  latitude = latitude
+)
+
+cbd <- st_as_sf(cbd_coords, coords = c("longitude", "latitude"), crs = 4326) %>%
+  st_transform(crs= 3414)
 ```
 
 We save this as a new rds file:
@@ -624,6 +778,14 @@ We then `left_join()` the *shoppingmall* data frame with *coords_mall:*
 shoppingmall <- left_join(shoppingmall, coords_mall, by = c("shopping_mall" = "address"))
 ```
 
+We convert the *shoppingmall* data frame into a simple features data object and apply `st_transform()` to change the EPSG code to 3414:
+
+```{r}
+#| eval: false
+shoppingmall <- st_as_sf(shoppingmall, coords = c("longitude", "latitude"), crs = 4326) %>%   
+  st_transform(crs = 3414)
+```
+
 We save the output as a new rds file:
 
 ```{r}
@@ -635,6 +797,254 @@ write_rds(shoppingmall, "data/rds/shoppingmall.rds")
 shoppingmall <- read_rds("data/rds/shoppingmall.rds")
 ```
 :::
+
+### 5.2.3 Generating proximity variables using geoprocessing functions
+
+From the locational factors above, we will generate proximity variables that will be used for downstream geographically weighted regression analysis, specifically we will utilise geoprocessing functions:
+
+-   `st_distance()` function to create variables representing the proximity to the nearest eldercare, hawker centre, park, supermarket, CHAS clinic, childcare service, kindergarten, MRT, bus stop, primary school (in general), good primary school (based on most popular 20%), CBD and shopping mall
+
+-   `st_buffer()`, `st_intersects()` and `length()` to create a buffer and carry out point-in-polygon counts to determine:
+
+    1.  Number of hawker centres within 350m
+    2.  Number of supermarkets within 350m
+    3.  Number of childcare centres within 350m
+    4.  Number of kindergartens within 350m
+    5.  Number of bus stops within 350m
+    6.  Number of primary schools within 1km
+
+    These six variables were chosen as they represent essential services that most might need on a day-to-day basis i.e. for meals, grocery shopping, education and transport.
+
+    350m was set for the first five variables as the [average habitual gait of adults in Singapore is 1.08 metres/second](https://pmc.ncbi.nlm.nih.gov/articles/PMC11205154/) which makes 350m an approximately 5 minutes walking distance, a good representation of how close/convenient day-to-day facilities are in the neighbourhood which could impact HDB resale prices.
+
+    For the sixth variable, the distance was set at 1km as [priority admission to primary schools is given to those living within 1km of the school](https://www.moe.gov.sg/primary/p1-registration/distance).
+
+#### 5.2.3.1 Creating proximity variables using `st_distance()`
+
+We utilise `st_distance()` to calculate the distance matrix between each row in *resale_tidy* and all rows in the different locational factors listed below and then utilise `apply()` to find the minimum (nearest) distance for each row of HDB resale data to the nearest locational factor:
+
+::: panel-tabset
+## Eldercare
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_ELDERCARE = st_distance(., eldercare) %>% 
+                                   apply(1, min))
+```
+
+## Hawker Centre
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_HAWKER = st_distance(., hawker) %>% 
+                                   apply(1, min))
+```
+
+## Park
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_PARK = st_distance(., parks) %>% 
+                                   apply(1, min))
+```
+
+## Supermarket
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_SUPERMARKET = st_distance(., supermarkets) %>% 
+                                   apply(1, min))
+```
+
+## CHAS clinic
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_CLINIC = st_distance(., chas) %>% 
+                                   apply(1, min))
+```
+
+## Childcare service
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_CHILDCARE= st_distance(., childcare) %>% 
+                                   apply(1, min))
+```
+
+## Kindergarten
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_KINDERGARTEN = st_distance(., kindergartens) %>% 
+                                   apply(1, min))
+```
+
+## MRT
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_MRT = st_distance(., mrt_names) %>% 
+                                   apply(1, min))
+```
+
+## Bus stop
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_BUSSTOP = st_distance(., busstop) %>% 
+                                   apply(1, min))
+```
+
+## Primary school (in general)
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_PRISCH = st_distance(., prisch) %>% 
+                                   apply(1, min))
+```
+
+## Good primary school
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_GOODPRISCH = st_distance(., goodprisch) %>% 
+                                   apply(1, min))
+```
+
+## CBD
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_CBD = st_distance(., cbd) %>% 
+                                   apply(1, min))
+```
+
+## Shopping mall
+
+```{r}
+#| eval: false
+resale_tidy <- resale_tidy %>%
+  mutate(PROX_MALL = st_distance(., shoppingmall) %>% 
+                                   apply(1, min))
+```
+:::
+
+We save the updated *resale_tidy* as a new rds data file for safekeeping:
+
+```{r}
+#| eval: false
+write_rds(resale_tidy, "data/rds/resale_tidy_stdist.rds")
+```
+
+```{r}
+resale_tidy_stdist <- read_rds("data/rds/resale_tidy_stdist.rds")
+```
+
+#### 5.2.3.2 Creating proximity variables using `st_buffer()`, `st_intersects()` and `length()`
+
+We will first create two data frames which comprise a buffer of 350 metres and 1km around each HDB unit in the *resale_tidy* sf object:
+
+```{r}
+buffer_350m <- st_buffer(resale_tidy,
+                         dist = 350)
+buffer_1km <- st_buffer(resale_tidy,
+                        dist = 1000)
+```
+
+We then utilise `st_intersects()` and `lengths()` to count the number of essential services within 350m and 1km of the HDB resale units in *resale_tidy:*
+
+::: panel-tabset
+## No. of hawker centres within 350m
+
+```{r}
+#| eval: false
+buffer_350m$WITHIN_350M_HAWKER <- lengths(st_intersects(buffer_350m, hawker))
+```
+
+## No. of supermarkets within 350m
+
+```{r}
+#| eval: false
+buffer_350m$WITHIN_350M_SUPERMARKETS <- lengths(st_intersects(buffer_350m, supermarkets))
+```
+
+## No. of childcare centres within 350m
+
+```{r}
+#| eval: false
+buffer_350m$WITHIN_350M_CHILDCARE <- lengths(st_intersects(buffer_350m, childcare))
+```
+
+## No. of kindergartens within 350m
+
+```{r}
+#| eval: false
+buffer_350m$WITHIN_350M_KINDERGARTENS <- lengths(st_intersects(buffer_350m, kindergartens))
+```
+
+## No. of bus stops within 350m
+
+```{r}
+#| eval: false
+buffer_350m$WITHIN_350M_BUSSTOP <- lengths(st_intersects(buffer_350m, busstop))
+```
+
+## No. of primary schools within 1km
+
+```{r}
+#| eval: false
+buffer_1km$WITHIN_1KM_PRISCH <- lengths(st_intersects(buffer_1km, prisch))
+```
+:::
+
+We save *buffer_350m* and *buffer_1km* as new rds files for safekeeping:
+
+```{r}
+#| eval: false
+write_rds(buffer_350m,"data/rds/buffer_350m.rds")
+write_rds(buffer_1km,"data/rds/buffer_1km.rds")
+```
+
+```{r}
+buffer_350m <- read_rds("data/rds/buffer_350m.rds")
+buffer_1km <- read_rds("data/rds/buffer_1km.rds")
+```
+
+We then combine the WITHIN_1KM_PRISCH field from *buffer_1km* to *buffer_350m* to put all the variables together:
+
+```{r}
+#| eval: false
+buffer_350m <- buffer_350m %>%
+  st_drop_geometry()
+buffer_1km <- buffer_1km %>%
+  st_drop_geometry()
+resale_tidy_all <- cbind(resale_tidy, buffer_350m[,c(21:25)])
+resale_tidy_all <- cbind(resale_tidy_all, buffer_1km[,21])
+```
+
+We save *resale_tidy_all* as a new rds file and load it into the R environment for further analysis:
+
+```{r}
+#| eval: false
+write_rds(resale_tidy_all,"data/rds/resale_tidy_all.rds")
+```
+
+```{r}
+resale_tidy_all <- read_rds("data/rds/resale_tidy_all.rds")
+```
 
 ### 5.3 Geospatial Data Wrangling
 
@@ -652,9 +1062,85 @@ We check if the EPSG code has been correctly transformed using the code chunk be
 st_crs(mpsz)
 ```
 
-We note that the *mpsz* has a multipolygon geometry.
+We note that the *mpsz* has a multipolygon geometry. We save the output as a new rds file for further analysis:
 
-## Next steps
+```{r}
+#| eval: false
+write_rds(mpsz,"data/rds/mpsz.rds")
+```
+
+```{r}
+mpsz <- read_rds("data/rds/mpsz.rds")
+```
+
+## 5.4 Computing Correlation Matrix
+
+Before loading the independent variables/predictors into the predictive model, we will need to use the correlation matrix to examine for signs of multicollinearity. This helps to avoid biasness/skewness in the predictive models that may occur if highly correlated variables were used.
+
+```{r}
+resale_tidy_all_nogeo <- resale_tidy_all %>%
+  st_drop_geometry()
+
+corrplot(cor(resale_tidy_all_nogeo[,c(2:4,6:26)]),
+         diag = FALSE,
+         order = "AOE",
+         tl.pos = "td",
+         tl.cex = 0.5,
+         number.cex = 0.7,
+         method = "number",
+         type = "upper")
+```
+
+Based on the correlation matrix, we there is multicollinearity between variables "age" and "remaining_lease_mth" which are highly negatively correlated (-1.00). As "age" is less specific than "remaining_lease_mth", given that we used the current year 2024 to minus the lease commencement year and did not consider month in its formulation, we will retain the latter for further analysis:
+
+```{r}
+resale_tidy_all <- resale_tidy_all %>%
+  select(-age)
+```
+
+## 5.5 Data Sampling
+
+Before we carry out further analysis, we will split the *resale_tidy_all* data into train, validation and test data sets. As the intent of the exercise is to predict the HDB resale prices between July and September 2024, we will extract the data during this period as the test data set. For the remaining data, we will use `initial_split()` of the [**rsample**](https://rsample.tidymodels.org/)package to split it into train (65%) and validation (35%):
+
+```{r}
+#| eval: false 
+set.seed(1234)
+test_data <- resale_tidy_all %>%
+  filter(month >= "2024-07")
+remaining_data <- resale_tidy_all %>%
+  filter(month < "2024-07")
+
+resale_split <- initial_split(remaining_data,prop = 6.5/10,)
+train_data <- training(resale_split) 
+val_data <- testing(resale_split)
+```
+
+We save the train, validation and test data sets as new rds files and load them into the R environment to avoid re-running the step above:
+
+```{r}
+#| eval: false 
+write_rds(train_data,"data/rds/train_data.rds")
+write_rds(val_data,"data/rds/val_data.rds")
+write_rds(test_data,"data/rds/test_data.rds")
+```
+
+```{r}
+train_data <- read_rds("data/rds/train_data.rds")
+val_data <- read_rds("data/rds/val_data.rds")
+test_data <- read_rds("data/rds/test_data.rds")
+```
+
+## 5.6 Multiple linear regression (MLR)
+
+### 5.6.1 Non-spatial MLR
+
+```{r}
+#| eval: false
+price_mlr <- lm(resale_price ~ floor_area_sqm + storey_order + remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + PROX_MRT + PROX_PARK+ PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+                data = train_data)
+```
+
+### 5.6.2 Geographically weighted MLR predictive model
 
 -   Locational factors
 
@@ -686,9 +1172,6 @@ We note that the *mpsz* has a multipolygon geometry.
 
         -   Numbers of primary school within 1km
 
-```{=html}
-<!-- -->
-```
 -   Structural factors (done)
 
     -   "floor_area_sqm": Area of the unit
