@@ -132,6 +132,12 @@ mpsz <- st_read(dsn = "data/geospatial",
   st_transform(crs = 3414)
 ```
 
+::: callout-note
+## In-class notes from Prof Kam
+
+-   note that the "MPSZ-2019" data was kindly created by Prof Kam. The original kml and geojson files required further steps to split columns.
+:::
+
 We note that BusStop has a point form geometry while mpsz has a multipolygon geometry.
 
 We will save the BusStop and mpsz as new rds files and load them into the R environment for further use:
@@ -165,6 +171,14 @@ busstop_mpsz <- st_intersection(busstop,mpsz) %>%
 -   `select()` of dplyr package is then use to retain only BUS_STOP_N and SUBZONE_C in the busstop_mpsz sf data frame.
 
 -   five bus stops are excluded in the resultant data frame because they are outside of Singapore's boundary.
+:::
+
+::: callout-note
+## In-class notes from Prof Kam:
+
+-   adding planning subzone name to the busstop sf data frame
+
+-   drop geometry to become a typical tibble data frame so that its easier to work wit
 :::
 
 ```{r}
@@ -278,6 +292,10 @@ write_rds(od_data,"data/rds/od_data_fii.rds")
 od_data_fii <- read_rds("data/rds/od_data_fii.rds")
 ```
 
+::: callout-note
+-   "fii" reflects within zone flow as its meant to indicate i to i
+:::
+
 ## 10.6 Visualising Spatial Interaction
 
 In this section, we will prepare **desire lines - straight lines between the origin and destination and represent where people would go if they were not constrained by the route network** - using [**stplanr**](#0)package.
@@ -354,3 +372,9 @@ tm_shape(mpsz)+
            n = 6,
            alpha = 0.3)
 ```
+
+::: callout-note
+## In-class notes from Prof Kam
+
+-   note that Prof Kam had decided on 5000 after trial and error
+:::

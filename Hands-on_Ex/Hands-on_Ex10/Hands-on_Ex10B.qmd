@@ -95,13 +95,19 @@ dist <- spDists(mpsz_sp,
                 longlat = FALSE)
 ```
 
+::: callout-note
+## In-class notes from Prof Kam
+
+-   note that actually st_distance() can be used directly on the sf object, is just that it takes a longer time hence in this exercise, Prof Kam guided to convert sf object to sp object and apply spDists() instead
+:::
+
 ```{r}
 head(dist, n = c(10,10))
 ```
 
 Note that the output *dist* is a matrix object class. Note that the column and row headers are not labelled with the planning subzone codes.
 
-### 10.4.3 Labelling column and row headers of a distance matrix
+### 10.4.3 Labeling column and row headers of a distance matrix
 
 First, we will create a list sorted according to the distance matrix by planning subzone code:
 
@@ -116,6 +122,12 @@ colnames(dist) <- paste0(sz_names)
 rownames(dist) <- paste0(sz_names)
 ```
 
+::: callout-note
+## In-class notes from Prof Kam
+
+-   note that this step would not be necessary if st_distance() had been applied
+:::
+
 ### 10.4.4 Pivoting distance value by SUBZONE_C
 
 Next, we will pivot the distance matrix into a long table using the row and column subzone codes shown in the code chunk below:
@@ -127,6 +139,12 @@ head(distPair,10)
 ```
 
 Note that the within zone distance is 0.
+
+::: callout-note
+## In-class notes from Prof Kam
+
+-   note that melt() came from reshape2 package, which is the "grandfather" of dplyr
+:::
 
 ### 10.4.5 Updating intra-zonal distances
 
@@ -280,6 +298,14 @@ flow_data1 <- flow_data1 %>%
   select(-c(PA,SZ_NAME))
 ```
 
+::: callout-note
+## In-class notes from Prof Kam
+
+-   note that strictly speaking, population should not be set as the destination attribute but rather can consider factors such as number of schools, workplaces
+
+-   population was used here for simplicity
+:::
+
 We save the output as a new rds file *SIM_data* and load it into the R environment for future use:
 
 ```{r}
@@ -395,6 +421,12 @@ uncSIM <- glm(formula = TRIPS ~
 uncSIM
 ```
 
+::: callout-note
+-   note that log(ORIGIN_AGE25_64) and log(DESTIN_AGE25_64) are positive
+
+-   note that log(dist) is negative aka travel longer, willingness to travel is lesser
+:::
+
 ### 10.7.4 R-Squared function
 
 In order to measure how much variation of the trips can be accounted by the model we will write a function to calculate R-Squared value as shown below.
@@ -416,6 +448,14 @@ CalcRSquared(uncSIM$data$TRIPS, uncSIM$fitted.values)
 ```{r}
 r2_mcfadden(uncSIM)
 ```
+
+::: callout-note
+## In-class notes from Prof Kam:
+
+-   in reality, we do not have to go through these steps to calculate R2, we can instead use the performance package like in [10.7.8 Model Comparison]
+
+-   using r2_mcfadden() might be better for poisson, negative binomial models
+:::
 
 ### 10.7.5 Origin (Production) constrained SIM
 
@@ -516,6 +556,12 @@ compare_performance(model_list,
 
 The print above reveals that doubly constrained SIM is the best model among all the four SIMs because it has the smallest RMSE value of 3252.297.
 
+::: callout-note
+## In-class notes from Prof Kam
+
+-   note that r2_mcfadden() is not available for group display like above - only meant for RMSE, AIC/BIC etc
+:::
+
 ### 10.7.9 Visualising fitted values
 
 In this section, we will visualise the observed values and the fitted values.
@@ -609,3 +655,13 @@ ggarrange(unc_p, orc_p, dec_p, dbc_p,
           ncol = 2,
           nrow = 2)
 ```
+
+::: callout-note
+## In-class notes from Prof Kam
+
+-   note that for the above plots, a lot of points are clustered at bottom left, can apply log transformation so that you can see the results spread out better
+
+-   when calibrating model, keep the distance as positive such that when it gets returned, the distance obtained will be negative (i.e. inversely related)
+
+-   note that **FlowNoIntra** and **Offset** are not used in this exercise, meant for Spatial Econometrics (chapter not covered in this module)
+:::
