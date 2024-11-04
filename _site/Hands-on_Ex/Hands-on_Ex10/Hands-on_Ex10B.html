@@ -228,6 +228,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../In-class_Ex/In-class_Ex09/In-class_Ex09.html">
  <span class="dropdown-text">In-class Exercise 9</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../In-class_Ex/In-class_Ex10/In-class_Ex10.html">
+ <span class="dropdown-text">In-class Exercise 10</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -302,7 +306,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#converting-sf-data.table-to-spatialpolygonsdataframe" id="toc-converting-sf-data.table-to-spatialpolygonsdataframe" class="nav-link" data-scroll-target="#converting-sf-data.table-to-spatialpolygonsdataframe">10.4.1 Converting sf data.table to SpatialPolygonsDataFrame</a></li>
   <li><a href="#computing-distance-matrix-1" id="toc-computing-distance-matrix-1" class="nav-link" data-scroll-target="#computing-distance-matrix-1">10.4.2 Computing distance matrix</a></li>
-  <li><a href="#labelling-column-and-row-headers-of-a-distance-matrix" id="toc-labelling-column-and-row-headers-of-a-distance-matrix" class="nav-link" data-scroll-target="#labelling-column-and-row-headers-of-a-distance-matrix">10.4.3 Labelling column and row headers of a distance matrix</a></li>
+  <li><a href="#labeling-column-and-row-headers-of-a-distance-matrix" id="toc-labeling-column-and-row-headers-of-a-distance-matrix" class="nav-link" data-scroll-target="#labeling-column-and-row-headers-of-a-distance-matrix">10.4.3 Labeling column and row headers of a distance matrix</a></li>
   <li><a href="#pivoting-distance-value-by-subzone_c" id="toc-pivoting-distance-value-by-subzone_c" class="nav-link" data-scroll-target="#pivoting-distance-value-by-subzone_c">10.4.4 Pivoting distance value by SUBZONE_C</a></li>
   <li><a href="#updating-intra-zonal-distances" id="toc-updating-intra-zonal-distances" class="nav-link" data-scroll-target="#updating-intra-zonal-distances">10.4.5 Updating intra-zonal distances</a></li>
   </ul></li>
@@ -367,7 +371,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">October 31, 2024</p>
+      <p class="date-modified">November 4, 2024</p>
     </div>
   </div>
     
@@ -501,6 +505,21 @@ Reasons why the distance is calculated between two centroids of a pair of spatia
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dist <span class="ot">&lt;-</span> <span class="fu">spDists</span>(mpsz_sp,</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">longlat =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+In-class notes from Prof Kam
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>note that actually st_distance() can be used directly on the sf object, is just that it takes a longer time hence in this exercise, Prof Kam guided to convert sf object to sp object and apply spDists() instead</li>
+</ul>
+</div>
+</div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dist, <span class="at">n =</span> <span class="fu">c</span>(<span class="dv">10</span>,<span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -530,8 +549,8 @@ Reasons why the distance is calculated between two centroids of a pair of spatia
 </div>
 <p>Note that the output <em>dist</em> is a matrix object class. Note that the column and row headers are not labelled with the planning subzone codes.</p>
 </section>
-<section id="labelling-column-and-row-headers-of-a-distance-matrix" class="level3">
-<h3 class="anchored" data-anchor-id="labelling-column-and-row-headers-of-a-distance-matrix">10.4.3 Labelling column and row headers of a distance matrix</h3>
+<section id="labeling-column-and-row-headers-of-a-distance-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="labeling-column-and-row-headers-of-a-distance-matrix">10.4.3 Labeling column and row headers of a distance matrix</h3>
 <p>First, we will create a list sorted according to the distance matrix by planning subzone code:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sz_names <span class="ot">&lt;-</span> mpsz<span class="sc">$</span>SUBZONE_C</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -540,6 +559,21 @@ Reasons why the distance is calculated between two centroids of a pair of spatia
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dist) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(sz_names)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(dist) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(sz_names)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+In-class notes from Prof Kam
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>note that this step would not be necessary if st_distance() had been applied</li>
+</ul>
+</div>
 </div>
 </section>
 <section id="pivoting-distance-value-by-subzone_c" class="level3">
@@ -564,6 +598,21 @@ Reasons why the distance is calculated between two centroids of a pair of spatia
 </div>
 </div>
 <p>Note that the within zone distance is 0.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+In-class notes from Prof Kam
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>note that melt() came from reshape2 package, which is the “grandfather” of dplyr</li>
+</ul>
+</div>
+</div>
 </section>
 <section id="updating-intra-zonal-distances" class="level3">
 <h3 class="anchored" data-anchor-id="updating-intra-zonal-distances">10.4.5 Updating intra-zonal distances</h3>
@@ -751,6 +800,22 @@ $ AGE25_64 &lt;dbl&gt; 2780, 15700, 14240, 12460, 3620, 9650, 4350, 11320, 0, 25
 <span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">DESTIN_AGE25_64 =</span> AGE25_64) <span class="sc">%&gt;%</span></span>
 <span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(PA,SZ_NAME))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+In-class notes from Prof Kam
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>note that strictly speaking, population should not be set as the destination attribute but rather can consider factors such as number of schools, workplaces</p></li>
+<li><p>population was used here for simplicity</p></li>
+</ul>
+</div>
+</div>
 <p>We save the output as a new rds file <em>SIM_data</em> and load it into the R environment for future use:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(flow_data1, <span class="st">"data/rds/SIM_data.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -927,6 +992,22 @@ Null Deviance:      60800000
 Residual Deviance: 36430000     AIC: 36520000</code></pre>
 </div>
 </div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>note that log(ORIGIN_AGE25_64) and log(DESTIN_AGE25_64) are positive</p></li>
+<li><p>note that log(dist) is negative aka travel longer, willingness to travel is lesser</p></li>
+</ul>
+</div>
+</div>
 </section>
 <section id="r-squared-function" class="level3">
 <h3 class="anchored" data-anchor-id="r-squared-function">10.7.4 R-Squared function</h3>
@@ -951,6 +1032,22 @@ Residual Deviance: 36430000     AIC: 36520000</code></pre>
 <pre><code># R2 for Generalized Linear Regression
        R2: 0.400
   adj. R2: 0.400</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+In-class notes from Prof Kam:
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>in reality, we do not have to go through these steps to calculate R2, we can instead use the performance package like in <a href="#model-comparison">10.7.8 Model Comparison</a></p></li>
+<li><p>using r2_mcfadden() might be better for poisson, negative binomial models</p></li>
+</ul>
 </div>
 </div>
 </section>
@@ -2229,6 +2326,21 @@ doublyConstrained      |   glm | 3252.297</code></pre>
 </div>
 </div>
 <p>The print above reveals that doubly constrained SIM is the best model among all the four SIMs because it has the smallest RMSE value of 3252.297.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+In-class notes from Prof Kam
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>note that r2_mcfadden() is not available for group display like above - only meant for RMSE, AIC/BIC etc</li>
+</ul>
+</div>
+</div>
 </section>
 <section id="visualising-fitted-values" class="level3">
 <h3 class="anchored" data-anchor-id="visualising-fitted-values">10.7.9 Visualising fitted values</h3>
@@ -2319,6 +2431,23 @@ doublyConstrained      |   glm | 3252.297</code></pre>
 <p><img src="Hands-on_Ex10B_files/figure-html/unnamed-chunk-54-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+In-class notes from Prof Kam
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>note that for the above plots, a lot of points are clustered at bottom left, can apply log transformation so that you can see the results spread out better</p></li>
+<li><p>when calibrating model, keep the distance as positive such that when it gets returned, the distance obtained will be negative (i.e.&nbsp;inversely related)</p></li>
+<li><p>note that <strong>FlowNoIntra</strong> and <strong>Offset</strong> are not used in this exercise, meant for Spatial Econometrics (chapter not covered in this module)</p></li>
+</ul>
 </div>
 </div>
 
