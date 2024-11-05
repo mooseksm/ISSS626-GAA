@@ -18,6 +18,12 @@ execute:
 
 ![](images/clipboard-3365961292.png)
 
+-   Refer to the [LTA User Guide](https://datamall.lta.gov.sg/content/dam/datamall/datasets/LTA_DataMall_API_User_Guide.pdf) to obtain the URL to the dataset of choice. An example is shown below:
+
+    ![](images/clipboard-4056052330.png){width="481"}
+
+-   
+
 ## Run through of Hands-on Exercise 10
 
 Please refer to [Hands-on Exercise 10A](https://isss626-ksm.netlify.app/hands-on_ex/hands-on_ex10/hands-on_ex10a) and [Hands-on Exercise 10B](https://isss626-ksm.netlify.app/hands-on_ex/hands-on_ex10/hands-on_ex10b) for in-class notes.
