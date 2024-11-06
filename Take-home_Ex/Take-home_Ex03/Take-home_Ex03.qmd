@@ -51,14 +51,14 @@ The following datasets will be used:
     -   Locational factors with geographic coordinates from [Datamall.lta.gov.sg](https://datamall.lta.gov.sg/content/datamall/en.html):
 
         | S/N | Data                                                                                      |
-        |------------|------------------------------------------------------------|
+        |----------------|--------------------------------------------------------|
         | 1   | **MRT** data is a list of MRT/LRT stations in Singapore with the station names and codes. |
         | 2   | **Bus stops** data is a list of bus stops in Singapore                                    |
 
     -   Locational factors without geographic coordinates from [Data.gov.sg](https://data.gov.sg/) and other sources:
 
         | S/N | Data                                                                                                                   | Source                                                                                        |
-        |-------------|---------------------------------|--------------------------|
+        |-----------------|-------------------------------|------------------------|
         | 1   | **Primary school** data is extracted from the list on General information of schools                                   | [Data.gov.sg](https://data.gov.sg/)                                                           |
         | 2   | **Good primary schools** is a list of primary schools that are ordered in ranking in terms of popularity for year 2024 | [Local Salary Forum](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/)     |
         | 3   | **CBD** coordinates obtained from Google                                                                               | Google                                                                                        |
@@ -1460,7 +1460,19 @@ To further determine if our observation is true, we will perform the Moran's I t
 First, we will compute the distance-based weight matrix using the `dnearneigh()` function of spdep package:
 
 ```{r}
+#| eval: false
 nb <- dnearneigh(coordinates(as_Spatial(train_data_res)), 0, 1500, longlat = FALSE)
+```
+
+We save the output as a new rds file to avoid re-running the step above:
+
+```{r}
+#| eval: false
+write_rds(nb,"data/rds/nb.rds")
+```
+
+```{r}
+nb <- read_rds("data/rds/nb.rds")
 summary(nb)
 ```
 
@@ -1560,16 +1572,56 @@ gwr_adaptive
 
 Based on the report above, we note that the gwr has an improved adjusted R2 value at approximately 0.937 as compared to the conventional MLR (that was fitted with the train data) which had a R2 value of 0.678. This means that the calibrated model is able to better explain the HDB resale prices (\~93.7%) as compared to the conventional MLR model (which could only explain 67.8%).
 
-#### 5.6.2.3 Converting SDF into sf data frame
+#### 5.6.2.3 Visualising GWR output
+
+The output feature class table includes fields for the observed and predicted y values, local R2, residuals, explanatory variable coefficients and standard errors:
+
+-   [Predicted:]{.underline} estimated (or fitted) y values computed by GWR
+
+-   [Local R2:]{.underline} values indicate how well the local regression model fits observed y values and range between 0.0 and 1.0. Very low values indicate that the local model is performing poorly. Mapping the Local R2 values to see where GWR predicts well and where it predicts poorly may provide clues about important variables that may be missing from the regression model.
+
+-   [Residuals:]{.underline} the fitted y values are subtracted from the observed y values to obtain the residual values
+
+-   [Coefficient Standard Error:]{.underline} these values measure the reliability of each coefficient estimate. Confidence in those estimates are higher when standard errors are small in relation to the actual coefficient values. Large standard errors may indicate problems with local collinearity.
+
+The above information are all stored in an object called **SDF** of the output list.
+
+To visualise the fields in SDF, we first need to convert it into a sf data frame using the code chunk below:
 
 ```{r}
 gwr_adaptive_output <- as.data.frame(gwr_adaptive$SDF)
 train_data_adaptive <- cbind(train_data_res, as.matrix(gwr_adaptive_output))
 ```
 
+We display the content of the *train_data_adaptive* sf data frame using `glimpse()`:
+
 ```{r}
 glimpse(train_data_adaptive)
 ```
+
+The code chunk below is used to create an interactive point symbol map visualising the distribution of local R2. The first line unlists the values in Local_R2 before proceeding to map it using the tmap package:
+
+```{r}
+train_data_adaptive$Local_R2 <- unlist(train_data_adaptive$Local_R2)
+
+tmap_mode("view")
+tm_shape(mpsz)+
+  tmap_options(check.and.fix = TRUE)+
+  tm_polygons(alpha = 0.1)+
+tm_shape(train_data_adaptive)+
+  tm_dots(col = "Local_R2",
+          border.col = "gray60",
+          border.lwd = 1)+
+  tm_view(set.zoom.limits = c(11,14))
+```
+
+We need to remember to set the tmap mode back to "plot":
+
+```{r}
+tmap_mode("plot")
+```
+
+Based on the map above, we note that the model generally has a good R2 in predicting HDB resale prices across Singapore, but with weaker R2 values for predicting HDB resale prices in the north and east regions in Singapore.
 
 Given the small size of the data set used for this exercise i.e. a total of 11642 observations, using a different bandwidth for train and test data might result in significant variations. We will hence utilise "bw_adaptive" of 48 neighbours, determined for train data, as the adaptive bandwidth to construct the model for the test data in the next section below.
 
