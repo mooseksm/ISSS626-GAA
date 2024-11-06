@@ -51,14 +51,14 @@ The following datasets will be used:
     -   Locational factors with geographic coordinates from [Datamall.lta.gov.sg](https://datamall.lta.gov.sg/content/datamall/en.html):
 
         | S/N | Data                                                                                      |
-        |-------------------|-----------------------------------------------------|
+        |------------|------------------------------------------------------------|
         | 1   | **MRT** data is a list of MRT/LRT stations in Singapore with the station names and codes. |
         | 2   | **Bus stops** data is a list of bus stops in Singapore                                    |
 
     -   Locational factors without geographic coordinates from [Data.gov.sg](https://data.gov.sg/) and other sources:
 
         | S/N | Data                                                                                                                   | Source                                                                                        |
-        |------------------|------------------------------|------------------------|
+        |-------------|---------------------------------|--------------------------|
         | 1   | **Primary school** data is extracted from the list on General information of schools                                   | [Data.gov.sg](https://data.gov.sg/)                                                           |
         | 2   | **Good primary schools** is a list of primary schools that are ordered in ranking in terms of popularity for year 2024 | [Local Salary Forum](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/)     |
         | 3   | **CBD** coordinates obtained from Google                                                                               | Google                                                                                        |
@@ -75,7 +75,7 @@ We will install and load the following R packages:
 -   [jsonlite](https://cran.r-project.org/web/packages/jsonlite/): to communicate with one map API and convert data into dataframe format
 
 ```{r}
-pacman::p_load(tidyverse, sf, GWmodel, SpatialML, tmap, rsample, Metrics, httr, jsonlite, rvest, fastDummies, corrplot)
+pacman::p_load(tidyverse, sf, GWmodel, SpatialML, tmap, rsample, Metrics, httr, jsonlite, rvest, fastDummies, corrplot, olsrr,DT,ggpubr,kableExtra,performance,spatstat,sfdep,spdep)
 ```
 
 ## 5. Aspatial Data Wrangling
@@ -302,7 +302,7 @@ We note that this labels the flat model types as follows:
 | Terrace           | 8     |
 :::
 
-### 5.1.5 Jittering
+### 5.1.5 Saving as a sf object
 
 We convert the *resale_tidy* data frame into a simple features data object and apply `st_transform()` to change the EPSG code to 3414:
 
@@ -311,14 +311,7 @@ resale_tidy <- st_as_sf(resale_tidy, coords = c("longitude", "latitude"), crs = 
   st_transform(crs = 3414)
 ```
 
-We then apply `st_jitter()` as HDB units can share the same postal code:
-
-```{r}
-resale_tidy <- resale_tidy %>%
-  st_jitter(amount = .1)
-```
-
-### 5.1.5 Saving as a new rds file
+### 5.1.6 Saving as a new rds file
 
 We save the output as a new rds file and load it into the R environment:
 
@@ -950,7 +943,7 @@ write_rds(resale_tidy, "data/rds/resale_tidy_stdist.rds")
 ```
 
 ```{r}
-resale_tidy_stdist <- read_rds("data/rds/resale_tidy_stdist.rds")
+resale_tidy <- read_rds("data/rds/resale_tidy_stdist.rds")
 ```
 
 #### 5.2.3.2 Creating proximity variables using `st_buffer()`, `st_intersects()` and `length()`
@@ -1073,7 +1066,188 @@ write_rds(mpsz,"data/rds/mpsz.rds")
 mpsz <- read_rds("data/rds/mpsz.rds")
 ```
 
-## 5.4 Computing Correlation Matrix
+### 5.4 Exploratory Data Analysis (EDA)
+
+We will perform some EDA to better understand the data.
+
+### 5.4.1 Distribution of HDB resale price
+
+We study the distribution of the resale price of 3-room HDB flats using the code chunk below:
+
+```{r}
+ggplot(resale_tidy_all,
+       aes(x = `resale_price`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "turquoise")+
+  labs(title = "Distribution of 3-room HDB resale price", x = "HDB Resale Price")
+```
+
+### 5.4.2 Distribution of structural and locational factors
+
+We will also visualise the distribution of the various structural and locational factors by creating individual plots for each variable and then using `ggarrange()` to organise the plots into 4 column by 6 row multiple small plots:
+
+```{r}
+#| code-fold: true
+storeyrange <- ggplot(resale_tidy_all,
+                      aes(x=`storey_range`))+
+  geom_bar(color = "black",
+           fill = "violetred")
+
+floorareasqm <- ggplot(resale_tidy_all,
+                      aes(x=`floor_area_sqm`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "turquoise")
+
+flatmodel <- ggplot(resale_tidy_all,
+                      aes(x=`floor_area_sqm`))+
+  geom_bar(color = "black",
+           fill = "tomato")
+
+remaininglease <- ggplot(resale_tidy_all,
+                      aes(x=`remaining_lease_mth`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "thistle2")
+
+PROXELDER <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_ELDERCARE`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "steelblue1")
+
+PROXHAWKER <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_HAWKER`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "slategray2")
+
+PROXPARK <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_PARK`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "skyblue")
+
+PROXSUPERMARKET <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_SUPERMARKET`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "seashell3")
+
+PROXCLINIC <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_CLINIC`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "seagreen2")
+
+PROXCHILDCARE <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_CHILDCARE`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "salmon")
+
+PROXKINDERGARTEN <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_KINDERGARTEN`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "royalblue")
+
+PROXMRT <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_MRT`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "rosybrown2")
+
+PROXBUS <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_BUSSTOP`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "plum")
+
+PROXPRISCH <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_PRISCH`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "pink1")
+
+PROXGOODPRISCH <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_GOODPRISCH`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "palevioletred2")
+
+PROXCBD <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_CBD`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "paleturquoise2")
+
+PROXMALL <- ggplot(resale_tidy_all,
+                      aes(x=`PROX_MALL`))+
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "palegreen2")
+
+within350mhawker <- ggplot(resale_tidy_all,
+                      aes(x=`WITHIN_350M_HAWKER`))+
+  geom_bar(color = "black",
+           fill = "orchid1")
+
+within350msupmarket <- ggplot(resale_tidy_all,
+                      aes(x=`WITHIN_350M_SUPERMARKETS`))+
+  geom_bar(color = "black",
+           fill = "olivedrab2")
+
+within350mcc <- ggplot(resale_tidy_all,
+                      aes(x=`WITHIN_350M_CHILDCARE`))+
+  geom_bar(color = "black",
+           fill = "mistyrose2")
+
+within350mkinder <- ggplot(resale_tidy_all,
+                      aes(x=`WITHIN_350M_KINDERGARTENS`))+
+  geom_bar(color = "black",
+           fill = "lightpink2")
+
+within350mbusstop <- ggplot(resale_tidy_all,
+                      aes(x=`WITHIN_350M_BUSSTOP`))+
+  geom_bar(color = "black",
+           fill = "lightgoldenrod1")
+
+within1kmprisch <- ggplot(resale_tidy_all,
+                      aes(x=`WITHIN_1KM_PRISCH`))+
+  geom_bar(color = "black",
+           fill = "lavender")
+
+ggarrange(storeyrange, floorareasqm, flatmodel, remaininglease, PROXELDER, PROXHAWKER, PROXPARK, PROXSUPERMARKET, PROXCLINIC, PROXCHILDCARE, PROXKINDERGARTEN, PROXMRT, PROXBUS, PROXPRISCH,  PROXGOODPRISCH, PROXCBD,  PROXMALL, within350mhawker, within350msupmarket, within350mcc, within350mkinder, within350mbusstop, within1kmprisch,
+         ncol = 4,
+         nrow = 6)
+```
+
+### 5.4.3 Geographical Distribution of 3-room HDB Resale Price
+
+We will also study the geospatial distribution of the 3-room HDB resale prices using the tmap package. Note that we have the first line in the code chunk below to prevent errors in the plotting of our high quality cartographic map. We also set the zoom limits to be between the minimum and maximum zoom level of 11 and 14 respectively.
+
+```{r}
+tmap_options(check.and.fix = TRUE)
+
+tmap_mode("view")
+tm_shape(mpsz)+
+  tm_polygons()+
+  tm_shape(resale_tidy_all)+
+  tm_dots(col = "resale_price",
+          alpha = 0.6,
+          style = "quantile")+
+  tm_view(set.zoom.limits = c(11,14))
+```
+
+From the map above, we note that there is a concentration of higher-priced 3-room HDB resale flat in the northeast region of Singapore. We also note that 3-room HDB resale flats in the west are usually of a lower resale price. Before we move on to next steps, we must remember to change the tmap mode to plot using the code chunk below:
+
+```{r}
+tmap_mode("plot")
+```
+
+### 5.5 Computing Correlation Matrix
 
 Before loading the independent variables/predictors into the predictive model, we will need to use the correlation matrix to examine for signs of multicollinearity. This helps to avoid biasness/skewness in the predictive models that may occur if highly correlated variables were used.
 
@@ -1098,21 +1272,36 @@ resale_tidy_all <- resale_tidy_all %>%
   select(-age)
 ```
 
-## 5.5 Data Sampling
+### 5.5 Jittering and Data Sampling
 
-Before we carry out further analysis, we will split the *resale_tidy_all* data into train, validation and test data sets. As the intent of the exercise is to predict the HDB resale prices between July and September 2024, we will extract the data during this period as the test data set. For the remaining data, we will use `initial_split()` of the [**rsample**](https://rsample.tidymodels.org/)package to split it into train (65%) and validation (35%):
+Before we carry out further analysis, we will
+
+\(i\) apply jittering as several HDB units share the same postal code and this will cause downstream issues for our predictive model analysis. This is proven as we check for duplicated points in our *resale_tidy_all* sf object using the code chunk below:
+
+```{r}
+any(duplicated(resale_tidy_all))
+```
+
+The output of the above is TRUE indicating that there are duplicated points as expected. We hence apply jittering below, note that the amount follows the units of coordinates. For this case, the units of measurement for EPSG 3414 is in metres. The code chunk below hence jitters points using 100 metres.
+
+```{r}
+resale_tidy_all <- st_jitter(resale_tidy_all, amount = 100)
+```
+
+We confirm that jittering has been carried out properly using the code chunk below:
+
+```{r}
+any(duplicated(resale_tidy_all))
+```
+
+\(ii\) split the *resale_tidy_all* data into train and test data sets. As the intent of the exercise is to predict the HDB resale prices between July and September 2024, we will extract the data during this period as the test data set. We will use the remaining data as train data.
 
 ```{r}
 #| eval: false 
-set.seed(1234)
 test_data <- resale_tidy_all %>%
   filter(month >= "2024-07")
-remaining_data <- resale_tidy_all %>%
+train_data <- resale_tidy_all %>%
   filter(month < "2024-07")
-
-resale_split <- initial_split(remaining_data,prop = 6.5/10,)
-train_data <- training(resale_split) 
-val_data <- testing(resale_split)
 ```
 
 We save the train, validation and test data sets as new rds files and load them into the R environment to avoid re-running the step above:
@@ -1120,64 +1309,522 @@ We save the train, validation and test data sets as new rds files and load them 
 ```{r}
 #| eval: false 
 write_rds(train_data,"data/rds/train_data.rds")
-write_rds(val_data,"data/rds/val_data.rds")
 write_rds(test_data,"data/rds/test_data.rds")
 ```
 
 ```{r}
 train_data <- read_rds("data/rds/train_data.rds")
-val_data <- read_rds("data/rds/val_data.rds")
 test_data <- read_rds("data/rds/test_data.rds")
 ```
 
-## 5.6 Multiple linear regression (MLR)
+### 5.6 Multiple linear regression (MLR)
 
-### 5.6.1 Non-spatial MLR
+### 5.6.1 Conventional MLR
+
+We start off by building a non-spatial MLR model using the code chunk below:
 
 ```{r}
 #| eval: false
-price_mlr <- lm(resale_price ~ floor_area_sqm + storey_order + remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + PROX_MRT + PROX_PARK+ PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+price_mlr <- lm(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
                 data = train_data)
 ```
 
+We save the output as a new rds file and load it into the R environment to avoid re-running the above step:
+
+```{r}
+#| eval: false
+write_rds(price_mlr,"data/rds/price_mlr.rds")
+```
+
+```{r}
+price_mlr <- read_rds("data/rds/price_mlr.rds")
+```
+
+We generate the report using the `olsrr_regress()` function:
+
+```{r}
+ols_regress(price_mlr)
+```
+
+Based on the report output above that the adjusted R2 is 0.678 which indicate that the predictors are able to explain 67.8% of the HDB resale prices.
+
+We also check once more for multicollinearity by analysing the variance inflation factors (VIF) using the \``check_collinearity()` function in the performance package. We then use `kable()` to generate a table from the tibble data frame created:
+
+```{r}
+vif <- check_collinearity(price_mlr)
+kable(vif,
+      caption = "Variance Inflation Factor (VIF) results") %>%
+  kable_styling(font_size = 18)
+```
+
+```{r}
+plot(vif) +
+  theme(axis.text.x = element_text(angle = 45, hjust =1))
+```
+
+Based on the output above, we note that the VIF values are all less than 5, indicating that there's no presence of multicollinearity.
+
+However, at 95% confidence level, we note that not all the independent variables are statistically significant. Specifically, PROX_BUSSTOP, PROX_PRISCH, PROX_MALL and WITHIN_350M_BUSSTOP are not statistically significant. We revise the model by removing these variables and calibrate the revised model using the code chunk below:
+
+```{r}
+#| eval: false
+price_mlr1 <- lm(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_GOODPRISCH + PROX_CBD + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_1KM_PRISCH,
+                data = train_data)
+```
+
+As with the above, we save the output as a new rds file and load it into the R environment to avoid re-running the above step:
+
+```{r}
+#| eval: false
+write_rds(price_mlr1,"data/rds/price_mlr1.rds")
+```
+
+```{r}
+price_mlr1 <- read_rds("data/rds/price_mlr1.rds")
+```
+
+We generate the report using the `olsrr_regress()` function:
+
+```{r}
+ols_regress(price_mlr1)
+```
+
+We note that all remaining independent variables are significant, however we note that the adjusted R2 still remained at 0.678, which indicates that this revised model is only able to predict as well as the earlier model and explain approximately 67.8% of 3-room HDB resale prices.
+
+#### 5.6.1.1 Test for non-linearity
+
+In MLR, it is also important to test for the linearity and additivity of the relationship between dependent and independent variables. This is because MLR assumes a linear relationship between each predictor and the outcome variable. If a predictor has a non-linear relationship with the dependent variable, it can lead to biased or inaccurate predictions.
+
+We hence utilise the `ols_plot_resid_fit()` function of the olsrr package to perform the linearity assumption test, to test the validity of our model:
+
+```{r}
+ols_plot_resid_fit(price_mlr1)
+```
+
+The plot above indicates that most of the data points are scattered around the 0 line, hence we can conclude that the relationships between the dependent variable and the independent variables are linear.
+
+#### 5.6.1.2 Test for Normality Assumption
+
+For MLR, we would also need to assess the normality of residuals as it would affect the validity of hypothesis tests, confidence intervals etc.
+
+We hence determine normality using the `ols_plot_resid_hist()` of the olsrr package:
+
+```{r}
+ols_plot_resid_hist(price_mlr1)
+```
+
+The figure above indicates that the residual fo the MLR model resembles a normal distribution.
+
+#### 5.6.1.3 Testing for spatial autocorrelation
+
+Spatial autocorrelation implies that observations that are near each other are more likely to be similar, which can violate the independence assumption in linear regression and lead to erroneous results. We will hence test for spatial autocorrelation.
+
+We will first export the residual of the MLR model and save it as a data frame:
+
+```{r}
+price_mlr1.output <- as.data.frame(price_mlr1$residuals)
+```
+
+Next, we will join the newly created data frame with the *train_data* sf object:
+
+```{r}
+train_data_res <- cbind(train_data,
+                        price_mlr1.output) %>%
+  rename(`MLR_RES` = `price_mlr1.residuals`)
+```
+
+Next, we will use tmap to display the distribution of the residuals on an interactive map:
+
+```{r}
+tmap_mode("view")
+tm_shape(mpsz)+
+  tmap_options(check.and.fix = TRUE)+
+  tm_polygons(alpha = 0.4)+
+  tm_shape(train_data_res)+
+  tm_dots(col = "MLR_RES",
+          alpha = 0.6,
+          style = "quantile")+
+  tm_view(set.zoom.limits = c(11,14))
+```
+
+We will switch the tmap mode back to "plot" using the code chunk below:
+
+```{r}
+tmap_mode("plot")
+```
+
+The map above reveals that there seems to be signs of spatial autocorrelation as the model predicts higher than expected resale prices in the central and east regions of Singapore and lower than expected resale prices in the west and northeast regions.
+
+To further determine if our observation is true, we will perform the Moran's I test.
+
+First, we will compute the distance-based weight matrix using the `dnearneigh()` function of spdep package:
+
+```{r}
+nb <- dnearneigh(coordinates(as_Spatial(train_data_res)), 0, 1500, longlat = FALSE)
+summary(nb)
+```
+
+Next, we will utilise `nb2listw()` of sfdep package to convert the output neighbours list into spatial weights:
+
+```{r}
+nb_lw <- nb2listw(nb, style = 'W')
+```
+
+We then use the `lm.morantest()` function of spdep package to perform Moran's I test for residual spatial autocorrelation:
+
+```{r}
+lm.morantest(price_mlr1, nb_lw)
+```
+
+The Global Moran's I test for residual spatial autocorrelation shows that its p-value is less than 2.2e-16, which is less than the alpha value of 0.05 at 95% confidence interval. As such, we will reject the null hypothesis that residuals are randomly distributed. As the observed Global Moran I value is greater than 0, we can infer that the residuals resemble a cluster distribution.
+
+#### 5.6.1.4 Predicting values for test data
+
+After determining the validity of the MLR model through the tests above, we will utilise the *price_mlr1* model which has fitted with the *train_data* to make predictions on the test data:
+
+```{r}
+test_data$predicted_price <- predict(price_mlr1,test_data)
+```
+
+We evaluate the model performance by comparing the prediction against the actual resale prices:
+
+```{r}
+rmse <- Metrics::rmse(test_data$resale_price,test_data$predicted_price)
+rmse
+```
+
+```{r}
+r_squared <- cor(test_data$resale_price,test_data$predicted_price)^2
+r_squared
+```
+
+We note that the R2 value is 0.7375984, which indicates that the model is able to predict approximately 73.8% of the 3-room HDB resale data with the test data and that the model has a RMSE of 63070.34.
+
 ### 5.6.2 Geographically weighted MLR predictive model
 
--   Locational factors
+We will now calibrate a model to predict HDB resale prices using geographically weighted regression (gwr).
 
-    -   Use st_distance() or function in sf package
+#### 5.6.2.1 Computing adaptive bandwidth for train data
 
-        -   Proximity to CBD
+We will first determine the optimal bandwidth to use using `bw_gwr()` of the [GWmodel](https://cran.r-project.org/web/packages/GWmodel/GWmodel.pdf) package. In the code chunk below, we will use the cross-validation (CV) approach to determine the optimal bandwidth.
 
-        -   Proximity to eldercare
+```{r}
+#| eval: false
+bw_adaptive <- bw.gwr(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
+                data = train_data,
+                approach = "CV",
+                kernel = "gaussian",
+                adaptive = TRUE,
+                longlat = FALSE)
+```
 
-        -   Proximity to foodcourt/hawker centres
+We will save the results as a new rds file to avoid re-running the above step as it can take a while:
 
-        -   Proximity to MRT
+```{r}
+#| eval: false
+write_rds(bw_adaptive,"data/rds/bw_adaptive.rds")
+```
 
-        -   Proximity to park
+```{r}
+bw_adaptive <- read_rds("data/rds/bw_adaptive.rds")
+bw_adaptive
+```
 
-        -   Proximity to good primary school
+Based on the result, we note that 48 neighbour points will be the optimal bandwidth to use for this data.
 
-        -   Proximity to shopping mall
+#### 5.6.2.2 Constructing the adaptive bandwidth gwr model for train data
 
-        -   Proximity to supermarket
+We will calibrate the gwr-based hedonic pricing model by using the adaptive bandwidth determined above:
 
-    -   Generate a buffer from HDB and use point-in-geometry
+```{r}
+#| eval: false
+gwr_adaptive <- gwr.basic(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
+                data = train_data,
+                bw = bw_adaptive,
+                kernel = "gaussian",
+                adaptive = TRUE,
+                longlat = FALSE)
+```
 
-        -   Numbers of kindergartens within 350m
+We save the model as a new rds file to avoid re-running the step above:
 
-        -   Numbers of childcare centres within 350m
+```{r}
+#| eval: false
+write_rds(gwr_adaptive,"data/rds/gwr_adaptive.rds")
+```
 
-        -   Numbers of bus stop within 350m
+```{r}
+gwr_adaptive <- read_rds("data/rds/gwr_adaptive.rds")
+gwr_adaptive
+```
 
-        -   Numbers of primary school within 1km
+Based on the report above, we note that the gwr has an improved adjusted R2 value at approximately 0.937 as compared to the conventional MLR (that was fitted with the train data) which had a R2 value of 0.678. This means that the calibrated model is able to better explain the HDB resale prices (\~93.7%) as compared to the conventional MLR model (which could only explain 67.8%).
 
--   Structural factors (done)
+#### 5.6.2.3 Converting SDF into sf data frame
 
-    -   "floor_area_sqm": Area of the unit
+```{r}
+gwr_adaptive_output <- as.data.frame(gwr_adaptive$SDF)
+train_data_adaptive <- cbind(train_data_res, as.matrix(gwr_adaptive_output))
+```
 
-    -   "storey_range": Floor level
+```{r}
+glimpse(train_data_adaptive)
+```
 
-    -   "remaining_lease_mth": Remaining lease
+Given the small size of the data set used for this exercise i.e. a total of 11642 observations, using a different bandwidth for train and test data might result in significant variations. We will hence utilise "bw_adaptive" of 48 neighbours, determined for train data, as the adaptive bandwidth to construct the model for the test data in the next section below.
 
-    -   "age": Age of the unit
+#### 5.6.2.3 Constructing the adaptive bandwidth gwr model and computing predicted values for test data
+
+We will compute the predicted HDB resale prices of the test data using the code chunk below:
+
+```{r}
+#| eval: false
+gwr_pred <- gwr.predict(formula = resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
+                data = train_data,
+                predictdata = test_data,
+                bw = bw_adaptive,
+                kernel = "gaussian",
+                adaptive = TRUE,
+                longlat = FALSE)
+```
+
+We save the model as a new rds file to avoid re-running the step above:
+
+```{r}
+#| eval: false
+write_rds(gwr_pred,"data/rds/gwr_pred.rds")
+```
+
+```{r}
+#| eval: false
+gwr_pred <- read_rds("data/rds/gwr_pred.rds")
+```
+
+### 5.7 Random Forest (RF)
+
+In this section, we will build predictive models using RF. We will utilise functions from the [ranger](https://cran.r-project.org/web/packages/ranger/) (non-spatial RF) and [SpatialML](https://cran.r-project.org/web/packages/SpatialML/SpatialML.pdf) package.
+
+### 5.7.1 Extracting coordinates data and dropping geometry field
+
+Before we carry out further analysis, we will need to extract the x, y coordinates from the full *resale_tidy_all*, train and test data sets. We need to do this additional step for RF as functions under the SpatialML package are not able to use train and test data directly and take in the attribute data (in the form of a general data frame) and coordinates data as separate arguments.
+
+The code chunk below extracts the x, y coordinates:
+
+```{r}
+coords_all <- st_coordinates(resale_tidy_all)
+coords_train <- st_coordinates(train_data)
+coords_test <- st_coordinates(test_data)
+```
+
+We save the output as new rds files:
+
+```{r}
+#| eval: false
+write_rds(coords_all,"data/rds/coords_all.rds")
+write_rds(coords_train,"data/rds/coords_train.rds")
+write_rds(coords_test,"data/rds/coords_test.rds")
+```
+
+```{r}
+coords_all <- read_rds("data/rds/coords_all.rds")
+coords_train <- read_rds("data/rds/coords_train.rds")
+coords_test <- read_rds("data/rds/coords_test.rds")
+```
+
+We drop the geometry column of the train and test sf data frames using the code chunk below:
+
+```{r}
+train_data <- train_data %>%
+  st_drop_geometry()
+
+test_data <- test_data %>%
+  st_drop_geometry()
+```
+
+### 5.7.2 Non-spatial RF
+
+We will utilise the `ranger()` function of the ranger package to create the rf model. We indicate the number of trees to be 30 and will consistently use this across our rf analysis.
+
+```{r}
+#| eval: false
+set.seed(1234)
+rf <- ranger(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
+                data = train_data,
+                num.trees = 30)
+```
+
+We save the model as a new rds file and load it into the R environment to avoid re-running the step above:
+
+```{r}
+#| eval: false
+write_rds(rf,"data/rds/rf.rds")
+```
+
+```{r}
+rf <- read_rds("data/rds/rf.rds")
+```
+
+We view the report using the code chunk below:
+
+```{r}
+rf
+```
+
+We note that using the non-spatial RF model, the R2 value is 0.9113451 which means that the model is able to predict approximately 91.1% of HDB resale prices. This is a better predictive performance than the conventional MLR model which was only able to predict 67.8% of 3-room HDB resale prices and comparable to the geographically weighted MLR model (fitted with train data) which was able to predict approximately 93.7% of HDB resale prices.
+
+### 5.7.3 Geographically Weighted RF (grf)
+
+We will now calibrate the predictive model using the `grf()` function of SpatialML package.
+
+#### 5.7.3.1 Computing adaptive bandwidth for train data
+
+We will first determine the optimal bandwidth to run the grf model with by using the `grf.bw()` function of the SpatialML package below. We also keep to 30 trees for the analysis for consistency and to allow for comparison of results.
+
+```{r}
+#| eval: false
+grf_bw_adaptive <- grf.bw(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
+                data = train_data,
+                kernel = "adaptive",
+                coords = coords_train,
+                bw.min = 20,
+                bw.max = 100,
+                step = 10,
+                trees = 30)
+```
+
+We will save the results as a new rds to avoid re-running the above step as it can take a while:
+
+```{r}
+#| eval: false
+write_rds(grf_bw_adaptive,"data/rds/grf_bw_adaptive.rds")
+```
+
+```{r}
+grf_bw_adaptive <- read_rds("data/rds/grf_bw_adaptive.rds")
+grf_bw_adaptive
+```
+
+Based on the result above, we note that the optimal bandwidth is 80.
+
+#### 5.7.3.2 Constructing the adaptive bandwidth grf model
+
+We then build the grf model using the adaptive bandwidth determined above. Likewise, we set the number of trees at 30.
+
+```{r}
+#| eval: false
+set.seed(1234)
+gwRF_adaptive_train <- grf(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
+                dframe = train_data,
+                bw = 80,
+                kernel = "adaptive",
+                coords = coords_train,
+                ntree = 30)
+```
+
+We save the model output as a new rds file to avoid re-running the step above, since the process takes some time to run, and load it into the R environment:
+
+```{r}
+#| eval: false
+write_rds(gwRF_adaptive_train,"data/rds/gwRF_adaptive_train.rds")
+```
+
+```{r}
+gwRF_adaptive_train <- read_rds("data/rds/gwRF_adaptive_train.rds")
+```
+
+#### 5.7.3.4 Computing predicted values of test data
+
+Before we generate the predicted values of the test data, we first will need to prepare the test data set by combining it back with its coordinates data. We do so as the `predict.grf()` function requires the test data to be in the same data frame, different from the other functions under the SpatialML package used above.
+
+The code chunk utilises `cbind()` to combine the test data with its corresponding coordinates data:
+
+```{r}
+test_data_nogeom <- cbind(test_data,coords_test) %>%
+  st_drop_geometry()
+```
+
+We then generate the predicted values of the test data using the code chunk below which utilises the `grf.predict()` function:
+
+```{r}
+#| eval: false
+set.seed(1234)
+gwRF_pred <- predict.grf(gwRF_adaptive_train,
+                         test_data_nogeom,
+                         x.var.name = "X",
+                         y.var.name = "Y",
+                         local.w = 1,
+                         global.w = 0)
+```
+
+We save the output as a new rds file:
+
+```{r}
+#| eval: false
+write_rds(gwRF_pred,"data/rds/gwRF_pred.rds")
+```
+
+```{r}
+gwRF_pred <- read_rds("data/rds/gwRF_pred.rds")
+```
+
+#### 5.7.3.5 Converting vector predicted values into data frame
+
+The output of the `predict.grf()` is a vector of predicted values. We convert the output into a data frame to facilitate further visualisation and analysis using the code chunk below:
+
+```{r}
+#| eval: false
+gwRF_pred_df <- as.data.frame(gwRF_pred)
+```
+
+We also save the output as a new rds file for safekeeping using the code chunk below:
+
+```{r}
+#| eval: false
+write_rds(gwRF_pred_df,"data/rds/gwRF_pred_df.rds")
+```
+
+```{r}
+gwRF_pred_df <- read_rds("data/rds/gwRF_pred_df.rds")
+```
+
+#### 5.7.3.6 Appending predicted values to test data
+
+We then append the predicted values to the test data using the `cbind()` function in the code chunk below:
+
+```{r}
+#| eval: false
+test_data_pred <- cbind(test_data,gwRF_pred_df)
+```
+
+We also save this output as a new rds file for safekeeping:
+
+```{r}
+#| eval: false
+write_rds(test_data_pred,"data/rds/test_data_pred.rds")
+```
+
+```{r}
+test_data_pred <- read_rds("data/rds/test_data_pred.rds")
+```
+
+### 5.7.4 Calculating Root Mean Square Error (RMSE)
+
+The RMSE allows us to measure how far predicted values are from observed values in a regression analysis. In the code chunk below, `rmse()` of the [Metrics](https://cran.r-project.org/web/packages/Metrics/Metrics.pdf) package is used to compute the RMSE:
+
+```{r}
+Metrics::rmse(test_data_pred$resale_price,
+     test_data_pred$gwRF_pred)
+```
+
+### 5.7.5 Visualising the predicted values
+
+We will use a scatterplot to visualise the actual resale price vs the predicted resale price using the code chunk below:
+
+```{r}
+ggplot(test_data_pred,
+       aes(x=gwRF_pred,
+           y=resale_price))+
+  geom_point()+
+  ggtitle("Scatterplot of Actual Resale Price vs Predicted Resale Price (gwRF)")+
+  labs(x="Predicted Resale Price",y="Actual Resale Price")
+```
