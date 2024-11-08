@@ -1334,7 +1334,7 @@ resale_tidy_all <- resale_tidy_all %>%
   select(-age)
 ```
 
-### 5.5 Jittering and Data Sampling
+### 5.6 Jittering and Data Sampling
 
 Before we carry out further analysis, we will
 
@@ -1379,9 +1379,7 @@ train_data <- read_rds("data/rds/train_data.rds")
 test_data <- read_rds("data/rds/test_data.rds")
 ```
 
-### 5.6 Multiple linear regression (MLR)
-
-### 5.6.1 Conventional non-spatial MLR
+### 5.7 Multiple linear regression (MLR)
 
 We start off by building a conventional non-spatial MLR model using the `lm()` function in the code chunk below:
 
@@ -1443,7 +1441,7 @@ ols_regress(price_mlr1)
 We note that all remaining independent variables are significant, however we note that the adjusted R2 still remained at 0.678, which indicates that this revised model is only able to predict as well as the earlier model and explain approximately 67.8% of 3-room HDB resale prices.
 :::
 
-#### 5.6.1.1 Test for multicollinearity
+### 5.7.1 Test for multicollinearity
 
 We also check once more for multicollinearity by analysing the variance inflation factors (VIF) using the \``check_collinearity()` function in the performance package. We then use `kable()` to generate a table from the tibble data frame created:
 
@@ -1462,7 +1460,7 @@ plot(vif)+
 Based on the output above, we note that the VIF values are all less than 5, indicating that there's no presence of multicollinearity.
 :::
 
-#### 5.6.1.2 Test for non-linearity
+### 5.7.2 Test for non-linearity
 
 In MLR, it is also important to test for the linearity and additivity of the relationship between dependent and independent variables. This is because MLR assumes a linear relationship between each predictor and the outcome variable. If a predictor has a non-linear relationship with the dependent variable, it can lead to biased or inaccurate predictions.
 
@@ -1476,7 +1474,7 @@ ols_plot_resid_fit(price_mlr1)
 The plot above indicates that most of the data points are scattered around the 0 line, hence we can conclude that the relationships between the dependent variable and the independent variables are linear.
 :::
 
-#### 5.6.1.2 Test for Normality Assumption
+### 5.7.3 Test for Normality Assumption
 
 For MLR, we would also need to assess the normality of residuals as it would affect the validity of hypothesis tests, confidence intervals etc.
 
@@ -1500,7 +1498,7 @@ ols_test_normality(sample(residuals(price_mlr1), size = 5000))
 We note from the results that the p-values are smaller than alpha value of 0.05 at 95% confidence interval. We can hence reject the null hypothesis and determine that there is sufficient evidence that the residuals are not normally distributed.
 :::
 
-#### 5.6.1.3 Testing for spatial autocorrelation
+### 5.7.4 Testing for spatial autocorrelation
 
 Spatial autocorrelation implies that observations that are near each other are more likely to be similar, which can violate the independence assumption in linear regression and lead to erroneous results. We will hence test for spatial autocorrelation.
 
@@ -1592,151 +1590,11 @@ moran_mlr
 The Global Moran's I test for residual spatial autocorrelation shows that its p-value is less than 2.2e-16, which is less than the alpha value of 0.05 at 95% confidence interval. As such, we will reject the null hypothesis that residuals are randomly distributed. As the observed Global Moran I value is greater than 0, we can infer that the residuals resemble a cluster distribution.
 :::
 
-### 5.6.2 Geographically weighted MLR predictive model
-
-We will now calibrate a model to predict HDB resale prices using geographically weighted regression (gwr).
-
-#### 5.6.2.1 Computing adaptive bandwidth for train data
-
-We will first determine the optimal bandwidth to use using `bw_gwr()` of the [GWmodel](https://cran.r-project.org/web/packages/GWmodel/GWmodel.pdf) package. In the code chunk below, we will use the cross-validation (CV) approach to determine the optimal bandwidth.
-
-```{r}
-#| eval: false
-bw_adaptive <- bw.gwr(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
-                data = train_data,
-                approach = "CV",
-                kernel = "gaussian",
-                adaptive = TRUE,
-                longlat = FALSE)
-```
-
-We will save the results as a new rds file to avoid re-running the above step as it can take a while:
-
-```{r}
-#| eval: false
-write_rds(bw_adaptive,"data/rds/bw_adaptive.rds")
-```
-
-```{r}
-bw_adaptive <- read_rds("data/rds/bw_adaptive.rds")
-bw_adaptive
-```
-
-Based on the result, we note that 48 neighbour points will be the optimal bandwidth to use for this data.
-
-#### 5.6.2.2 Constructing the adaptive bandwidth gwr model for train data
-
-We will calibrate the gwr-based hedonic pricing model by using the adaptive bandwidth determined above:
-
-```{r}
-#| eval: false
-gwr_adaptive <- gwr.basic(resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
-                data = train_data,
-                bw = bw_adaptive,
-                kernel = "gaussian",
-                adaptive = TRUE,
-                longlat = FALSE)
-```
-
-We save the model as a new rds file to avoid re-running the step above:
-
-```{r}
-#| eval: false
-write_rds(gwr_adaptive,"data/rds/gwr_adaptive.rds")
-```
-
-```{r}
-gwr_adaptive <- read_rds("data/rds/gwr_adaptive.rds")
-gwr_adaptive
-```
-
-Based on the report above, we note that the gwr has an improved adjusted R2 value at approximately 0.937 as compared to the conventional MLR (that was fitted with the train data) which had a R2 value of 0.678. This means that the calibrated model is able to better explain the HDB resale prices (\~93.7%) as compared to the conventional MLR model (which could only explain 67.8%).
-
-#### 5.6.2.3 Visualising GWR output
-
-The output feature class table includes fields for the observed and predicted y values, local R2, residuals, explanatory variable coefficients and standard errors:
-
--   [Predicted:]{.underline} estimated (or fitted) y values computed by GWR
-
--   [Local R2:]{.underline} values indicate how well the local regression model fits observed y values and range between 0.0 and 1.0. Very low values indicate that the local model is performing poorly. Mapping the Local R2 values to see where GWR predicts well and where it predicts poorly may provide clues about important variables that may be missing from the regression model.
-
--   [Residuals:]{.underline} the fitted y values are subtracted from the observed y values to obtain the residual values
-
--   [Coefficient Standard Error:]{.underline} these values measure the reliability of each coefficient estimate. Confidence in those estimates are higher when standard errors are small in relation to the actual coefficient values. Large standard errors may indicate problems with local collinearity.
-
-The above information are all stored in an object called **SDF** of the output list.
-
-To visualise the fields in SDF, we first need to convert it into a sf data frame using the code chunk below:
-
-```{r}
-gwr_adaptive_output <- as.data.frame(gwr_adaptive$SDF)
-train_data_adaptive <- cbind(train_data_res, as.matrix(gwr_adaptive_output))
-```
-
-We display the content of the *train_data_adaptive* sf data frame using `glimpse()`:
-
-```{r}
-glimpse(train_data_adaptive)
-```
-
-The code chunk below is used to create an interactive point symbol map visualising the distribution of local R2. The first line unlists the values in Local_R2 before proceeding to map it using the tmap package:
-
-```{r}
-train_data_adaptive$Local_R2 <- unlist(train_data_adaptive$Local_R2)
-
-tmap_mode("view")
-tm_shape(mpsz)+
-  tmap_options(check.and.fix = TRUE)+
-  tm_polygons(alpha = 0.1)+
-tm_shape(train_data_adaptive)+
-  tm_dots(col = "Local_R2",
-          border.col = "gray60",
-          border.lwd = 1)+
-  tm_view(set.zoom.limits = c(11,14))
-```
-
-We need to remember to set the tmap mode back to "plot":
-
-```{r}
-tmap_mode("plot")
-```
-
-Based on the map above, we note that the model generally has a good R2 in predicting HDB resale prices across Singapore, but with weaker R2 values for predicting HDB resale prices in the north and east regions in Singapore.
-
-Given the small size of the data set used for this exercise i.e. a total of 11642 observations, using a different bandwidth for train and test data might result in significant variations. We will hence utilise "bw_adaptive" of 48 neighbours, determined for train data, as the adaptive bandwidth to construct the model for the test data in the next section below.
-
-#### 5.6.2.3 Constructing the adaptive bandwidth gwr model and computing predicted values for test data
-
-We will compute the predicted HDB resale prices of the test data using the code chunk below:
-
-```{r}
-#| eval: false
-gwr_pred <- gwr.predict(formula = resale_price ~ storey_range + floor_area_sqm + flat_model + remaining_lease_mth + PROX_ELDERCARE + PROX_HAWKER + PROX_PARK + PROX_SUPERMARKET + PROX_CLINIC + PROX_CHILDCARE + PROX_KINDERGARTEN + PROX_MRT + PROX_BUSSTOP + PROX_PRISCH + PROX_GOODPRISCH + PROX_CBD + PROX_MALL + WITHIN_350M_HAWKER + WITHIN_350M_SUPERMARKETS + WITHIN_350M_CHILDCARE + WITHIN_350M_KINDERGARTENS +  WITHIN_350M_BUSSTOP + WITHIN_1KM_PRISCH,
-                data = train_data,
-                predictdata = test_data,
-                bw = bw_adaptive,
-                kernel = "gaussian",
-                adaptive = TRUE,
-                longlat = FALSE)
-```
-
-We save the model as a new rds file to avoid re-running the step above:
-
-```{r}
-#| eval: false
-write_rds(gwr_pred,"data/rds/gwr_pred.rds")
-```
-
-```{r}
-#| eval: false
-gwr_pred <- read_rds("data/rds/gwr_pred.rds")
-```
-
-### 5.7 Random Forest (RF)
+### 5.8 Random Forest (RF)
 
 In this section, we will build predictive models using RF. We will utilise functions from the [ranger](https://cran.r-project.org/web/packages/ranger/) (non-spatial RF) and [SpatialML](https://cran.r-project.org/web/packages/SpatialML/SpatialML.pdf) package.
 
-### 5.7.1 Extracting coordinates data and dropping geometry field
+### 5.8.1 Extracting coordinates data and dropping geometry field
 
 Before we carry out further analysis, we will need to extract the x, y coordinates from the full *resale_tidy_all*, train and test data sets. We need to do this additional step for RF as functions under the SpatialML package are not able to use train and test data directly and take in the attribute data (in the form of a general data frame) and coordinates data as separate arguments.
 
@@ -1773,7 +1631,7 @@ test_data_nogeom <- test_data %>%
   st_drop_geometry()
 ```
 
-### 5.7.2 Non-spatial RF
+### 5.8.2 Non-spatial RF
 
 We will utilise the `ranger()` function of the ranger package to create the rf model. To ensure reproducibility, we set a seed. We also indicate the number of trees to be 30 and will consistently use this across our rf analysis.
 
@@ -1808,11 +1666,11 @@ We note that the non-spatial RF model has an R2 value of 0.9113451 which means t
 At present, based on the train data set, this is a better predictive performance than the conventional MLR model which was only able to predict 67.8% of 3-room HDB resale prices and comparable to the geographically weighted MLR model (fitted with train data) which was able to predict approximately 93.7% of HDB resale prices.
 :::
 
-### 5.7.3 Geographically Weighted RF (grf)
+### 5.8.3 Geographically Weighted RF (grf)
 
 We will now calibrate the predictive model using the `grf()` function of SpatialML package. We will utilise an adaptive bandwidth as it would better be able to capture the local variations in the distribution of HDB resale units across Singapore.
 
-#### 5.7.3.1 Computing adaptive bandwidth for train data
+#### 5.8.3.1 Computing adaptive bandwidth for train data
 
 We will first determine the optimal bandwidth to run the grf model with by using the `grf.bw()` function of the SpatialML package below. We also keep to 30 trees for the analysis for consistency and to allow for comparison of results.
 
@@ -1842,7 +1700,7 @@ grf_bw_adaptive
 
 Based on the result above, we note that the optimal bandwidth is 80.
 
-#### 5.7.3.2 Constructing the adaptive bandwidth grf model
+#### 5.8.3.2 Constructing the adaptive bandwidth grf model
 
 We then build the grf model using the adaptive bandwidth determined above. Likewise, we set the number of trees at 30. To ensure reproducibility, we set a seed.
 
@@ -1874,7 +1732,7 @@ To compare the performance of the three models, we will generate the predictions
 
 ### 6.1 Predicting values of test data
 
-#### 6.1.1. Multiple Linear Regression (MLR)
+### 6.1.1. Multiple Linear Regression (MLR)
 
 We will utilise the *price_mlr1* model which has fitted with the *train_data* to make predictions on the test data using the `predict()` function in the code chunk below:
 
@@ -1882,21 +1740,7 @@ We will utilise the *price_mlr1* model which has fitted with the *train_data* to
 test_data$predicted_mlr <- predict(price_mlr1,test_data)
 ```
 
-We evaluate the model performance by comparing the prediction against the actual resale prices:
-
-```{r}
-rmse <- Metrics::rmse(test_data$resale_price,test_data$predicted_price)
-rmse
-```
-
-```{r}
-r_squared <- cor(test_data$resale_price,test_data$predicted_price)^2
-r_squared
-```
-
-We note that the R2 value is 0.7375984, which indicates that the model is able to predict approximately 73.8% of the 3-room HDB resale data with the test data and that the model has a RMSE of 63070.34.
-
-#### 6.1.2. Random Forest (RF)
+### 6.1.2. Random Forest (RF)
 
 For RF, we will also utilise the `predict()` function on the *rf* model which has fitted with the *train_data_nogeom* to make predictions on the test data in the code chunk below:
 
@@ -1912,7 +1756,7 @@ We then extract the predictions into a new field under the *test_data* data fram
 test_data$predicted_rf <- rf_pred$predictions
 ```
 
-#### 6.1.3. Geographically Weighted RF (grf)
+### 6.1.3. Geographically Weighted RF (grf)
 
 For grf, before we generate the predicted values of the test data, we first will need to prepare the test data set by combining it back with its coordinates data. We do so as the `predict.grf()` function requires the test data to be in the same data frame, different from the other functions under the SpatialML package used above.
 
@@ -1964,7 +1808,25 @@ test_data_allres <- read_rds("data/rds/test_data_allres.rds")
 test_data_allres
 ```
 
-### 6.2. Calculating Root Mean Square Error (RMSE)
+### 6.2. Calculating R2 and Root Mean Square Error (RMSE)
+
+### 6.2.1 MLR
+
+We evaluate the model performance by comparing the prediction against the actual resale prices:
+
+```{r}
+rmse <- Metrics::rmse(test_data$resale_price,test_data$predicted_price) 
+rmse
+```
+
+```{r}
+r_squared <- cor(test_data$resale_price,test_data$predicted_price)^2 
+r_squared
+```
+
+We note that the R2 value is 0.7375984, which indicates that the model is able to predict approximately 73.8% of the 3-room HDB resale data with the test data and that the model has a RMSE of 63070.34.
+
+### 6.2.2 rf
 
 ### 6.2.3 grf
 
@@ -1977,7 +1839,12 @@ Metrics::rmse(test_data_pred$resale_price,
 
 ### 6.3. Visualising the predicted values
 
-### 6.3.3. grf
+::: panel-tabset
+## Multiple Linear Regression
+
+## Random Forest
+
+## Geographically Weighted Random Forest
 
 We will use a scatterplot to visualise the actual resale price vs the predicted resale price using the code chunk below:
 
@@ -1989,3 +1856,8 @@ ggplot(test_data_pred,
   ggtitle("Scatterplot of Actual Resale Price vs Predicted Resale Price (gwRF)")+
   labs(x="Predicted Resale Price",y="Actual Resale Price")
 ```
+:::
+
+## 7. Conclusion
+
+## 8. References
