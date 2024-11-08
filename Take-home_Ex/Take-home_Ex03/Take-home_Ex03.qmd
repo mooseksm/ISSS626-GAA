@@ -1666,7 +1666,7 @@ We note that the non-spatial RF model has an R2 value of 0.9113451 which means t
 At present, based on the train data set, this is a better predictive performance than the conventional MLR model which was only able to predict 67.8% of 3-room HDB resale prices and comparable to the geographically weighted MLR model (fitted with train data) which was able to predict approximately 93.7% of HDB resale prices.
 :::
 
-### 5.8.3 Geographically Weighted RF (grf)
+### 5.8.3 Geographically Weighted RF (gwRF)
 
 We will now calibrate the predictive model using the `grf()` function of SpatialML package. We will utilise an adaptive bandwidth as it would better be able to capture the local variations in the distribution of HDB resale units across Singapore.
 
@@ -1796,7 +1796,7 @@ The output of the `predict.grf()` is a vector of predicted values. We append the
 test_data$predicted_gwrf <- gwRF_pred
 ```
 
-We also save this output as a new rds file for safekeeping:
+We also save this overall *test_data* data frame as a new rds file:
 
 ```{r}
 #| eval: false
@@ -1805,7 +1805,6 @@ write_rds(test_data,"data/rds/test_data_allres.rds")
 
 ```{r}
 test_data_allres <- read_rds("data/rds/test_data_allres.rds")
-test_data_allres
 ```
 
 ### 6.2. Calculating R2 and Root Mean Square Error (RMSE)
