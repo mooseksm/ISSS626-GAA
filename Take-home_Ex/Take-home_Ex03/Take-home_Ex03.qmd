@@ -83,7 +83,7 @@ The following datasets will be used:
     -   Locational factors with geographic coordinates from [Datamall.lta.gov.sg](https://datamall.lta.gov.sg/content/datamall/en.html):
 
         | S/N | Data                                                                |
-        |----------------------|--------------------------------------------------|
+        |------------------------|------------------------------------------------|
         | 1   | **MRT/LRT stations** in Singapore with the station names and codes. |
         | 2   | **Bus stops** in Singapore                                          |
 
@@ -1812,9 +1812,11 @@ test_data_allres <- read_rds("data/rds/test_data_allres.rds")
 
 ### 6.2. Calculating R2 and Root Mean Square Error (RMSE)
 
-To compare model performance, we will compute two metrics for each of the models:
+To compare model performance, we will compute the folllowing metrics for each of the models:
 
 -   [**Root Mean Square Error (RMSE)**]{.underline} which represents the standard deviation of the residuals (difference between predicted and actual resale prices): A lower RMSE indicates a model with more accurate predictions. This would allow us to determine which model can more accurately predict the HDB resale prices.
+
+-   [**Residual analysis**]{.underline} complements the RMSE analysis by delving deeper into the accuracy of the model, specifically whether the models over- or under-predict.
 
 -   [**Coefficient of determination (R2)**]{.underline} which indicates how well the independent variables in a statistical model explains the variation in the dependent variable: A higher R2 value suggests that the model and its chosen independent variables better capture the underlying variations in HDB resale prices. This would allow us to determine which combination of regression model and independent variables would be a better fit to predict HDB resale prices.
 
@@ -1836,7 +1838,7 @@ rmse_results <- data.frame(
   RMSE = c(rmse_mlr,rmse_rf,rmse_gwrf)
 )
 
-rmse_results
+datatable(rmse_results)
 ```
 
 ::: {.callout-note style="#6495ED"}
@@ -1967,9 +1969,117 @@ Before we proceed with further analysis, we switch the tmap_mode to "plot":
 tmap_mode("plot")
 ```
 
-### 6.2.2 R2 values
+### 6.2.2 Residual Analysis
 
-#### 6.2.2.1 Overall R2 values
+After we have determined the accuracy of the predictive models above, we will carry out residual analysis to better understand model performance in detail i.e. whether the model under- or over-predicts. We will carry out this analysis at the planning area level.
+
+We will create a new sf data frame *test_data_residual* using the *test_data_allres* sf data frame created earlier and add new fields representing the residuals from each of the three models by using the `mutate()` function:
+
+```{r}
+#| eval: false
+test_data_residual <- test_data_allres %>%
+  mutate(residual_mlr = resale_price - predicted_mlr,
+         residual_rf = resale_price - predicted_rf,
+         residual_gwrf = resale_price - predicted_gwrf)
+```
+
+We will then use `st_joint()` to append the “PLN_AREA_N” in the *mpsz* sf data object to the *test_data_residual* data frame in the code chunk below:
+
+```{r}
+#| eval: false
+test_data_residual <- st_join(test_data_residual, mpsz["PLN_AREA_N"])
+```
+
+We will save this output as a new rds file to avoid re-running the above steps and load it into the R environment for further analysis:
+
+```{r}
+#| eval: false
+write_rds(test_data_residual,"data/rds/test_data_residual.rds")
+```
+
+```{r}
+test_data_residual <- read_rds("data/rds/test_data_residual.rds")
+```
+
+We then utilise tmap to plot a high quality cartographic map displaying the residuals for each model for each planning area across Singapore:
+
+::: panel-tabset
+## Multiple Linear Regression
+
+```{r}
+tmap_mode("view")
+tm_shape(mpsz)+
+  tm_polygons(alpha = 0.1)+
+  tm_shape(test_data_residual)+
+  tm_dots(col = "residual_mlr",
+          title = "Residual of MLR")+
+  tm_compass(type = "8star",size = 2)+
+  tm_grid(alpha = 0.2)+
+  tm_layout(main.title = "Residual of MLR for each planning area in Singapore",
+            main.title.position = "center")+
+  tm_credits("Source: Planning subzone boundary from Urban Redevelopment Authority",
+             position = c("left","bottom"))+
+  tm_view(set.zoom.limits = c(11,14))
+```
+
+## Random Forest
+
+```{r}
+tmap_mode("view")
+tm_shape(mpsz)+
+  tm_polygons(alpha = 0.1)+
+  tm_shape(test_data_residual)+
+  tm_dots(col = "residual_rf",
+          title = "Residual of RF")+
+  tm_compass(type = "8star",size = 2)+
+  tm_grid(alpha = 0.2)+
+  tm_layout(main.title = "Residual of RF for each planning area in Singapore",
+            main.title.position = "center")+
+  tm_credits("Source: Planning subzone boundary from Urban Redevelopment Authority",
+             position = c("left","bottom"))+
+  tm_view(set.zoom.limits = c(11,14))
+```
+
+## Geographically Weighted Random Forest
+
+```{r}
+tmap_mode("view")
+tm_shape(mpsz)+
+  tm_polygons(alpha = 0.1)+
+  tm_shape(test_data_residual)+
+  tm_dots(col = "residual_gwrf",
+          title = "Residual of gwRF")+
+  tm_compass(type = "8star",size = 2)+
+  tm_grid(alpha = 0.2)+
+  tm_layout(main.title = "Residual of gwRF for each planning area in Singapore",
+            main.title.position = "center")+
+  tm_credits("Source: Planning subzone boundary from Urban Redevelopment Authority",
+             position = c("left","bottom"))+
+  tm_view(set.zoom.limits = c(11,14))
+```
+:::
+
+::: {.callout-note style="#6495ED"}
+Based on the map above, we note that the geographically weighted random forest model is the best predictive model for most regions for the resale price of 3-room HDB resale flats, this is followed by the random forest model and lastly the multiple linear regression model.
+
+Specifically,
+
+-   the geographically weighted random forest model is better at predicting resale prices of 3-room HDB units in the central, east and part of the north (Woodlands) region of Singapore
+
+-   the random forest model is better at predicting resale prices of 3-room HDB units in the west and peripheral regions of the central region
+
+-   the multiple linear regression model is better at predicting resale prices of 3-room HDB units in part of the north (Sembawang) and north east region (Punggol and Sengkang)
+:::
+
+Before we proceed with further analysis, we switch the tmap_mode to "plot":
+
+```{r}
+tmap_mode("plot")
+```
+
+### 6.2.3 R2 values
+
+#### 6.2.3.1 Overall R2 values
 
 We compute the R2 values for each model using the `R2_Score()` function in the MLmetrics package. We then combine the results into a data frame using the `data.frame()` function.
 
@@ -1985,7 +2095,7 @@ r2_results <- data.frame(
   R2_Score = c(r2_mlr,r2_rf,r2_gwrf)
 )
 
-r2_results
+datatable(r2_results)
 ```
 
 ::: {.callout-note style="#6495ED"}
@@ -1996,7 +2106,7 @@ This indicates that the geographically weighted random forest model and its inde
 To recap, all models used the same independent variables with the exception of multiple linear regression as PROX_BUSSTOP, PROX_PRISCH, PROX_MALL and WITHIN_350M_BUSSTOP were not statistically significant for the multiple linear regression model and removed.
 :::
 
-#### 6.2.2.2 R2 values by planning area
+#### 6.2.3.2 R2 values by planning area
 
 Beyond the overall R2 values, we are also interested to find out how the R2 score of the models differ across Singapore. We will do so at the planning area level by making use of the "PLN_AREA_N" field in the *mpsz* sf data object. We will first use `st_joint()` to append the "PLN_AREA_N" attribute to the *test_data_allres* data frame in the code chunk below:
 
@@ -2079,17 +2189,11 @@ Note that we will need switch the tmap_mode to "plot" to save bandwidth:
 tmap_mode("plot")
 ```
 
-### 6.3 In-depth analysis of r2 score of geographically weighted random forest
+#### 6.2.3.3 Variable importance for geographically weighted random forest
 
 The geographically weighted random forest model is the most promising predictive model among the three models studied in this exercise as it has the overall lowest RMSE and highest R2 score in predicting the resale prices of 3-room HDB flats across Singapore.
 
-We will hence carry out an in-depth analysis of the r2 score of the geographically weighted random forest by studying the coefficient estimates of the independent variables and understanding how they affect the r2 score of the model, and how they might differ across the planning areas in Singapore.
-
-We will utilise the output feature class table *gwRF_adaptive_train* generated in section [5.8.3.2 Constructing the adaptive bandwidth grf model].
-
-### 6.3.1 Overall variable importance
-
-We first determine the order of importance of the independent variables used in the geographically weighted random forest model. We do so by:
+We will hence further determine the order of importance of the independent variables of the geographically weighted random forest by utilising the output feature class table *gwRF_adaptive_train* generated in section [5.8.3.2 Constructing the adaptive bandwidth grf model]. We do so by:
 
 -   extracting the Global Model "variable.importance" into a data frame
 
@@ -2118,100 +2222,6 @@ Among the locational factors, we note that proximity to CBD is the most importan
 
 The order of variable importance could potentially be explained by the demographics of the population who are interested in 3-room HDB flats, as they may be smaller unit families that have no to few children, thus contributing to the lower ranking of locational factors relatied to schools.
 :::
-
-### 6.3.2 Variable importance by planning area
-
-We first extract the "Local.Variable.Importance" from the output feature class table *gwRF_adaptive_train* generated in section [5.8.3.2 Constructing the adaptive bandwidth grf model] into a data frame *gwRF_varorder_area*.
-
-We then add the geometry from the *train_data* as a new geometry column in the *gwRF_varorder_area* data frame. Note that we are able to do this as we did not rearrange the order of the observations in both the *train_data* sf data frame and in the output feature class table *gwRF_varorder_area*.
-
-```{r}
-gwRF_varorder_area <- as.data.frame(gwRF_adaptive_train$Local.Variable.Importance)
-
-gwRF_varorder_area <- gwRF_varorder_area %>%
-  mutate(geometry = train_data$geometry)
-```
-
-Beyond the overall RMSE values, we are also interested to find out the performance of the model across Singapore. We will do so at the planning area level by making use of the "PLN_AREA_N" field in the *mpsz* sf data object. We will first use `st_joint()` to append the "PLN_AREA_N" attribute to the *test_data_allres* data frame in the code chunk below:
-
-```{r}
-test_data_area <- st_join(test_data_allres, mpsz["PLN_AREA_N"])
-```
-
-We then generate RMSE values based on "PLN_AREA_N" by first using `group_by()` to group the *test_data_area* data frame by "PLN_AREA_N", followed by determining the rmse values for each planning area and creating a new field "lowest rmse for each planning area using the `casewhen()` and `pmin()` function:
-
-```{r}
-#| eval: false
-test_data_area <- test_data_area %>%
-  group_by(PLN_AREA_N) %>%
-  summarise(
-    rmse_mlr = Metrics::rmse(resale_price,predicted_mlr),
-    rmse_rf = Metrics::rmse(resale_price,predicted_rf),
-    rmse_gwrf = Metrics::rmse(resale_price,predicted_gwrf)) %>%
-  mutate(lowest_rmse = case_when(rmse_mlr == pmin(rmse_mlr,rmse_rf,rmse_gwrf) ~ "MLR",
-                                 rmse_rf == pmin(rmse_mlr,rmse_rf,rmse_gwrf) ~ "RF"
-,
-rmse_gwrf == pmin(rmse_mlr,rmse_rf,rmse_gwrf) ~ "gwRF")) %>%
-  st_drop_geometry()
-```
-
-We save the *test_data_area* data frame as a new rds file and load it into the environment for further analysis to avoid re-running the step above:
-
-```{r}
-#| eval: false
-write_rds(test_data_area,"data/rds/test_data_area.rds")
-```
-
-```{r}
-test_data_area <- read_rds("data/rds/test_data_area.rds")
-```
-
-In order to visualise best model with the lowest RMSE for each area, we will need to `left_join` the fields created in the above code chunk with the *mpsz* sf data object.
-
-We will first utilise `group_by()` and `st_union()` to collapse the geometries within each planning area into a single, unified geometry and then utilise `left_join` to append the RMSE results created in the *test_data_area* data frame to the unified geometry created in *mpsz,* creating a new data frame *mpsz_test_rmse*.
-
-```{r}
-mpsz_test_rmse <- mpsz %>%
-  group_by(PLN_AREA_N) %>%
-  summarise(geometry = st_union(geometry)) %>%
-  ungroup() %>%
-  left_join(test_data_area,by = "PLN_AREA_N")
-```
-
-We then utilise tmap to plot a high quality cartographic map displaying the best predictive model with the lowest RMSE for each planning area across Singapore:
-
-```{r}
-tmap_mode("view")
-tm_shape(mpsz_test_rmse)+
-  tm_fill("lowest_rmse",
-          title = "Lowest RMSE")+
-  tm_borders(alpha = 0.5)+
-  tm_compass(type = "8star",size = 2)+
-  tm_grid(alpha = 0.2)+
-  tm_layout(main.title = "Best predictive model with lowest RMSE for each planning area in Singapore",
-            main.title.position = "center")+
-  tm_credits("Source: Planning subzone boundary from Urban Redevelopment Authority",
-             position = c("left","bottom"))+
-  tm_view(set.zoom.limits = c(11,14))
-```
-
-::: {.callout-note style="#6495ED"}
-Based on the map above, we note that the geographically weighted random forest model is the best predictive model for most regions for the resale price of 3-room HDB resale flats, this is followed by the random forest model and lastly the multiple linear regression model.
-
-Specifically,
-
--   the geographically weighted random forest model is better at predicting resale prices of 3-room HDB units in the central, east and part of the north (Woodlands) region of Singapore
-
--   the random forest model is better at predicting resale prices of 3-room HDB units in the west and peripheral regions of the central region
-
--   the multiple linear regression model is better at predicting resale prices of 3-room HDB units in part of the north (Sembawang) and north east region (Punggol and Sengkang)
-:::
-
-Before we proceed with further analysis, we switch the tmap_mode to "plot":
-
-```{r}
-tmap_mode("plot")
-```
 
 ## 7. Conclusion
 
