@@ -1,0 +1,67 @@
+---
+title: "Consultation Session 1"
+author: "Kock Si Min"
+date: October 3, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# Raw notes from consultation with Prof Kam on 3 Oct 2024
+
+-   [Hands-on Ex-3 (1 tab)]{.underline}
+
+    \>\> For Network Constrained G- and K-function analysis, would like to check if you have some tips on how to go about determining the best figures to use in the code?
+
+-   [Hands-on Ex4 (2 tabs) spatial weights used to define the neighbourhood relationships between the geographical units (i.e. county) in the study area.]{.underline}
+
+    \>\> For section 8.6.3 - to clarify if specifying the number of neighbours is actually computation of a fixed distance weight matrix? what would be an adaptive distance weight matrix method?
+
+> > -   *fixed when use polygons are similar in size and adaptive when it differs look at summary print after calculating the distance i.e. str()*
+> >
+> > -   *make sure no polygon w/o neighbour or v few neighbours*
+> >
+> > -   *choose the methods that avoid geographic units w/o neighbours but to make sure analysis is statistically unbiased. in addition to size of polygonsneed to make sure no. of neighbours you catch meet certain requirements i.e. at least 5/6 and above neighbours; no. of neighbours depend on study area i.e. if only have 88 regions, then 4 to 6 will be good enough. if 100, then need more.*
+> >
+> > -   *start with continguity matrix - if find that have several geographical units w/o neighbours then cannot. minimum neighbour to have is about 4 then can go about with continguity matrix, don't have to do anything extra*
+> >
+> > -   *to explore if IDW is a better choice etc - start w continguity matrix to have a better direction*
+> >
+> > -   *do polygon at edges have limitations i.e. edges only have 1 neighbour hence will not be that satisfactory for continguity matrix but can make it adaptive neighbour i.e. change to 4 then can change to have everyone having 4 neighbours*
+> >
+> > -   *look at plot to understand how to improve plot matrix selection*
+
+-   On spatial weights, taught us different computation methods - noted that for LISA and for calculation of Getis-Ord, we can either use fixed distance or adaptive distance weight matrix, - how to know when to use which - similarly, for the other methods i.e. when to use what method, when to use inverse distance weights given the advantage of the method i.e. that it helps to account for stronger influence by nearby regions as compared to distant regions, when should just use row standardised weight matrix etc
+
+-   spatial lag - when to use what method i.e. are there certain cases where its advisable to use certain methods 1. spatial lag with row-standardized weights, 2. spatial lag as a sum of neighbouring values, 3. spatial window average, and 4. spatial window sum. i.e. whether spatial window average is the most accurate to use since it includes the region itself and not just the values from its neigbours?
+
+    > > *include self in calculation is one proj that prof did w pizza hut in korea - they wanted to find possible locations for infield i.e. have stores in area but want to increase the number of stores in the area - doing infield aka reducing number of customers per store - so for this case include self. i.e. within 8 mins drive time, shld be able to reach customer for delivery purposes. summing up will know that for each area you calculate include yourself and other stores in the neighbourhood how many within the 8 mins drive = make up 30,000 selection of choice depends on question on hand site selection - usually include self*
+
+how to interpret spatial lag for each case i.e. in the case of spatial lag GDPPC, for spatial lags with row-standardized weights and sum of neighbouring values - for the chart on the right - does it mean that the region has the highest chance of getting rich next?
+
+whether the interpretation for spatial window average would differ since it now includes self
+
+-   *spatial lag - only continguity-based, not distance-based*
+
+Hands-on Ex5 (2 tabs) have to have spatial weights then can have spatial autocorrelation - with regards to section 9.5.3, not very sure why we need to visualise the monte carlo moran's I results via a histogram i.e. in the bperm results, we know that the moran's I statistic from 1000 simulations is 0.30075 which indicates positive spatial autocorrelation, and the p-value; why do we need to know the spread of the moran I's results?
+
+-   *histogram is to tell you whether enough simulations to make it a normal distribution, if not close to normal - have to increase the number of simulations - to have more confidence of the results; cause if just run 1 time = have higher chance of type 1 error*
+
+-   *what does fips \<- order(hunan\$County) do? this is to prepare it and to avoid combining incorrectly. so order is to sort area by county name then use it to perform local moran - to ensure that joined correctly later on. would have been resolved if use sfdep instead of spdep*
+
+-   *standardiation in LISA - unit of measurement is free, means cut-off is at 0, non-standardised version would vary based on original data = in terms of interpretation, depends on preference - standardised version is better for comparing year-on-year, using non-standardised - value keep switching as depends on min-max value hence harder for comparison and interpretation. but non-standardised can refer to raw values*
+
+-   *results of Gi statistics alr going to show u where are high-high etc clusters/hotspot or low-low/coldspot areas - the others will be outliers LISA still useful to detect outliers null hypothesis: not spatially associated p_sim = simulation/permutation to do it p_sim or p_folded_sim - latter designed by another grp who created pysar, created own package in python strictly speaking, tend to use p_sim since based on permutation method/frequentist method whereas k-fold/is a ML method. usually dont use p-value (cause is just 1 time) - always use the permutation version to be more confident*
+
+Hands-on Ex6 - Section 12.9.3 Since we only need to determine the optimal number of clusters from the top chart (Q graph), how to interpret the Qnorm graph
+
+-   *Qnorm compute data loss - black one talk about attribute clusters, when increase alpha value for black line, will see lose more and more information from cluster, as loosen up cluster varialbes where red one - spatial integrity- increase alpha become more spatially cosntrainted and increase spatial integrity - cluster formed will be more well shaped/more distinct*
+
+-   *SKATER force everything to be spatially clustered/homogenous - mean form 4 main clusters then have 2 isolated ones but havelimitation - run one time, no soft way to do it - everytime run it will be biased but will lose variable value cause cluster analysis - originally shld have similarity (attribute + location proximity) hence use soft clustering method by clustgeo - allow vary alpha value to choose to be totally spatially constrained (degree of spatial constraints - allow determination of optimum cut-off i.e. in hands-on ex, 0.2 - result is not that spatially constrained*
+
+-   *Qnorm - push D0 and D1 into 1 - stretch them so that can get both D0 and D1 so that max is 1. if dont standardise, is based on raw data - alpha val for D0, Q value might not touch 1 (only about 0.76 while D1 is 0.94) to make D0 and D1 to be at alpha value of 0 and 1. it just tells you that 0.76 and 0.94 - thats all, nothing else is useful.*

@@ -1,0 +1,53 @@
+---
+title: "Consultation Session 2"
+author: "Kock Si Min"
+date: October 24, 2024
+date-modified: "last-modified"
+toc: true
+execute:
+  eval: true
+  echo: true
+  freeze: true
+  warning: false
+  message: false
+---
+
+# Raw notes from consultation with Prof Kam on 24 Oct 2024
+
+1.  Take-home Ex2 1. why need to split multipolygons into polygons, choose the largest island representing the province then find the centroid from there? \>\> can we actually still make use of the multipolygon and find the centroid and just ensure that the geometry of the centroid is within the boundaries of the multipolygon?
+
+-   Yes
+
+    2.  for take-home ex1, we were focused on the bangkok metropolitan region and hence transformed the spatial data to EPSG 32647 projected coordinate system. for take-home ex2, we were focused on the whole of thailand, so i was wondering for this case, whether it is still necessary to transform to the data to a projected coordinate system. could we just work with the original WGS84 geographic coordinate system?
+
+```{=html}
+<!-- -->
+```
+-   can use wgs but use lat, long = true so that st_transform done on the fly, based on grid circle (distance is in km rather than m) \>\>can also just choose either epsg code
+
+    3.  jittering and doing nsim rlly gives multiple plots - how should we overcome this?
+
+-   sf has a package st_jitter() - only have displacement value, not simulation st_jitter(data, amount = 0.01 (follow data projection)) #use amount or factor
+
+-   calibrate gwr, definitely do jitter - not needed for typical lm model
+
+    4.  can always include variables that you deem impt even if not significant but shld always pick out variables that are significant enough to generate good adjusted R2
+
+4.  Section 13.8.4 and 13.8.5 olsrr vs gtsummary method: we did both in the hands-on ex to obtain publication quality tables, just to check that we actually only need to run one of them? Likewise testing for multicollinearity, noted that there are diff ways to do it i.e. corrplot, ggcorrmat under the ggstatsplot package, olsrr package - ols_vif_tol (section 13.8.5.1) (alr provide most of the diagnostics)
+
+-   just need to choose 1
+
+5.  does it suffice to just carry out one of the above to determine multicollinearity among the independent variables? of these, olsrr would be the best package to work with since it also provides tests for linearity and normality?
+
+> > normality assumption test v tricky - as long as not too highly skewed, can go ahead, in this case, majority close to 0 though p-val significant and reject H0 ols also have test to determine impact of outliers and whether to remove them plot local R2 - know which part of area have better explanatory power than other area area_sqm_se and area_sqm_tv: se more impt to indicate uncertainty as allow to know which predictors have more uncertainty than other parts
+
+6.  section 13.8.5.4 - am not sure how to interpret the map that displays the residuals of the hedonic pricing model of condo resale prices? that using the multiple linear regression model, there are areas in which we will predict condo resale prices higher or lower than actual condo resale price? same model w different predictors, across diff parts of the land; larger SE more uncertain and at which locations
+
+```{=html}
+<!-- -->
+```
+5.  section 13.9.4: several code chunks to form the condo_resale.sf.adaptive, can i just confirm that we actually only need the last code chunk in the third box?
+
+"gwr.adaptive.output \<- as.data.frame(gwr.adaptive\$SDF) condo_resale.sf.adaptive \<- cbind(condo_resale.res.sf, as.matrix(gwr.adaptive.output))"
+
+-   correct cause just need SDF table; dont need to transform actly cause no coordinates, SDF is just output table
