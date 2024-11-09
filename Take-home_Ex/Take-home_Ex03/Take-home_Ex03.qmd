@@ -83,14 +83,14 @@ The following datasets will be used:
     -   Locational factors with geographic coordinates from [Datamall.lta.gov.sg](https://datamall.lta.gov.sg/content/datamall/en.html):
 
         | S/N | Data                                                                |
-        |-----|---------------------------------------------------------------------|
+        |--------------|----------------------------------------------------------|
         | 1   | **MRT/LRT stations** in Singapore with the station names and codes. |
         | 2   | **Bus stops** in Singapore                                          |
 
     -   Locational factors without geographic coordinates from [Data.gov.sg](https://data.gov.sg/) and other sources:
 
         | S/N | Data                                                                  | Source                                                                                                                |
-        |-----|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+        |----------------|----------------|-----------------------------------------|
         | 1   | **Primary school data**                                               | [Data.gov.sg](https://data.gov.sg/) - extracted from the list on General information of schools                       |
         | 2   | **Good primary schools** ordered in terms of popularity for year 2024 | [Local Salary Forum](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/) - extracted into a csv file |
         | 3   | **CBD** coordinates                                                   | Google                                                                                                                |
@@ -2255,7 +2255,7 @@ The order of variable importance could potentially be explained by the demograph
 
 ## 7. Conclusion
 
-Overall, we observe that the geographically weighted random forest model to be a better predictive model as compared to the two other models studied in this exercise, multiple linear regression and random forest as it has the lowest overall RMSE and has the lowest RMSE for most regions in Singapore for the resale prices of 3-room HDB flats. Further, it has the highest overall R2 score which indicates that the model and its independent variables are better able to capture the underlying variations in HDB resale prices as compared to the other two models. This indicates the importance of taking in the spatial autocorrelation and spatial heterogeneity in geographic datasets such as HDB resale transactions.
+Overall, we observe the geographically weighted random forest model to be a better predictive model as compared to the two other models studied in this exercise, multiple linear regression and random forest as it has the lowest overall RMSE and has the lowest RMSE for most regions in Singapore for the resale prices of 3-room HDB flats. Further, it has the highest overall R2 score which indicates that the model and its independent variables are better able to capture the underlying variations in HDB resale prices as compared to the other two models. This indicates the importance of taking in the spatial autocorrelation and spatial heterogeneity in geographic datasets such as HDB resale transactions.
 
 We also observe structural factors to have greater variable importance as compared to locational factors. For future work, we could study more structural factors and how they might influence the predictive power of the model. Potential factors could include the last renovation date of the HDB flat as a recently renovated flat might attract higher prices, given that less renovation might need to be done for the new buyer to move in, and also whether the flat is west-facing as buyers could be concerned about high temperatures/hot afternoon sun.
 
