@@ -33,7 +33,6 @@ execute:
 The packages are loaded with the following code chunk:
 
 ```{r}
-#| eval: false
 pacman::p_load(sf,spatstat,raster,tmap,tidyverse)
 ```
 
