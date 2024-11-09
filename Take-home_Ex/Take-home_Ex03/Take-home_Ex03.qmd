@@ -2012,7 +2012,9 @@ tm_shape(mpsz)+
   tm_polygons(alpha = 0.1)+
   tm_shape(test_data_residual)+
   tm_dots(col = "residual_mlr",
-          title = "Residual of MLR")+
+          title = "Residual of MLR",
+          breaks = seq(-400000, 600000, by = 100000),
+          palette = "-RdBu")+
   tm_compass(type = "8star",size = 2)+
   tm_grid(alpha = 0.2)+
   tm_layout(main.title = "Residual of MLR for each planning area in Singapore",
@@ -2030,7 +2032,9 @@ tm_shape(mpsz)+
   tm_polygons(alpha = 0.1)+
   tm_shape(test_data_residual)+
   tm_dots(col = "residual_rf",
-          title = "Residual of RF")+
+          title = "Residual of RF",
+          breaks = seq(-400000, 600000, by = 100000),
+          palette = "-RdBu")+
   tm_compass(type = "8star",size = 2)+
   tm_grid(alpha = 0.2)+
   tm_layout(main.title = "Residual of RF for each planning area in Singapore",
@@ -2048,7 +2052,9 @@ tm_shape(mpsz)+
   tm_polygons(alpha = 0.1)+
   tm_shape(test_data_residual)+
   tm_dots(col = "residual_gwrf",
-          title = "Residual of gwRF")+
+          title = "Residual of gwRF",
+          breaks = seq(-400000, 600000, by = 100000),
+          palette = "-RdBu")+
   tm_compass(type = "8star",size = 2)+
   tm_grid(alpha = 0.2)+
   tm_layout(main.title = "Residual of gwRF for each planning area in Singapore",
@@ -2060,15 +2066,13 @@ tm_shape(mpsz)+
 :::
 
 ::: {.callout-note style="#6495ED"}
-Based on the map above, we note that the geographically weighted random forest model is the best predictive model for most regions for the resale price of 3-room HDB resale flats, this is followed by the random forest model and lastly the multiple linear regression model.
+Based on the maps above, we note that:
 
-Specifically,
+-   the multiple linear regression model largely tends to under-predict in most regions of Singapore except for the west and northeast region where there are more overpredictions of resale price
 
--   the geographically weighted random forest model is better at predicting resale prices of 3-room HDB units in the central, east and part of the north (Woodlands) region of Singapore
+-   the random forest model also largely tends to under predict in most regions of Singapore however there are data points for which the model over predicts, albeit more so for the central and west region
 
--   the random forest model is better at predicting resale prices of 3-room HDB units in the west and peripheral regions of the central region
-
--   the multiple linear regression model is better at predicting resale prices of 3-room HDB units in part of the north (Sembawang) and north east region (Punggol and Sengkang)
+-   the geographically weighted random forest model largely tends to over predict
 :::
 
 Before we proceed with further analysis, we switch the tmap_mode to "plot":
