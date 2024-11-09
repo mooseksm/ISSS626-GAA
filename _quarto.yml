@@ -67,12 +67,6 @@ website:
             href: Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html
           - text: Take-Home Exercise 3
             href: Take-home_Ex/Take-home_Ex03/Take-home_Ex03.html
-      - text: Notes from Consultation
-        menu: 
-          - text: Session 1
-            href: Consultation/Session_1.html
-          - text: Session 2
-            href: Consultation/Session_2.html
     right:
       - href: index.qmd
         text: Home
