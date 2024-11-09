@@ -18,7 +18,7 @@ execute:
 
 Housing is a sign of household wealth. It is a major investment for most people and its price is affected by several factors that can be global in nature such as the general economy of a country, inflation rate or are factors specific to the nature of the property which can be further divided into structural and locational factors:
 
--   [Structural variables]{.underline} are related to the property such as the size, fitting, tenur
+-   [Structural variables]{.underline} are related to the property such as the size, fitting, tenure
 
 -   [Locational variables]{.underline} are related to the neighbourhood of the property such as proximity to childcare services, public transport and shopping centres.
 
@@ -30,15 +30,15 @@ In this take-home exercise, we will calibrate predictive models to predict HDB r
 
 Our study will be scoped to focus on 3-room flat types, given the [increasing resale price of 3-room HDB flats in recent years](https://www.asiaone.com/money/more-3-room-resale-flats-change-hands-800k-and-higher-2024).
 
-In this exercise, we will study the relationship between the HDB resale prices, the dependent variable, with independent variables listed below:
+In this exercise, we will predict HDB resale prices, the dependent variable, with independent variables listed below:
 
--   [**Structural:**]{.underline} Storey range, Floor area, Flat model, Remaining lease
+-   [**Structural factors:**]{.underline} Storey range, Floor area, Flat model, Remaining lease
 
--   [**Locational**]{.underline} factors which have been broadly categorised as:
+-   [**Locational factors**]{.underline} which have been broadly categorised as:
 
     -   **Essential services:**
 
-        -   Proximity to childcare services, kindergarten, primary schools, good primary schools, eldercare services, hawker centres, supermarkets, clinics, MRT and bus stops
+        -   Proximity to childcare services, kindergartens, primary schools, good primary schools, eldercare services, hawker centres, supermarkets, clinics, MRT and bus stops
 
     -   **Leisure:**
 
@@ -62,7 +62,7 @@ The following datasets will be used:
 
 -   **Aspatial Data:**
 
-    -   [HDB Resale Flat Prices](https://data.gov.sg/datasets/d_8b84c4ee58e3cfc0ece0d773c8ca6abc/view) from [Data.gov.sg](https://data.gov.sg/): A list of HDB resale transacted prices in Singapore from Jan 2017 onwards. In this exercise, our focus will be on 3-room flat types, given the [increasing resale price of 3-room HDB flats in recent years.](https://www.asiaone.com/money/more-3-room-resale-flats-change-hands-800k-and-higher-2024)
+    -   [HDB Resale Flat Prices](https://data.gov.sg/datasets/d_8b84c4ee58e3cfc0ece0d773c8ca6abc/view) from [Data.gov.sg](https://data.gov.sg/): A list of HDB resale transacted prices in Singapore from Jan 2017 onwards. As mentioned, our focus will be on 3-room flat types, given the [increasing resale price of 3-room HDB flats in recent years.](https://www.asiaone.com/money/more-3-room-resale-flats-change-hands-800k-and-higher-2024)
 
 -   **Geospatial dataset**:
 
@@ -83,18 +83,18 @@ The following datasets will be used:
     -   Locational factors with geographic coordinates from [Datamall.lta.gov.sg](https://datamall.lta.gov.sg/content/datamall/en.html):
 
         | S/N | Data                                                                |
-        |------------------------|------------------------------------------------|
+        |---------------|----------------------------------------------------------------------------------------------------------|
         | 1   | **MRT/LRT stations** in Singapore with the station names and codes. |
         | 2   | **Bus stops** in Singapore                                          |
 
     -   Locational factors without geographic coordinates from [Data.gov.sg](https://data.gov.sg/) and other sources:
 
-        | S/N | Data                                                                                           | Source                                                                                                                |
-        |-------------------|--------------------------|---------------------------|
-        | 1   | **Primary school data**                                                                        | [Data.gov.sg](https://data.gov.sg/) - extracted from the list on General information of schools                       |
-        | 2   | **Good primary schools**: List of primary schools ordered in terms of popularity for year 2024 | [Local Salary Forum](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/) - extracted into a csv file |
-        | 3   | **CBD** coordinates                                                                            | Google                                                                                                                |
-        | 4   | **Shopping malls** in Singapore                                                                | [Wikipedia](https://en.wikipedia.org/wiki/List_of_shopping_malls_in_Singapore)                                        |
+        | S/N | Data                                                                  | Source                                                                                                                |
+        |-------------------|--------------------------|----------------------------------------------------------------------------|
+        | 1   | **Primary school data**                                               | [Data.gov.sg](https://data.gov.sg/) - extracted from the list on General information of schools                       |
+        | 2   | **Good primary schools** ordered in terms of popularity for year 2024 | [Local Salary Forum](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/) - extracted into a csv file |
+        | 3   | **CBD** coordinates                                                   | Google                                                                                                                |
+        | 4   | **Shopping malls** in Singapore                                       | [Wikipedia](https://en.wikipedia.org/wiki/List_of_shopping_malls_in_Singapore)                                        |
 
 ## 4. Installing and Loading R packages
 
@@ -116,7 +116,7 @@ The rationale for key packages are explained below:
 
 -   [**tmap**](https://cran.r-project.org/web/packages/tmap/)**:** provides functions for plotting cartographic quality static point patterns maps or interactive maps by using [leaflet](https://leafletjs.com/) API
 
--   [**httr**](https://httr.r-lib.org/): allow R to talk to http
+-   [**httr**](https://httr.r-lib.org/): to allow R to talk to http
 
 -   [**rvest**](https://rvest.tidyverse.org/): used to crawl websites
 
@@ -136,7 +136,11 @@ The rationale for key packages are explained below:
 
 ### 5.1 HDB Resale Prices Data Wrangling
 
-We will load the HDB Resale Flat Prices data using `read_csv()` function in the code chunk below and we filter the data to (i) retain data from 2023 onwards as the intent of the take-home exercise is to predict HDB resale prices in July to September 2024 using 2023 data and (ii) focus on just 3-room flat types.
+We will load the HDB Resale Flat Prices data using `read_csv()` function in the code chunk below and we filter the data to
+
+\(i\) retain data from 2023 onwards as the intent of the take-home exercise is to predict HDB resale prices in July to September 2024 using 2023 data and
+
+\(ii\) focus on just 3-room flat types.
 
 ```{r}
 resale <- read_csv("data/aspatial/hdbresale.csv") %>%
@@ -153,7 +157,7 @@ glimpse(resale)
 
 Based on the output above, we also note that the address of the HDB flats have been split into "block", "street_name" and that there is no postal code. To facilitate the development of geographically weighted predictive models, we will need to combine the "block" and "street_name" to form a new field "address" and utilise [One Map API](https://www.onemap.gov.sg/apidocs/) to carry out reverse geocoding i.e. carry out API calls to return x, y coordinates for the address that is passed through the system.
 
-In the code chunk below, we will create "address" as a new field and as we do so, we also split the "remaining_lease" field which is current in the "XX years and YY months" format to "remaining_lease_yr" and "remaining_lease_mth" respectively. We then convert the "remaining_lease_yr" to months by multiplying it by 12 and add it to the "remaining_lease_mth" field to obtain the total remaining lease in terms of months:
+In the code chunk below, we will create "address" as a new field and as we do so, we also split the "remaining_lease" field which is currently in the "XX years and YY months" format to "remaining_lease_yr" and "remaining_lease_mth" respectively. We then convert the "remaining_lease_yr" to months by multiplying it by 12 and add it to the "remaining_lease_mth" field to obtain the total remaining lease in terms of months:
 
 ```{r}
 resale <- resale %>%
@@ -317,6 +321,7 @@ To faciliate downstream regression analysis, we will need to recode these catego
 ## "storey_range"
 
 ```{r}
+#| code-fold: true
 ggplot(resale_tidy,
        aes(x = storey_range))+
   geom_bar(fill = "skyblue")+
@@ -333,6 +338,7 @@ We note that this labels "01 TO 03" as 1, so on and so forth such that "40 TO 42
 ## "flat_model"
 
 ```{r}
+#| code-fold: true
 ggplot(resale_tidy,
        aes(x = flat_model))+
   geom_bar(fill = "lightyellow")+
@@ -388,216 +394,218 @@ As seen in [3. The Data], we will utilise several locational data for this take-
 
 We will first import the locational factors data into the R environment using the `st_read()` function.
 
--   Note that for this group of factors, we will also apply the `st_transform()` function to ensure that the EPSG code is 3414.
+Note that for this group of factors, we will also apply the `st_transform()` function to ensure that the EPSG code is 3414.
 
-    ::: panel-tabset
-    ## Eldercare
+::: panel-tabset
+## Eldercare
 
-    ```{r}
-    eldercare <- st_read(dsn = "data/geospatial",
-                         layer = "ELDERCARE") %>%
-      st_transform(3414)
-    ```
+```{r}
+eldercare <- st_read(dsn = "data/geospatial",
+                     layer = "ELDERCARE") %>%
+  st_transform(3414)
+```
 
-    We note that the *eldercare* sf has a point geometry.
+We note that the *eldercare* sf has a point geometry.
 
-    ## Hawker Centre
+## Hawker Centre
 
-    ```{r}
-    hawker <- st_read("data/geospatial/HawkerCentresGEOJSON.geojson") %>%
-      st_transform(crs = 3414)
-    ```
+```{r}
+hawker <- st_read("data/geospatial/HawkerCentresGEOJSON.geojson") %>%
+  st_transform(crs = 3414)
+```
 
-    We note that the *hawker* sf object has a point geometry.
+We note that the *hawker* sf object has a point geometry.
 
-    ## Parks
+## Parks
 
-    ```{r}
-    parks <- st_read("data/geospatial/Parks.geojson") %>%
-      st_transform(crs = 3414)
-    ```
+```{r}
+parks <- st_read("data/geospatial/Parks.geojson") %>%
+  st_transform(crs = 3414)
+```
 
-    We note that the *parks* sf object has a point geometry.
+We note that the *parks* sf object has a point geometry.
 
-    ## Supermarkets
+## Supermarkets
 
-    ```{r}
-    supermarkets <- st_read("data/geospatial/SupermarketsGEOJSON.geojson") %>%
-      st_transform(crs = 3414)
-    ```
+```{r}
+supermarkets <- st_read("data/geospatial/SupermarketsGEOJSON.geojson") %>%
+  st_transform(crs = 3414)
+```
 
-    We note that the *supermarkets* sf object has a point geometry.
+We note that the *supermarkets* sf object has a point geometry.
 
-    ## CHAS Clinics
+## CHAS Clinics
 
-    ```{r}
-    chas <- st_read("data/geospatial/CHASClinics.geojson")%>%
-      st_transform(crs = 3414)
-    ```
+```{r}
+chas <- st_read("data/geospatial/CHASClinics.geojson")%>%
+  st_transform(crs = 3414)
+```
 
-    We note that the *chas* sf object has a point geometry.
+We note that the *chas* sf object has a point geometry.
 
-    ## Childcare Services
+## Childcare Services
 
-    ```{r}
-    childcare <- st_read("data/geospatial/ChildCareServices.geojson") %>%
-      st_transform(crs = 3414)
-    ```
+```{r}
+childcare <- st_read("data/geospatial/ChildCareServices.geojson") %>%
+  st_transform(crs = 3414)
+```
 
-    We note that the *childcare* sf object has a point geometry.
+We note that the *childcare* sf object has a point geometry.
 
-    ## Kindergartens
+## Kindergartens
 
-    ```{r}
-    kindergartens <- st_read("data/geospatial/Kindergartens.geojson") %>%
-      st_transform(crs = 3414)
-    ```
+```{r}
+kindergartens <- st_read("data/geospatial/Kindergartens.geojson") %>%
+  st_transform(crs = 3414)
+```
 
-    We note that the *kindergartens* sf object has a point geometry.
+We note that the *kindergartens* sf object has a point geometry.
 
-    ## MRT
+## MRT
 
-    ```{r}
-    mrt <- st_read(dsn = "data/geospatial", 
-                   layer = "RapidTransitSystemStation") %>%
-      st_transform(crs = 4326)
-    ```
+```{r}
+mrt <- st_read(dsn = "data/geospatial", 
+               layer = "RapidTransitSystemStation") %>%
+  st_transform(crs = 4326)
+```
 
-    We note that the *mrt* sf object has a polygon geometry and that a warning message is shown in the output above, indicating that there are some invalid geometry within the sf object i.e. Non closed ring detected. However, error occurred after we tried to apply `st_make_valid()` function.
+We note that the *mrt* sf object has a polygon geometry and that a warning message appears when we run the code above, indicating that there are some invalid geometry within the sf object i.e. Non closed ring detected. Error would still occur even as we tried to apply `st_make_valid()` function.
 
-    Based on the code chunk below, we note that if we had tried to retain just rows of mrt stations with valid geometry, we will miss out on three observations as the total number of observations would drop from 230 to 227.
+Based on the code chunk below, we note that if we had tried to retain just rows of mrt stations with valid geometry, we will miss out on three observations as the total number of observations would drop from 230 to 227.
 
-    ```{r}
-    mrt_clean <- mrt %>%
-      filter(st_is_valid(.)) %>%  
-      filter(!is.na(geometry))
+```{r}
+mrt_clean <- mrt %>%
+  filter(st_is_valid(.)) %>%  
+  filter(!is.na(geometry))
 
-    mrt_clean
-    ```
+mrt_clean
+```
 
-    Upon examination, we note that the 3 rows was for "UPPER THOMSON MRT STATION", "HARBOURFRONT MRT STATION" and "BOCC".
+Upon examination, we note that the 3 affected rows were for "UPPER THOMSON MRT STATION", "HARBOURFRONT MRT STATION" and "BOCC".
 
-    Given that having "UPPER THOMSON MRT STATION" and "HARBOURFRONT MRT STATION" would be important to retain in the mrt data, we utilise another method to derive the coordinates of all mrt stations. We first extract the names of the mrt stations in the *mrt* sf object:
+Given that "UPPER THOMSON MRT STATION" and "HARBOURFRONT MRT STATION" would be important to retain in the mrt data, we utilise another method to derive the coordinates of all mrt stations. We first extract the names of the mrt stations in the *mrt* sf object:
 
-    ```{r}
-    mrt_names <- mrt %>%
-      select(STN_NAM_DE) %>%
-      st_drop_geometry()
-    ```
+```{r}
+mrt_names <- mrt %>%
+  select(STN_NAM_DE) %>%
+  st_drop_geometry()
+```
 
-    We then extract unique mrt names into the list - we note that there are only 203 unique mrt names out of the 230 observations:
+We then extract unique mrt names into the list - we note that there are only 203 unique mrt names out of the 230 observations:
 
-    ```{r}
-    add_list <- sort(unique(mrt_names$STN_NAM_DE))
-    ```
+```{r}
+add_list <- sort(unique(mrt_names$STN_NAM_DE))
+```
 
-    We then utilise the get_coords function to carry out API calls to obtain the x, y coordinates of the mrt stations:
+We then utilise the get_coords function to carry out API calls to obtain the x, y coordinates of the mrt stations:
 
-    ```{r}
-    coords_mrt_names <- get_coords(add_list)
-    ```
+```{r}
+coords_mrt_names <- get_coords(add_list)
+```
 
-    We save the output as a new rds file for safekeeping:
+We save the output as a new rds file for safekeeping:
 
-    ```{r}
-    write_rds(coords_mrt_names,"data/rds/coords_mrt_names.rds")
-    ```
+```{r}
+write_rds(coords_mrt_names,"data/rds/coords_mrt_names.rds")
+```
 
-    ```{r}
-    coords_mrt_names <- read_rds("data/rds/coords_mrt_names.rds")
-    ```
+```{r}
+coords_mrt_names <- read_rds("data/rds/coords_mrt_names.rds")
+```
 
-    We then utilise `left_join()` to join the coordinates data with *mrt_names:*
+We then utilise `left_join()` to join the coordinates data with *mrt_names:*
 
-    ```{r}
-    mrt_names <- left_join(mrt_names,coords_mrt_names, by = c("STN_NAM_DE" = "address"))
-    ```
+```{r}
+mrt_names <- left_join(mrt_names,coords_mrt_names, by = c("STN_NAM_DE" = "address"))
+```
 
-    However based on the code chunk below, we note that the postal code for "HUME MRT STATION" and "FOUNDERS' MEMORIAL MRT STATION" were NA hence leading to NA latitude and longitude.
+However based on the code chunk below, we note that the postal code for "HUME MRT STATION" and "FOUNDERS' MEMORIAL MRT STATION" were NA hence leading to NA latitude and longitude.
 
-    ```{r}
-    rows_with_na <- mrt_names %>%
-      filter(if_any(everything(), is.na))
-    rows_with_na
-    ```
+```{r}
+rows_with_na <- mrt_names %>%
+  filter(if_any(everything(), is.na))
+rows_with_na
+```
 
-    This is understandable as these two stations are upcoming stations and their postal codes might not be accurately retrieved. We manually obtain the postal codes via Google search:
+This is understandable as these two stations are upcoming stations and their postal codes might not be accurately retrieved. We manually obtain the postal codes via Google search:
 
-    -   Hume MRT Station: 589681
+-   Hume MRT Station: 589681
 
-    -   Founders' Memorial MRT Station: 438965
+-   Founders' Memorial MRT Station: 438965
 
-    We then create a list to apply the get_coords() function on:
+We then create a list to apply the get_coords() function on:
 
-    ```{r}
-    #| eval: false
-    addedmrt <- list(589681,438965)
-    coords_addedmrt <- get_coords(addedmrt)
-    ```
+```{r}
+#| eval: false
+addedmrt <- list(589681,438965)
+coords_addedmrt <- get_coords(addedmrt)
+```
 
-    ```{r}
-    mrt_names <- mrt_names %>%
-      mutate(
-        postal = case_when(
-          STN_NAM_DE == "HUME MRT STATION" ~ "589681",
-          STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "438965",
-          TRUE ~ as.character(postal)  # Default to existing value
-        ),
-        latitude = case_when(
-          STN_NAM_DE == "HUME MRT STATION" ~ "1.35502264316802",
-          STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "1.29141358573109",
-          TRUE ~ as.character(latitude)  # Default to existing value
-        ),
-        longitude = case_when(
-          STN_NAM_DE == "HUME MRT STATION" ~ "103.768680287307",
-          STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "103.868706430815",
-          TRUE ~ as.character(longitude)  # Default to existing value
-        )
-      )
-    ```
+We then incorporate the two coordinates into the *mrt_names* data frame*:*
 
-    We double check if there are na rows using the code chunk below:
+```{r}
+mrt_names <- mrt_names %>%
+  mutate(
+    postal = case_when(
+      STN_NAM_DE == "HUME MRT STATION" ~ "589681",
+      STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "438965",
+      TRUE ~ as.character(postal)  # Default to existing value
+    ),
+    latitude = case_when(
+      STN_NAM_DE == "HUME MRT STATION" ~ "1.35502264316802",
+      STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "1.29141358573109",
+      TRUE ~ as.character(latitude)  # Default to existing value
+    ),
+    longitude = case_when(
+      STN_NAM_DE == "HUME MRT STATION" ~ "103.768680287307",
+      STN_NAM_DE == "FOUNDERS' MEMORIAL MRT STATION" ~ "103.868706430815",
+      TRUE ~ as.character(longitude)  # Default to existing value
+    )
+  )
+```
 
-    ```{r}
-    rows_with_na <- mrt_names %>%
-      filter(if_any(everything(), is.na))
-    rows_with_na
-    ```
+We double check if there are na rows using the code chunk below:
 
-    We note that there are no longer any missing values.
+```{r}
+rows_with_na <- mrt_names %>%
+  filter(if_any(everything(), is.na))
+rows_with_na
+```
 
-    We convert *mrt_names* as a sf object, apply `st_transform()` to ensure that it is in the SVY21 projected coordinate system (EPSG 3414) and save it as a new rds file:
+We note that there are no longer any missing values.
 
-    ```{r}
-    #| eval: false
-    mrt_names <- st_as_sf(mrt_names, coords = c("longitude", "latitude"), crs = 4326) %>%   
-      st_transform(crs = 3414)
-    ```
+We convert *mrt_names* to a sf object, apply `st_transform()` to ensure that it is in the SVY21 projected coordinate system (EPSG 3414) and save it as a new rds file:
 
-    ```{r}
-    #| eval: false
-    write_rds(mrt_names,"data/rds/mrt_names.rds")
-    ```
+```{r}
+#| eval: false
+mrt_names <- st_as_sf(mrt_names, coords = c("longitude", "latitude"), crs = 4326) %>%   
+  st_transform(crs = 3414)
+```
 
-    ```{r}
-    mrt_names <- read_rds("data/rds/mrt_names.rds")
-    mrt_names
-    ```
+```{r}
+#| eval: false
+write_rds(mrt_names,"data/rds/mrt_names.rds")
+```
 
-    We note that the mrt data has a point geometry.
+```{r}
+mrt_names <- read_rds("data/rds/mrt_names.rds")
+mrt_names
+```
 
-    ## Bus Stops
+We note that the mrt data has a point geometry.
 
-    ```{r}
-    busstop <- st_read("data/geospatial",
-    layer = "BusStop") %>%
-      st_transform(crs = 3414)
-    ```
+## Bus Stops
 
-    We note that the *busstops* sf object has a point geometry.
-    :::
+```{r}
+busstop <- st_read("data/geospatial",
+layer = "BusStop") %>%
+  st_transform(crs = 3414)
+```
 
-    ### 5.2.2 Locational factors without geographic coordinates
+We note that the *busstops* sf object has a point geometry.
+:::
+
+### 5.2.2 Locational factors without geographic coordinates
 
 ::: panel-tabset
 ## Primary school
@@ -1131,6 +1139,7 @@ We will perform some EDA to better understand the data.
 We study the distribution of the resale price of 3-room HDB flats using the code chunk below:
 
 ```{r}
+#| code-fold: true
 ggplot(resale_tidy_all,
        aes(x = `resale_price`))+
   geom_histogram(bins = 20,
@@ -1145,6 +1154,7 @@ We will also visualise the distribution of the various structural and locational
 
 ```{r}
 #| fig-height: 15
+#| fig-width: 10
 #| code-fold: true
 storeyrange <- ggplot(resale_tidy_all,
                       aes(x=`storey_range`))+
@@ -1286,6 +1296,7 @@ ggarrange(storeyrange, floorareasqm, flatmodel, remaininglease, PROXELDER, PROXH
 We will also study the geospatial distribution of the 3-room HDB resale prices using the tmap package. Note that we have the first line in the code chunk below to prevent errors in the plotting of our high quality cartographic map. We also set the zoom limits to be between the minimum and maximum zoom level of 11 and 14 respectively.
 
 ```{r}
+#| code-fold: true
 tmap_options(check.and.fix = TRUE)
 
 tmap_mode("view")
@@ -1326,11 +1337,13 @@ corrplot(cor(resale_tidy_all_nogeo[,c(2:4,6:26)]),
          type = "upper")
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 Based on the correlation matrix, we observe that there is multicollinearity between variables "age" and "remaining_lease_mth" which are highly negatively correlated (-1.00).
 
 As "age" is less specific than "remaining_lease_mth", given that we used the current year 2024 to minus the lease commencement year and did not consider month in its formulation, we will retain the latter for further analysis:
 :::
+
+We drop the "age" variable in the code chunk below:
 
 ```{r}
 resale_tidy_all <- resale_tidy_all %>%
@@ -1409,7 +1422,7 @@ We generate the report using the `olsrr_regress()` function:
 ols_regress(price_mlr)
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 Based on the report output above that the adjusted R2 is 0.678 which indicate that the predictors are able to explain 67.8% of the HDB resale prices.
 
 However, at 95% confidence level, we note that not all the independent variables are statistically significant. Specifically, PROX_BUSSTOP, PROX_PRISCH, PROX_MALL and WITHIN_350M_BUSSTOP are not statistically significant.
@@ -1440,7 +1453,7 @@ We generate the report using the `olsrr_regress()` function:
 ols_regress(price_mlr1)
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 We note that all remaining independent variables are significant, however we note that the adjusted R2 still remained at 0.678, which indicates that this revised model is only able to predict as well as the earlier model and explain approximately 67.8% of 3-room HDB resale prices.
 :::
 
@@ -1454,12 +1467,14 @@ vif <- check_collinearity(price_mlr1)
 kable(vif,       caption = "Variance Inflation Factor (VIF) results") %>%   kable_styling(font_size = 18)
 ```
 
+We also plot the vif values generated for easier visualisation:
+
 ```{r}
 plot(vif)+
   theme(axis.text.x = element_text(angle = 45, hjust =1))
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 Based on the output above, we note that the VIF values are all less than 5, indicating that there's no presence of multicollinearity.
 :::
 
@@ -1473,13 +1488,13 @@ We hence utilise the `ols_plot_resid_fit()` function of the olsrr package to per
 ols_plot_resid_fit(price_mlr1)
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 The plot above indicates that most of the data points are scattered around the 0 line, hence we can conclude that the relationships between the dependent variable and the independent variables are linear.
 :::
 
 ### 5.7.3 Test for Normality Assumption
 
-For MLR, we would also need to assess the normality of residuals as it would affect the validity of hypothesis tests, confidence intervals etc.
+For MLR, we would also need to assess the normality of residuals. Normality of residuals mean that they are distributed symmetrically around zero, with no skewness, implying that the model would be able to capture the main patterns and sources of variation in the data and that errors are random and independent ([source](https://www.linkedin.com/advice/0/what-best-methods-assess-normality-residuals#:~:text=Normality%20of%20residuals%20means%20that,errors%20are%20random%20and%20independent.)).
 
 We hence determine normality using the `ols_plot_resid_hist()` of the olsrr package:
 
@@ -1487,7 +1502,7 @@ We hence determine normality using the `ols_plot_resid_hist()` of the olsrr pack
 ols_plot_resid_hist(price_mlr1)
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 The figure above indicates that the residual fo the MLR model resembles a normal distribution.
 :::
 
@@ -1497,8 +1512,10 @@ However, we also carry out further statistical test to ascertain this observatio
 ols_test_normality(sample(residuals(price_mlr1), size = 5000))
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 We note from the results that the p-values are smaller than alpha value of 0.05 at 95% confidence interval. We can hence reject the null hypothesis and determine that there is sufficient evidence that the residuals are not normally distributed.
+
+Taking this result into consideration with the normality plot above, we can assess that the MLR model might not be able to fully capture the main patterns and sources of variation in the data.
 :::
 
 ### 5.7.4 Testing for spatial autocorrelation
@@ -1522,6 +1539,7 @@ train_data_res <- cbind(train_data,
 Next, we will use tmap to display the distribution of the residuals on an interactive map:
 
 ```{r}
+#| code-fold: true
 tmap_mode("view")
 tm_shape(mpsz)+
   tmap_options(check.and.fix = TRUE)+
@@ -1539,7 +1557,7 @@ We will switch the tmap mode back to "plot" using the code chunk below:
 tmap_mode("plot")
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 The map above reveals that there seems to be signs of spatial autocorrelation as the model predicts higher than expected resale prices in the central and east regions of Singapore and lower than expected resale prices in the west and northeast regions.
 :::
 
@@ -1589,8 +1607,10 @@ moran_mlr <- read_rds("data/rds/moran_mlr.rds")
 moran_mlr
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 The Global Moran's I test for residual spatial autocorrelation shows that its p-value is less than 2.2e-16, which is less than the alpha value of 0.05 at 95% confidence interval. As such, we will reject the null hypothesis that residuals are randomly distributed. As the observed Global Moran I value is greater than 0, we can infer that the residuals resemble a cluster distribution.
+
+Given this, we note that multiple linear regression might not be able to fully capture the varuiations in the data to predict HDB resale prices.
 :::
 
 ### 5.8 Random Forest (RF)
@@ -1636,7 +1656,7 @@ test_data_nogeom <- test_data %>%
 
 ### 5.8.2 Non-spatial RF
 
-We will utilise the `ranger()` function of the ranger package to create the rf model. To ensure reproducibility, we set a seed. We also indicate the number of trees to be 30 and will consistently use this across our rf analysis.
+We will utilise the `ranger()` function of the ranger package to create the rf model. To ensure reproducibility, we set a seed. We also indicate the number of trees to be 30, for a robust analysis while ensuring that it is not too computationally intensive, and will consistently use this across our rf analysis.
 
 ```{r}
 #| eval: false
@@ -1663,7 +1683,7 @@ We view the report using the code chunk below:
 rf
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 We note that the non-spatial RF model has an R2 value of 0.9113451 which means that the model is able to predict approximately 91.1% of HDB resale prices.
 
 At present, based on the train data set, this is a better predictive performance than the conventional MLR model which was only able to predict 67.8% of 3-room HDB resale prices and comparable to the geographically weighted MLR model (fitted with train data) which was able to predict approximately 93.7% of HDB resale prices.
@@ -1841,7 +1861,7 @@ rmse_results <- data.frame(
 datatable(rmse_results)
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 From the output above, we note that the geographically weighted random forest model has the lowest RMSE, followed by random forest and multiple linear regression. This indicates that the geographically weighted random model is better able to accurately predict the 3-room HDB resale prices as compared to the other two models.
 :::
 
@@ -1851,6 +1871,7 @@ We can also plot a scatterplot to visualise the actual resale price and the pred
 ## Multiple Linear Regression
 
 ```{r}
+#| code-fold: true
 ggplot(test_data_allres,
        aes(x=predicted_mlr,
            y=resale_price))+
@@ -1862,6 +1883,7 @@ ggplot(test_data_allres,
 ## Random Forest
 
 ```{r}
+#| code-fold: true
 ggplot(test_data_allres,
        aes(x=predicted_rf,
            y=resale_price))+
@@ -1873,6 +1895,7 @@ ggplot(test_data_allres,
 ## Geographically Weighted Random Forest
 
 ```{r}
+#| code-fold: true
 ggplot(test_data_allres,
        aes(x=predicted_gwrf,
            y=resale_price))+
@@ -1882,19 +1905,19 @@ ggplot(test_data_allres,
 ```
 :::
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 As with the result of the overall RMSE values determined above, we note that the geographically weighted random forest is the better predictive model as it has more scatter points closer to the diagonal line.
 :::
 
 #### 6.2.1.2 RMSE values by planning area
 
-Beyond the overall RMSE values, we are also interested to find out the performance of the model across Singapore. We will do so at the planning area level by making use of the "PLN_AREA_N" field in the *mpsz* sf data object. We will first use `st_joint()` to append the "PLN_AREA_N" attribute to the *test_data_allres* data frame in the code chunk below:
+Beyond the overall RMSE values, we are also interested to find out the performance of the model across Singapore. We will do so at the planning area level by making use of the "PLN_AREA_N" field in the *mpsz* sf data object. We will first use `st_join()` to append the "PLN_AREA_N" attribute to the *test_data_allres* data frame in the code chunk below:
 
 ```{r}
 test_data_area <- st_join(test_data_allres, mpsz["PLN_AREA_N"])
 ```
 
-We then generate RMSE values based on "PLN_AREA_N" by first using `group_by()` to group the *test_data_area* data frame by "PLN_AREA_N", followed by determining the rmse values for each planning area and creating a new field "lowest rmse for each planning area using the `casewhen()` and `pmin()` function:
+We then generate RMSE values based on "PLN_AREA_N" by first using `group_by()` to group the *test_data_area* data frame by "PLN_AREA_N", followed by determining the rmse values for each planning area and creating a new field "lowest rmse" for each planning area using the `case_when()` and `pmin()` function:
 
 ```{r}
 #| eval: false
@@ -1937,6 +1960,7 @@ mpsz_test_rmse <- mpsz %>%
 We then utilise tmap to plot a high quality cartographic map displaying the best predictive model with the lowest RMSE for each planning area across Singapore:
 
 ```{r}
+#| code-fold: true
 tmap_mode("view")
 tm_shape(mpsz_test_rmse)+
   tm_fill("lowest_rmse",
@@ -1951,7 +1975,7 @@ tm_shape(mpsz_test_rmse)+
   tm_view(set.zoom.limits = c(11,14))
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 Based on the map above, we note that the geographically weighted random forest model is the best predictive model for most regions for the resale price of 3-room HDB resale flats, this is followed by the random forest model and lastly the multiple linear regression model.
 
 Specifically,
@@ -1983,7 +2007,7 @@ test_data_residual <- test_data_allres %>%
          residual_gwrf = resale_price - predicted_gwrf)
 ```
 
-We will then use `st_joint()` to append the “PLN_AREA_N” in the *mpsz* sf data object to the *test_data_residual* data frame in the code chunk below:
+We will then use `st_join()` to append the “PLN_AREA_N” in the *mpsz* sf data object to the *test_data_residual* data frame in the code chunk below:
 
 ```{r}
 #| eval: false
@@ -2007,6 +2031,7 @@ We then utilise tmap to plot a high quality cartographic map displaying the resi
 ## Multiple Linear Regression
 
 ```{r}
+#| code-fold: true
 tmap_mode("view")
 tm_shape(mpsz)+
   tm_polygons(alpha = 0.1)+
@@ -2027,6 +2052,7 @@ tm_shape(mpsz)+
 ## Random Forest
 
 ```{r}
+#| code-fold: true
 tmap_mode("view")
 tm_shape(mpsz)+
   tm_polygons(alpha = 0.1)+
@@ -2047,6 +2073,7 @@ tm_shape(mpsz)+
 ## Geographically Weighted Random Forest
 
 ```{r}
+#| code-fold: true
 tmap_mode("view")
 tm_shape(mpsz)+
   tm_polygons(alpha = 0.1)+
@@ -2065,7 +2092,7 @@ tm_shape(mpsz)+
 ```
 :::
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 Based on the maps above, we note that:
 
 -   the multiple linear regression model tends to under-predict in most regions of Singapore except for the west and northeast region where there are more over-predictions of resale price
@@ -2100,7 +2127,7 @@ r2_results <- data.frame(
 datatable(r2_results)
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 From the output above, we note that the geographically weighted random forest model has the highest R2 score, followed by random forest and multiple linear regression.
 
 This indicates that the geographically weighted random forest model and its independent variables are better able to capture the underlying variations in HDB resale prices.
@@ -2110,13 +2137,13 @@ To recap, all models used the same independent variables with the exception of m
 
 #### 6.2.3.2 R2 values by planning area
 
-Beyond the overall R2 values, we are also interested to find out how the R2 score of the models differ across Singapore. We will do so at the planning area level by making use of the "PLN_AREA_N" field in the *mpsz* sf data object. We will first use `st_joint()` to append the "PLN_AREA_N" attribute to the *test_data_allres* data frame in the code chunk below:
+Beyond the overall R2 values, we are also interested to find out how the R2 score of the models differ across Singapore. We will do so at the planning area level by making use of the "PLN_AREA_N" field in the *mpsz* sf data object. We will first use `st_join()` to append the "PLN_AREA_N" attribute to the *test_data_allres* data frame in the code chunk below:
 
 ```{r}
 test_data_area_r2 <- st_join(test_data_allres, mpsz["PLN_AREA_N"])
 ```
 
-We then generate R2 scores based on "PLN_AREA_N" by first using `group_by()` to group the *test_data_area_r2* data frame by "PLN_AREA_N", followed by determining the R2 score for each planning area and creating a new field "best r2" for each planning area using the `casewhen()` and `pmax()` function:
+We then generate R2 scores based on "PLN_AREA_N" by first using `group_by()` to group the *test_data_area_r2* data frame by "PLN_AREA_N", followed by determining the R2 score for each planning area and creating a new field "best r2" for each planning area using the `case_when()` and `pmax()` function:
 
 ```{r}
 #| eval: false
@@ -2159,6 +2186,7 @@ mpsz_test_r2 <- mpsz %>%
 We then utilise tmap to plot a high quality cartographic map displaying the predictive model with the highest R2 score for each planning area across Singapore:
 
 ```{r}
+#| code-fold: true
 tmap_mode("view")
 tm_shape(mpsz_test_r2)+
   tm_fill("highest_r2",
@@ -2173,7 +2201,7 @@ tm_shape(mpsz_test_r2)+
   tm_view(set.zoom.limits = c(11,14))
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 Based on the map above, we note that the R2 scores/goodness-of-fit of the geographically weighted random forest model for the resale price of 3-room HDB resale flats is the best for most regions, this is followed by the random forest model and lastly the multiple linear regression model.
 
 Specifically,
@@ -2201,7 +2229,7 @@ We will hence further determine the order of importance of the independent varia
 
 -   creating a new field "Variable" using `rownames_to_column()` to house the names of the independent variables
 
--   renaming the "gwRF_adaptive_train$Global.Model$variable.importance" to a shorter and more user-friendly term "Value"
+-   renaming the variable importance variable to a shorter and more user-friendly term "Value"
 
 -   arrange the variables in descending order of variable importance
 
@@ -2217,7 +2245,7 @@ gwRF_varorder <- as.data.frame(gwRF_adaptive_train$Global.Model$variable.importa
 datatable(gwRF_varorder)
 ```
 
-::: {.callout-note style="orange"}
+::: {.callout-note style="color: steelblue"}
 From the output above, we note that structural factors are more important than locational factors, with the remaining lease as the most important factor. Notably, the value of variable importance for "remaining_lease_mth" is more than twice the value of the next most important variable.
 
 Among the locational factors, we note that proximity to CBD is the most important, followed by proximity to MRT, hawker centres, parks, shopping malls, eldercare services, kindergartens, good primary schools, primary schools, and CHAS clinics. This is followed by the number of hawker centres within 350m (aka walking distance) and number of primary schools within 1 km of the HDB units. The remaining variables have variable importance of less than 1 million and will not be elaborated in detail.
@@ -2236,3 +2264,11 @@ We also observe structural factors to have greater variable importance as compar
 -   <https://r4gdsa.netlify.app/>
 
 -   <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/how-geographicallyweightedregression-works.htm>
+
+-   <https://pmc.ncbi.nlm.nih.gov/articles/PMC11205154/>
+
+-   <https://www.asiaone.com/money/more-3-room-resale-flats-change-hands-800k-and-higher-2024>
+
+-   <https://www.moe.gov.sg/primary/p1-registration/distance>
+
+-   <https://www.linkedin.com/advice/0/what-best-methods-assess-normality-residuals#:~:text=Normality%20of%20residuals%20means%20that,errors%20are%20random%20and%20independent.>
