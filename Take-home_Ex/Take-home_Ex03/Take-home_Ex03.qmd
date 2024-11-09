@@ -83,14 +83,14 @@ The following datasets will be used:
     -   Locational factors with geographic coordinates from [Datamall.lta.gov.sg](https://datamall.lta.gov.sg/content/datamall/en.html):
 
         | S/N | Data                                                                |
-        |---------------|----------------------------------------------------------------------------------------------------------|
+        |-----|---------------------------------------------------------------------|
         | 1   | **MRT/LRT stations** in Singapore with the station names and codes. |
         | 2   | **Bus stops** in Singapore                                          |
 
     -   Locational factors without geographic coordinates from [Data.gov.sg](https://data.gov.sg/) and other sources:
 
         | S/N | Data                                                                  | Source                                                                                                                |
-        |-------------------|--------------------------|----------------------------------------------------------------------------|
+        |-----|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
         | 1   | **Primary school data**                                               | [Data.gov.sg](https://data.gov.sg/) - extracted from the list on General information of schools                       |
         | 2   | **Good primary schools** ordered in terms of popularity for year 2024 | [Local Salary Forum](https://www.salary.sg/2024/best-primary-schools-2024-by-popularity/) - extracted into a csv file |
         | 3   | **CBD** coordinates                                                   | Google                                                                                                                |
