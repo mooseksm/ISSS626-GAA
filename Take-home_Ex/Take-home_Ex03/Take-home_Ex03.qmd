@@ -2068,11 +2068,9 @@ tm_shape(mpsz)+
 ::: {.callout-note style="#6495ED"}
 Based on the maps above, we note that:
 
--   the multiple linear regression model largely tends to under-predict in most regions of Singapore except for the west and northeast region where there are more overpredictions of resale price
+-   the multiple linear regression model tends to under-predict in most regions of Singapore except for the west and northeast region where there are more over-predictions of resale price
 
--   the random forest model also largely tends to under predict in most regions of Singapore however there are data points for which the model over predicts, albeit more so for the central and west region
-
--   the geographically weighted random forest model largely tends to over predict
+-   the random forest and geographically weighted random forest models tend to under predict in most regions of Singapore, there seems to be less over-predictions as compared to the multiple linear regression model
 :::
 
 Before we proceed with further analysis, we switch the tmap_mode to "plot":
@@ -2224,9 +2222,17 @@ From the output above, we note that structural factors are more important than l
 
 Among the locational factors, we note that proximity to CBD is the most important, followed by proximity to MRT, hawker centres, parks, shopping malls, eldercare services, kindergartens, good primary schools, primary schools, and CHAS clinics. This is followed by the number of hawker centres within 350m (aka walking distance) and number of primary schools within 1 km of the HDB units. The remaining variables have variable importance of less than 1 million and will not be elaborated in detail.
 
-The order of variable importance could potentially be explained by the demographics of the population who are interested in 3-room HDB flats, as they may be smaller unit families that have no to few children, thus contributing to the lower ranking of locational factors relatied to schools.
+The order of variable importance could potentially be explained by the demographics of the population who are interested in 3-room HDB flats, as they may be smaller unit families that have no to few children, thus contributing to the lower ranking of locational factors related to schools.
 :::
 
 ## 7. Conclusion
 
+Overall, we observe that the geographically weighted random forest model to be a better predictive model as compared to the two other models studied in this exercise, multiple linear regression and random forest as it has the lowest overall RMSE and has the lowest RMSE for most regions in Singapore for the resale prices of 3-room HDB flats. Further, it has the highest overall R2 score which indicates that the model and its independent variables are better able to capture the underlying variations in HDB resale prices as compared to the other two models. This indicates the importance of taking in the spatial autocorrelation and spatial heterogeneity in geographic datasets such as HDB resale transactions.
+
+We also observe structural factors to have greater variable importance as compared to locational factors. For future work, we could study more structural factors and how they might influence the predictive power of the model. Potential factors could include the last renovation date of the HDB flat as a recently renovated flat might attract higher prices, given that less renovation might need to be done for the new buyer to move in, and also whether the flat is west-facing as buyers could be concerned about high temperatures/hot afternoon sun.
+
 ## 8. References
+
+-   <https://r4gdsa.netlify.app/>
+
+-   <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/how-geographicallyweightedregression-works.htm>
